@@ -1,0 +1,12 @@
+# Toolkit caches held for the life of the process, so a report only covers this project:
+#   LSAN_OPTIONS=suppressions=lsan.supp ./build/bin/KernelManager
+
+# The font pattern cache.
+leak:libfontconfig
+
+# Freetype's library handle and driver modules, reached through the font lookup.
+leak:libfreetype
+
+# Pango, pulled in by the desktop's font handling.
+leak:libpangocairo
+leak:libpango

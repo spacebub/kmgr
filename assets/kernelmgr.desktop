@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=KernelManager
+GenericName=Kernel Manager
+Comment=Build, install and manage Linux kernels
+Exec=KernelManager
+Icon=kernelmgr
+Terminal=false
+Categories=System;Settings;
+Keywords=kernel;linux;build;install;
+StartupWMClass=KernelManager

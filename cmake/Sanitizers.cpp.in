@@ -1,0 +1,37 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+/*
+ * Part of kernelmgr
+ *
+ * Copyright (c) 2026
+ * Authors:
+ *	spacebub <spacebubs@proton.me>
+ */
+// Edit lsan.supp, not this file.
+// The runtimes read these hooks while still starting up, so everything here is a literal.
+
+// Reports land beside the binary, named after it with the pid appended: bin/kmgr.san.10231.
+#ifndef KERNELMGR_SANITIZER_LOG
+#define KERNELMGR_SANITIZER_LOG "@CMAKE_RUNTIME_OUTPUT_DIRECTORY@/sanitizer"
+#endif
+
+extern "C" const char *__lsan_default_suppressions();
+extern "C" const char *__asan_default_options();
+extern "C" const char *__ubsan_default_options();
+
+extern "C" const char *__lsan_default_suppressions() {
+    return R"lsan(
+@SANITIZER_SUPPRESSIONS@
+)lsan";
+}
+
+extern "C" const char *__asan_default_options() {
+    return "log_path=" KERNELMGR_SANITIZER_LOG ".san";
+}
+
+// A line number alone is not enough to find undefined behaviour by, hence the stack.
+// It reports without halting, so a run still reaches the part worth watching.
+extern "C" const char *__ubsan_default_options() {
+    return "log_path=" KERNELMGR_SANITIZER_LOG ".san"
+           ":print_stacktrace=1"
+           ":halt_on_error=0";
+}
