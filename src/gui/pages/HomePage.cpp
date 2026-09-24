@@ -16,8 +16,10 @@
 #include "ttk/toolkit/layout/Spacer.h"
 
 namespace {
+    using Palette = ttk::Theme::Palette;
+
     const ttk::Theme::Palette &palette() {
-        return ttk::Theme::of();
+        return ttk::Theme::palette();
     }
 }
 
@@ -47,13 +49,13 @@ HomePage::HomePage(Reach *reach) : Box(Flow::Column), _reach(reach) {
     ttk::Box *versions = head->append(ttk::Box::row());
     versions->spacing(16.0)->align(Place::Centre)->cross(Place::Centre);
 
-    _current = versions->append(Parts::text("", 700, ttk::Theme::fontHero, palette().text));
+    _current = versions->append(Parts::text("", 700, ttk::Theme::fontHero, &Palette::text));
     _current->on_click([this] { _reach->show(_reach->system.current()); });
 
     _arrow = versions->append(std::make_unique<Arrow>());
-    _latest = versions->append(Parts::text("", 700, ttk::Theme::fontHero, palette().accent));
+    _latest = versions->append(Parts::text("", 700, ttk::Theme::fontHero, &Palette::accent));
 
-    auto facts = Parts::text("", 400, ttk::Theme::fontBody, palette().faint);
+    auto facts = Parts::text("", 400, ttk::Theme::fontBody, &Palette::faint);
 
     _facts = facts.get();
     head->append(Parts::centred(std::move(facts)));
@@ -65,10 +67,10 @@ HomePage::HomePage(Reach *reach) : Box(Flow::Column), _reach(reach) {
     news->fixedHeight = ttk::Theme::control;
 
     // Only shown when the versions above do not already say it.
-    _status = news->append(Parts::pill("", palette().success, palette().successSoft));
+    _status = news->append(Parts::pill("", &Palette::success, &Palette::successSoft));
 
     _ahead = news->append(Parts::text("Nothing newer has been released.", 400, ttk::Theme::fontBody,
-                                      palette().muted));
+                                      &Palette::muted));
 
     _retry = news->append(std::make_unique<ttk::Button>("Retry", [this] { _reach->system.check_latest(); }));
     _retry->tooltip("Ask kernel.org again");
@@ -192,9 +194,9 @@ void HomePage::sync() {
         }
     }
 
-    const Parts::Tones tones = system.checking()       ? Parts::Tones{palette().muted, palette().mutedSoft}
-                             : !system.latest_known()  ? Parts::Tones{palette().warning, palette().warningSoft}
-                                                       : Parts::Tones{palette().success, palette().successSoft};
+    const Parts::Tones tones = system.checking()       ? Parts::Tones{&Palette::muted, &Palette::mutedSoft}
+                             : !system.latest_known()  ? Parts::Tones{&Palette::warning, &Palette::warningSoft}
+                                                       : Parts::Tones{&Palette::success, &Palette::successSoft};
     _status->tones(tones.tone, tones.wash);
     _status->invalidate();
 

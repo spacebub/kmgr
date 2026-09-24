@@ -5,7 +5,7 @@ Comes as a GUI (`KernelManager`) and a CLI (`kmgr`).
 
 ## Build
 
-Needs a C++23 compiler, CMake 3.25+, libcurl and libarchive. First configure needs github.com access.
+Needs a C++23 compiler, CMake 3.25+, libcurl, libarchive and libdbus-1. First configure needs github.com access.
 
 ```sh
 cmake -B build -DCMAKE_BUILD_TYPE=Release

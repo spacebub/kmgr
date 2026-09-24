@@ -22,8 +22,6 @@ namespace {
     }
 }
 
-ProgressTrack::ProgressTrack() : _tone(ttk::Theme::of().accent), _toneDark(ttk::Theme::dark()) {}
-
 void ProgressTrack::set_value(const int value) {
     if (value == _value) {
         return;
@@ -47,13 +45,12 @@ void ProgressTrack::set_value(const int value) {
     invalidate();
 }
 
-void ProgressTrack::set_tone(const BLRgba32 tone) {
-    if (tone.value == _tone.value) {
+void ProgressTrack::set_tone(const ttk::Theme::Tone tone) {
+    if (tone.colour().value == _tone.colour().value) {
         return;
     }
 
     _tone = tone;
-    _toneDark = ttk::Theme::dark();
     invalidate();
 }
 
@@ -63,9 +60,9 @@ void ProgressTrack::moved() {
 
 void ProgressTrack::paint(const ttk::Painter &painter) {
     const double radius = _box.h / 2.0;
-    const BLRgba32 tone = ttk::Theme::restated(_tone, _toneDark);
+    const BLRgba32 tone = _tone.colour();
 
-    painter.round(_box, radius, ttk::Theme::of().sunken);
+    painter.round(_box, radius, ttk::Theme::palette().sunken);
     painter.push(_box);
 
     if (_value >= 0) {

@@ -15,6 +15,10 @@
 #include "ttk/toolkit/Root.h"
 #include "ttk/toolkit/controls/Label.h"
 
+namespace {
+    using Palette = ttk::Theme::Palette;
+}
+
 LogSteps::LogSteps(Reach *reach) : Box(Flow::Column), _reach(reach) {
     spacing(6.0);
 }
@@ -100,8 +104,6 @@ void LogSteps::set_idle(const bool idle) {
 }
 
 void LogSteps::set_steps(const std::string &build, const std::vector<Log::Filed> &steps) {
-    const ttk::Theme::Palette &palette = ttk::Theme::of();
-
     _build = build;
     _count = static_cast<int>(steps.size());
     _loaded = true;
@@ -116,17 +118,17 @@ void LogSteps::set_steps(const std::string &build, const std::vector<Log::Filed>
         ttk::Box *row = append(ttk::Box::row());
 
         row->spacing(8.0)->cross(Place::Centre);
-        row->append(Parts::text(step_name(step.operation), 400, ttk::Theme::fontSmall, palette.text));
-        row->append(Parts::text(Format::runs(step.runs), 400, ttk::Theme::fontTiny, palette.faint))->stretch = 1.0;
-        row->append(Parts::text(Format::size(step.size), 400, ttk::Theme::fontTiny, palette.muted))->mono();
+        row->append(Parts::text(step_name(step.operation), 400, ttk::Theme::fontSmall, &Palette::text));
+        row->append(Parts::text(Format::runs(step.runs), 400, ttk::Theme::fontTiny, &Palette::faint))->stretch = 1.0;
+        row->append(Parts::text(Format::size(step.size), 400, ttk::Theme::fontTiny, &Palette::muted))->mono();
 
         const std::string operation = step.operation;
         const std::string size = Format::size(step.size);
         const int runs = step.runs;
 
         ttk::GlyphButton *bin = row->append(Parts::glyph_button(
-            ttk::Glyphs::Glyph::Trash, 26.0, "Delete what this step has filed here", palette.faint,
-            palette.danger, palette.dangerSoft, [this, operation, size, runs] {
+            ttk::Glyphs::Glyph::Trash, 26.0, "Delete what this step has filed here", &Palette::faint,
+            &Palette::danger, &Palette::dangerSoft, [this, operation, size, runs] {
                 _reach->ask("Delete the " + step_phrase(operation) + " logs for " + _build + "?",
                             size + " over " + Format::runs(runs)
                                 + " is removed. Everything filed here under the other steps stays.",

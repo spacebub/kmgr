@@ -21,11 +21,13 @@
 #include "ttk/toolkit/layout/Spacer.h"
 
 namespace {
+    using Palette = ttk::Theme::Palette;
+
     constexpr double RAIL_GAP = 18.0;
     constexpr double FOOTER_HEIGHT = 62.0;
 
     const ttk::Theme::Palette &palette() {
-        return ttk::Theme::of();
+        return ttk::Theme::palette();
     }
 
     std::unique_ptr<ttk::Panel> card(ttk::Box *&inside, const double spacing) {
@@ -41,7 +43,7 @@ namespace {
         std::unique_ptr<ttk::Box> made = ttk::Box::column();
 
         made->spacing(3.0);
-        made->append(Parts::text(title, 600, ttk::Theme::fontBody, palette().text));
+        made->append(Parts::text(title, 600, ttk::Theme::fontBody, &Palette::text));
         made->append(Parts::note(about));
 
         return made;
@@ -259,7 +261,7 @@ SettingsPage::SettingsPage(Reach *reach) : _reach(reach) {
 
     presets->spacing(10.0)->cross(ttk::Box::Place::Centre);
     inside->append(Parts::above(2.0, std::move(presetRow)));
-    presets->append(Parts::text("Start from", 400, ttk::Theme::fontSmall, palette().muted));
+    presets->append(Parts::text("Start from", 400, ttk::Theme::fontSmall, &Palette::muted));
     presets->append(std::make_unique<ttk::Button>("AOCC", [this] {
         _flags->set_text(SettingsBridge::aocc_preset());
         _reach->touch();
@@ -307,8 +309,8 @@ SettingsPage::SettingsPage(Reach *reach) : _reach(reach) {
 
     ttk::Box *aboutHead = about->append(ttk::Box::row());
     aboutHead->spacing(8.0)->cross(ttk::Box::Place::Centre);
-    aboutHead->append(Parts::text("Kept for every run", 600, ttk::Theme::fontBody, palette().text));
-    _logsSize = aboutHead->append(Parts::pill("none", palette().faint, palette().mutedSoft, false));
+    aboutHead->append(Parts::text("Kept for every run", 600, ttk::Theme::fontBody, &Palette::text));
+    _logsSize = aboutHead->append(Parts::pill("none", &Palette::faint, &Palette::mutedSoft, false));
     aboutHead->append(std::make_unique<ttk::Spacer>());
     _logsNote = about->append(Parts::note(""));
 
@@ -339,7 +341,7 @@ SettingsPage::SettingsPage(Reach *reach) : _reach(reach) {
 
     ttk::Label *unsaved = footer->append(Parts::note(
         "Unsaved changes. Directories that do not exist yet are created when you save."));
-    unsaved->tone(palette().warning);
+    unsaved->tone(&Palette::warning);
     unsaved->stretch = 1.0;
 
     footer->append(std::make_unique<ttk::Button>("Revert", [this] {

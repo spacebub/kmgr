@@ -17,6 +17,8 @@
 #include "ttk/toolkit/Root.h"
 
 namespace {
+    using Palette = ttk::Theme::Palette;
+
     constexpr double TAB_HEIGHT = 34.0;
     constexpr double TAB_SIDES = 28.0;
     constexpr double TAB_GAP = 2.0;
@@ -46,8 +48,6 @@ namespace {
 }
 
 TitleBar::TitleBar(Reach *reach, BLImage mark) : _reach(reach), _mark(std::move(mark)) {
-    const ttk::Theme::Palette &palette = ttk::Theme::of();
-
     _takesPointer = true;
 
     _tabs.emplace_back(Page::Home, "Home");
@@ -62,7 +62,7 @@ TitleBar::TitleBar(Reach *reach, BLImage mark) : _reach(reach), _mark(std::move(
                                                            [this] { _reach->window.toggle_maximize(); }));
     _close = append(std::make_unique<ttk::GlyphButton>(ttk::Glyphs::Glyph::Close,
                                                         [this] { _reach->window.stop(); }));
-    _close->tone(palette.muted, BLRgba32(0xffffffff))->wash(palette.danger);
+    _close->tone(&Palette::muted, ttk::Theme::Tone(BLRgba32(0xffffffff)))->wash(&Palette::danger);
 }
 
 void TitleBar::sync(const Page page, const bool homeBadge, const std::string &trailing) {
@@ -144,7 +144,7 @@ bool TitleBar::draggable(const double x, const double y) const {
 }
 
 void TitleBar::paint(const ttk::Painter &painter) {
-    const ttk::Theme::Palette &palette = ttk::Theme::of();
+    const ttk::Theme::Palette &palette = ttk::Theme::palette();
     const BLRect bar{_box.x, _box.y, _box.w, Look::barHeight};
 
     painter.fill(bar, palette.surface);

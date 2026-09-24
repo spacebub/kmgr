@@ -19,8 +19,10 @@
 #include "ttk/toolkit/layout/Wrap.h"
 
 namespace {
+    using Palette = ttk::Theme::Palette;
+
     const ttk::Theme::Palette &palette() {
-        return ttk::Theme::of();
+        return ttk::Theme::palette();
     }
 }
 
@@ -54,17 +56,17 @@ BuildCard::BuildCard(Reach *reach, const Catalog::Build &build, std::function<vo
     ttk::Box *head = layout->append(ttk::Box::row());
     head->spacing(8.0)->cross(ttk::Box::Place::Centre);
 
-    _title = head->append(Parts::text(build.name, palette().headingWeight, ttk::Theme::fontLarge, palette().text));
+    _title = head->append(Parts::text(build.name, palette().headingWeight, ttk::Theme::fontLarge, &Palette::text));
     _title->stretch = 1.0;
 
-    _running = head->append(Parts::pill("running now", palette().success, palette().successSoft));
+    _running = head->append(Parts::pill("running now", &Palette::success, &Palette::successSoft));
 
     // Shut, it still has to say that it is carrying something.
-    _options = head->append(Parts::pill("options set", palette().accent, palette().accentSoft));
+    _options = head->append(Parts::pill("options set", &Palette::accent, &Palette::accentSoft));
 
     // 135 degrees is three of the cog's eight teeth, so it comes to rest looking as it started.
     _cog = head->append(Parts::glyph_button(ttk::Glyphs::Glyph::Cog, 30.0, "Options and logs for this build",
-                                            palette().faint, palette().accent, palette().accentSoft,
+                                            &Palette::faint, &Palette::accent, &Palette::accentSoft,
                                             [this] { _action("options"); }));
     _cog->spin(135.0);
 
@@ -79,12 +81,12 @@ BuildCard::BuildCard(Reach *reach, const Catalog::Build &build, std::function<vo
     pills->spacing(6.0, 6.0);
     pills->stretch = 1.0;
 
-    _patched = pills->append(Parts::pill("patched", palette().success, palette().successSoft));
-    _configured = pills->append(Parts::pill("configured", palette().success, palette().successSoft));
-    _built = pills->append(Parts::pill("built", palette().success, palette().successSoft));
+    _patched = pills->append(Parts::pill("patched", &Palette::success, &Palette::successSoft));
+    _configured = pills->append(Parts::pill("configured", &Palette::success, &Palette::successSoft));
+    _built = pills->append(Parts::pill("built", &Palette::success, &Palette::successSoft));
 
     // Shown only when it disagrees with the switch, which otherwise says the same.
-    _made = pills->append(Parts::pill("made with", palette().warning, palette().warningSoft));
+    _made = pills->append(Parts::pill("made with", &Palette::warning, &Palette::warningSoft));
 
     _compiler = state->append(std::make_unique<Choice>([this](const int index) {
         _compiler->set_current(index);
@@ -128,14 +130,14 @@ BuildCard::BuildCard(Reach *reach, const Catalog::Build &build, std::function<vo
     logs->spacing(6.0)->cross(ttk::Box::Place::Centre);
     logs->append(Parts::section("LOGS"))->stretch = 1.0;
 
-    _weight = logs->append(Parts::pill("none", palette().faint, palette().mutedSoft, false));
+    _weight = logs->append(Parts::pill("none", &Palette::faint, &Palette::mutedSoft, false));
 
     logs->append(Parts::glyph_button(ttk::Glyphs::Glyph::Folder, 30.0, "Open this build's logs in your file manager",
-                                     palette().faint, palette().accent, palette().accentSoft,
+                                     &Palette::faint, &Palette::accent, &Palette::accentSoft,
                                      [this] { _reach->logs.open(_build.name); }));
 
     _bin = logs->append(Parts::glyph_button(ttk::Glyphs::Glyph::Trash, 30.0, "Delete every log this build has written",
-                                            palette().faint, palette().danger, palette().dangerSoft, [this] {
+                                            &Palette::faint, &Palette::danger, &Palette::dangerSoft, [this] {
         _reach->ask("Delete the logs for " + _build.name + "?",
                     "Every run filed under this build is removed. Other builds of the same "
                     "version keep theirs, and nothing else is touched.",
@@ -276,7 +278,7 @@ void BuildCard::sync(const Catalog::Build &build, const bool idle, const bool si
     _options->set_visible(tuned() && !expanded);
 
     _cog->tooltip(expanded ? "Hide this build's options and logs" : "Options and logs for this build");
-    _cog->tone(expanded || tuned() ? palette().accent : palette().faint, palette().accent);
+    _cog->tone(expanded || tuned() ? &Palette::accent : &Palette::faint, &Palette::accent);
 
     if (opened || (!expanded && _fold->open())) {
         _cog->spun(expanded);
@@ -291,13 +293,13 @@ void BuildCard::sync(const Catalog::Build &build, const bool idle, const bool si
 
     _patched->set_visible(patchable());
     _patched->set_text(build.patched ? "patched" : "not patched");
-    tint(_patched, Parts::lit(build.patched, palette().success, palette().successSoft));
+    tint(_patched, Parts::lit(build.patched, &Palette::success, &Palette::successSoft));
 
     _configured->set_text(build.configured ? "configured" : "not configured");
-    tint(_configured, Parts::lit(build.configured, palette().success, palette().successSoft));
+    tint(_configured, Parts::lit(build.configured, &Palette::success, &Palette::successSoft));
 
     _built->set_text(build.built ? "built" : "not built");
-    tint(_built, Parts::lit(build.built, palette().success, palette().successSoft));
+    tint(_built, Parts::lit(build.built, &Palette::success, &Palette::successSoft));
 
     _made->set_visible(switching());
     _made->set_text("made with " + toolchain_label(build.toolchain));

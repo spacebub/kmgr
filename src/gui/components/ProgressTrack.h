@@ -16,11 +16,9 @@
 
 class ProgressTrack : public ttk::Widget {
 public:
-    ProgressTrack();
-
     // Below zero is indeterminate.
     void set_value(int value);
-    void set_tone(BLRgba32 tone);
+    void set_tone(ttk::Theme::Tone tone);
 
     double natural_height(ttk::Typeface & /*type*/, double /*width*/) override { return 5.0; }
 
@@ -29,11 +27,11 @@ public:
 
 protected:
     void moved() override;
+    void restyle() override { _tone.restyle(); }
 
 private:
     int _value = -1;
-    BLRgba32 _tone;
-    bool _toneDark;
+    ttk::Theme::Tone _tone{&ttk::Theme::Palette::accent};
     ttk::Anim::Tween _share;
     double _started = 0.0;
     double _phase = 0.0;

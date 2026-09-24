@@ -83,7 +83,7 @@ void SectionTabs::arrange(ttk::Typeface &type) {
 }
 
 void SectionTabs::paint(const ttk::Painter &painter) {
-    const ttk::Theme::Palette &palette = ttk::Theme::of();
+    const ttk::Theme::Palette &palette = ttk::Theme::palette();
 
     // Laid down first so the mark under the picked tab covers it.
     painter.fill(BLRect{_box.x, _box.y + _box.h - 1.0, _box.w, 1.0}, palette.border);

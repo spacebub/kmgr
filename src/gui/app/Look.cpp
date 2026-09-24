@@ -42,6 +42,11 @@ namespace {
         .shadow = BLRgba32{0x66000000},
         .scrim = BLRgba32{0xa8030509},
 
+        .statusLaunching = BLRgba32{0xff7ba2ff},
+        .statusRunning = BLRgba32{0xff43d391},
+        .statusFailing = BLRgba32{0xfff4657a},
+        .statusIdle = BLRgba32{0xffb3bdcd},
+
         .headingWeight = 700,
         .dark = true,
     };
@@ -77,6 +82,11 @@ namespace {
         .shadow = BLRgba32{0x1f12203a},
         .scrim = BLRgba32{0x6e0c1420},
 
+        .statusLaunching = BLRgba32{0xff2a58d8},
+        .statusRunning = BLRgba32{0xff0a7d4e},
+        .statusFailing = BLRgba32{0xffc62d46},
+        .statusIdle = BLRgba32{0xff4d5769},
+
         .headingWeight = 600,
         .dark = false,
     };
@@ -101,8 +111,7 @@ namespace {
 namespace Look {
 
     void install() {
-        ttk::Theme::set_palettes(DARK, LIGHT);
-        ttk::Theme::set_mode(mode_of(Configuration::get()->theme));
+        ttk::Theme::configure({.dark = DARK, .light = LIGHT, .mode = mode_of(Configuration::get()->theme)});
     }
 
     std::string mode_name() {
@@ -111,9 +120,7 @@ namespace Look {
 
     // A shade that cannot be saved only warns. It is not worth stopping the application over.
     void cycle(ttk::Notifier *notifier) {
-        const ttk::Theme::Mode next = ttk::Theme::next_mode();
-
-        ttk::Theme::set_mode(next);
+        const ttk::Theme::Mode next = ttk::Theme::cycle_mode();
 
         Settings settings = *Configuration::get();
         settings.theme = name_of(next);

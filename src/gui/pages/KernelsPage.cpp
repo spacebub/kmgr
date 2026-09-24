@@ -19,12 +19,14 @@
 #include "ttk/toolkit/layout/Spacer.h"
 
 namespace {
+    using Palette = ttk::Theme::Palette;
+
     constexpr double GAP = 14.0;
     constexpr double LIST_WIDTH = 322.0;
     constexpr double LIST_HEIGHT = 220.0;
 
     const ttk::Theme::Palette &palette() {
-        return ttk::Theme::of();
+        return ttk::Theme::palette();
     }
 }
 
@@ -34,8 +36,8 @@ KernelsPage::Adder::Adder(KernelsPage *page) : _page(page) {
     _input->accepted = [this] { _page->fetch(); };
 
     _get = append(Parts::glyph_button(ttk::Glyphs::Glyph::Download, 30.0,
-                                      "Download this version from kernel.org", palette().accent,
-                                      palette().accent, palette().accentSoft, [this] { _page->fetch(); }));
+                                      "Download this version from kernel.org", &Palette::accent,
+                                      &Palette::accent, &Palette::accentSoft, [this] { _page->fetch(); }));
     _get->set_visible(false);
 }
 
@@ -53,7 +55,7 @@ void KernelsPage::Adder::sync() const {
 
     _input->placeholder(system.latest_known() ? "Add version, e.g. " + system.latest() : "Version to download");
     _get->set_visible(!_input->text().empty());
-    _get->tone(_page->idle_for(typed()) ? palette().accent : palette().faint, palette().accent);
+    _get->tone(_page->idle_for(typed()) ? &Palette::accent : &Palette::faint, &Palette::accent);
     invalidate();
 }
 
@@ -88,12 +90,12 @@ void KernelsPage::Adder::paint(const ttk::Painter &painter) {
 KernelsPage::KernelsPage(Reach *reach) : _reach(reach) {
     _head = append(ttk::Box::row());
     _head->spacing(10.0)->cross(ttk::Box::Place::Centre);
-    _head->append(Parts::text("Versions on this machine", 600, ttk::Theme::fontMedium, palette().text));
+    _head->append(Parts::text("Versions on this machine", 600, ttk::Theme::fontMedium, &Palette::text));
     _head->append(std::make_unique<ttk::Spacer>());
-    _count = _head->append(Parts::text("", 400, ttk::Theme::fontSmall, palette().faint));
+    _count = _head->append(Parts::text("", 400, ttk::Theme::fontSmall, &Palette::faint));
     _head->append(Parts::glyph_button(ttk::Glyphs::Glyph::Refresh, ttk::Theme::controlSmall,
-                                      "Read the base directory again", palette().muted, palette().text,
-                                      palette().hover, [this] {
+                                      "Read the base directory again", &Palette::muted, &Palette::text,
+                                      &Palette::hover, [this] {
         _reach->refresh();
         _reach->notify.info("Reloaded from " + SystemStatus::base_directory() + ".");
     }));
@@ -132,9 +134,9 @@ KernelsPage::KernelsPage(Reach *reach) : _reach(reach) {
 
     _title = detail->append(ttk::Box::row());
     _title->spacing(10.0)->cross(ttk::Box::Place::Centre);
-    _name = _title->append(Parts::text("", palette().headingWeight, ttk::Theme::fontDisplay, palette().text));
+    _name = _title->append(Parts::text("", palette().headingWeight, ttk::Theme::fontDisplay, &Palette::text));
     _name->stretch = 1.0;
-    _running = _title->append(Parts::pill("running now", palette().success, palette().successSoft));
+    _running = _title->append(Parts::pill("running now", &Palette::success, &Palette::successSoft));
 
     _archive = detail->append(std::make_unique<ttk::Panel>());
     _archive->inset = true;
@@ -145,7 +147,7 @@ KernelsPage::KernelsPage(Reach *reach) : _reach(reach) {
     ttk::Box *archiveHead = archive->append(ttk::Box::row());
     archiveHead->cross(ttk::Box::Place::Centre);
     archiveHead->append(Parts::section("ARCHIVE"))->stretch = 1.0;
-    _archiveSize = archiveHead->append(Parts::pill("", palette().accent, palette().accentSoft));
+    _archiveSize = archiveHead->append(Parts::pill("", &Palette::accent, &Palette::accentSoft));
 
     // The tarball is named, but opening it opens where it sits.
     _archivePath = archive->append(Parts::path(reach, "", true, SystemStatus::archive_directory()));
@@ -175,13 +177,13 @@ KernelsPage::KernelsPage(Reach *reach) : _reach(reach) {
 
     _extract = _extracting->append(Parts::glyph_button(ttk::Glyphs::Glyph::Extract, 34.0,
                                                        "Unpack the archive under the suffix on the left",
-                                                       palette().accent, palette().accent, palette().accentSoft,
+                                                       &Palette::accent, &Palette::accent, &Palette::accentSoft,
                                                        [this] { extract(); }));
     _extract->outlined();
 
     _deleteArchive = _extracting->append(Parts::glyph_button(
-        ttk::Glyphs::Glyph::Trash, 34.0, "Delete the tarball. Anything extracted from it stays", palette().faint,
-        palette().danger, palette().dangerSoft, [this] {
+        ttk::Glyphs::Glyph::Trash, 34.0, "Delete the tarball. Anything extracted from it stays", &Palette::faint,
+        &Palette::danger, &Palette::dangerSoft, [this] {
             const Catalog::Entry *held = entry();
 
             if (held == nullptr) {
@@ -199,10 +201,10 @@ KernelsPage::KernelsPage(Reach *reach) : _reach(reach) {
 
     _fetching = archive->append(ttk::Box::row());
     _fetching->spacing(10.0)->cross(ttk::Box::Place::Centre);
-    _fetchFrom = _fetching->append(Parts::text("", 400, ttk::Theme::fontSmall, palette().faint));
+    _fetchFrom = _fetching->append(Parts::text("", 400, ttk::Theme::fontSmall, &Palette::faint));
     _fetchFrom->stretch = 1.0;
-    _download = _fetching->append(Parts::glyph_button(ttk::Glyphs::Glyph::Download, 34.0, "", palette().accent,
-                                                      palette().accent, palette().accentSoft, [this] {
+    _download = _fetching->append(Parts::glyph_button(ttk::Glyphs::Glyph::Download, 34.0, "", &Palette::accent,
+                                                      &Palette::accent, &Palette::accentSoft, [this] {
         if (const Catalog::Entry *held = entry(); held != nullptr && entry_idle()) {
             _reach->workflow.download(held->name);
         }
@@ -261,7 +263,7 @@ KernelsPage::KernelsPage(Reach *reach) : _reach(reach) {
     ttk::Box *filedHead = filed->append(ttk::Box::row());
     filedHead->cross(ttk::Box::Place::Centre);
     filedHead->append(Parts::section("ON DISK"))->stretch = 1.0;
-    _logsSize = filedHead->append(Parts::pill("none", palette().faint, palette().mutedSoft, false));
+    _logsSize = filedHead->append(Parts::pill("none", &Palette::faint, &Palette::mutedSoft, false));
 
     _logsPath = filed->append(Parts::path(reach, "", true));
 
@@ -563,7 +565,7 @@ void KernelsPage::sync_entry() {
     _running->set_visible(held->running);
 
     _archiveSize->set_text(held->archived ? held->size : "not downloaded");
-    const Parts::Tones tones = Parts::lit(held->archived, palette().accent, palette().accentSoft);
+    const Parts::Tones tones = Parts::lit(held->archived, &Palette::accent, &Palette::accentSoft);
     _archiveSize->tones(tones.tone, tones.wash);
     _archiveSize->invalidate();
 
@@ -574,7 +576,7 @@ void KernelsPage::sync_entry() {
     _suffixField->prefix("linux-" + held->name + (_suffix.empty() ? "" : "-"));
     _suffixField->set_icon_visible(!system.suffix().empty() && _suffix != system.suffix());
     _suffixField->note("Left empty it is unpacked as linux-" + held->name);
-    _extract->tone(idle ? palette().accent : palette().faint, palette().accent);
+    _extract->tone(idle ? &Palette::accent : &Palette::faint, &Palette::accent);
     _extract->invalidate();
 
     _suffixField->set_icon_hint("Use " + system.suffix() + ", what the running kernel was built under");
@@ -589,7 +591,7 @@ void KernelsPage::sync_entry() {
 
     _fetchFrom->set_text("Fetch it from " + cdn);
     _download->tooltip("Download the " + held->name + " archive from kernel.org");
-    _download->tone(idle ? palette().accent : palette().faint, palette().accent);
+    _download->tone(idle ? &Palette::accent : &Palette::faint, &Palette::accent);
     _download->invalidate();
 
     _tabs->set_note(0, held->builds.empty() ? "" : std::to_string(held->builds.size()));

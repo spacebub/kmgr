@@ -132,7 +132,7 @@ void Choice::arrange(ttk::Typeface &type) {
 }
 
 void Choice::paint(const ttk::Painter &painter) {
-    const ttk::Theme::Palette &palette = ttk::Theme::of();
+    const ttk::Theme::Palette &palette = ttk::Theme::palette();
 
     painter.round(_box, ttk::Theme::radiusSmall, palette.sunken);
     painter.outline(_box, ttk::Theme::radiusSmall, 1.0, palette.border);

@@ -18,7 +18,7 @@
 namespace Wash {
     inline void paint(const ttk::Painter &painter, const BLRect &box, const double rounding,
                       const double selected, const double hovered) {
-        const ttk::Theme::Palette &palette = ttk::Theme::of();
+        const ttk::Theme::Palette &palette = ttk::Theme::palette();
 
         if (selected > 0.0) {
             painter.round(box, rounding, ttk::Theme::alpha(palette.accentSoft, selected));

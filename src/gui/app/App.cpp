@@ -108,7 +108,7 @@ void App::wire() {
     _shell.closing = [this] { _shell.stop(); };
     _shell.shortcut = [this](const ttk::Key &pressed) { return shortcut(pressed); };
     _shell.shadeChanged = [this] {
-        ttk::Shell::set_outline(ttk::Theme::of().borderStrong);
+        ttk::Shell::set_outline(ttk::Theme::palette().borderStrong);
         _shell.ui().damage_all();
         touch();
     };
@@ -147,7 +147,7 @@ void App::build() {
                   ->append(std::make_unique<Buzzes>([this](const int id) { _notifier.dismiss(id); }));
     _tips = root.layer(ttk::Root::TIPS)->append(std::make_unique<ttk::Tips>());
 
-    ttk::Shell::set_outline(ttk::Theme::of().borderStrong);
+    ttk::Shell::set_outline(ttk::Theme::palette().borderStrong);
 }
 
 void App::run() {
@@ -221,7 +221,7 @@ void App::show(const std::string &version) {
 
 void App::cycle_shade() {
     Look::cycle(&_notifier);
-    ttk::Shell::set_outline(ttk::Theme::of().borderStrong);
+    ttk::Shell::set_outline(ttk::Theme::palette().borderStrong);
     _shell.ui().damage_all();
     touch();
 }

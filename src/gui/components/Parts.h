@@ -27,7 +27,7 @@ struct Reach;
 namespace Parts {
     std::unique_ptr<ttk::Label> section(const std::string &text);
 
-    std::unique_ptr<ttk::Label> text(const std::string &text, int weight, float size, BLRgba32 tone);
+    std::unique_ptr<ttk::Label> text(const std::string &text, int weight, float size, ttk::Theme::Tone tone);
 
     std::unique_ptr<ttk::Label> note(const std::string &text);
 
@@ -35,11 +35,13 @@ namespace Parts {
     std::unique_ptr<ttk::Label> path(Reach *reach, const std::string &path, bool clickable,
                                      const std::string &opens = {});
 
-    std::unique_ptr<ttk::Pill> pill(const std::string &text, BLRgba32 tone, BLRgba32 wash, bool dot = true);
+    std::unique_ptr<ttk::Pill> pill(const std::string &text, ttk::Theme::Tone tone, ttk::Theme::Tone wash,
+                                    bool dot = true);
 
     std::unique_ptr<ttk::GlyphButton> glyph_button(ttk::Glyphs::Glyph glyph, double size,
-                                                   const std::string &hint, BLRgba32 rest, BLRgba32 hot,
-                                                   BLRgba32 wash, std::function<void()> clicked);
+                                                   const std::string &hint, ttk::Theme::Tone rest,
+                                                   ttk::Theme::Tone hot, ttk::Theme::Tone wash,
+                                                   std::function<void()> clicked);
 
     std::unique_ptr<ttk::Box> above(double top, ttk::Widget::Ptr child);
 
@@ -51,7 +53,7 @@ namespace Parts {
 
         void paint(const ttk::Painter &painter) override {
             painter.fill(BLRect{_box.x, _box.y, _box.w, 1.0},
-                         ttk::Theme::alpha(ttk::Theme::of().border, _opacity));
+                         ttk::Theme::alpha(ttk::Theme::palette().border, _opacity));
         }
 
     private:
@@ -59,11 +61,11 @@ namespace Parts {
     };
 
     struct Tones {
-        BLRgba32 tone;
-        BLRgba32 wash;
+        ttk::Theme::Tone tone;
+        ttk::Theme::Tone wash;
     };
 
-    Tones lit(bool on, BLRgba32 tone, BLRgba32 wash);
+    Tones lit(bool on, ttk::Theme::Tone tone, ttk::Theme::Tone wash);
 
     bool shown(const ttk::Widget *widget);
 }

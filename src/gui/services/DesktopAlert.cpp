@@ -6,96 +6,80 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
-#include <thread>
-#include <vector>
+#include <utility>
 
-#include "core/Command.h"
 #include "core/Configuration.h"
 #include "gui/services/DesktopAlert.h"
-#include "ttk/system/Text.h"
 
 namespace {
-    constexpr auto SERVICE = "org.freedesktop.Notifications";
-    constexpr auto PATH = "/org/freedesktop/Notifications";
+    constexpr auto ICON = "kernelmgr";
 
-    constexpr auto DEFAULT_TIMEOUT = "-1";
-    constexpr auto UNTIL_DISMISSED = "0";
-
-    std::string call(const std::string &method, const std::vector<std::string> &arguments) {
-        std::string line = "gdbus call --session --dest " + std::string(SERVICE) + " --object-path "
-            + PATH + " --method " + SERVICE + "." + method;
-
-        for (const std::string &argument : arguments) {
-            line += " " + ttk::Text::quote_argument(argument);
-        }
-
-        return line + " 2>/dev/null";
-    }
+    constexpr int DESKTOP_TIMEOUT = -1;
+    constexpr int UNTIL_DISMISSED = 0;
 }
 
-DesktopAlert::DesktopAlert() : _available(Command::exists("gdbus")) {}
+DesktopAlert::DesktopAlert() : _worker([this](const std::stop_token &stop) { run(stop); }) {}
+
+// The worker is joined before the bus it may still be using is dropped.
+DesktopAlert::~DesktopAlert() {
+    _worker.request_stop();
+    _worker.join();
+
+    ttk::Notify::stop();
+}
 
 void DesktopAlert::post(const std::string &title, const std::string &body, const Urgency urgency) {
-    if (!_available || !Configuration::get()->notifications.value_or(false)) {
+    if (!Configuration::get()->notifications.value_or(false)) {
         return;
     }
 
-    std::uint32_t replaces = 0;
-
     {
-        std::lock_guard lock(_held->guard);
-        replaces = _held->id;
+        const std::scoped_lock lock(_guard);
+
+        _next = ttk::Notify::Message{
+            .title = title,
+            .body = body,
+            .icon = ICON,
+            .urgency = urgency,
+            .timeout = urgency == Urgency::Critical ? UNTIL_DISMISSED : DESKTOP_TIMEOUT,
+        };
+        _withdraw = false;
     }
 
-    // The urgency has to reach the bus as a byte. The desktop takes the icon and
-    // name from the desktop entry.
-    const std::string hints = std::string("{'urgency': <byte ") + (urgency == Urgency::Critical ? "2" : "1")
-        + ">, 'desktop-entry': <'kernelmgr'>}";
-
-    const std::string line = call("Notify", {
-        "KernelManager", std::to_string(replaces), "", title, body, "[]", hints,
-        urgency == Urgency::Critical ? UNTIL_DISMISSED : DEFAULT_TIMEOUT
-    });
-
-    // The reply carries this alert's id, which the next one asks to replace.
-    std::thread([line, held = _held] {
-        std::string reply;
-
-        try {
-            reply = Command(line).capture();
-        } catch (const std::exception &) {
-            return;
-        }
-
-        const size_t at = reply.find("uint32 ");
-
-        if (at == std::string::npos) {
-            return;
-        }
-
-        std::lock_guard lock(held->guard);
-        held->id = static_cast<std::uint32_t>(ttk::Text::to_int(
-            ttk::Text::trim(reply.substr(at + 7, reply.find_first_of(",)", at) - at - 7))));
-    }).detach();
+    _wake.notify_one();
 }
 
 void DesktopAlert::withdraw() {
-    std::uint32_t id = 0;
-
     {
-        std::lock_guard lock(_held->guard);
-        id = _held->id;
-        _held->id = 0;
+        const std::scoped_lock lock(_guard);
+
+        _next.reset();
+        _withdraw = true;
     }
 
-    if (!_available || id == 0) {
-        return;
-    }
+    _wake.notify_one();
+}
 
-    std::thread([line = call("CloseNotification", { std::to_string(id) })] {
-        try {
-            (void) Command(line).capture();
-        } catch (const std::exception &) {
+void DesktopAlert::run(const std::stop_token &stop) {
+    while (true) {
+        std::optional<ttk::Notify::Message> next;
+        bool withdraw = false;
+
+        {
+            std::unique_lock lock(_guard);
+
+            if (!_wake.wait(lock, stop, [this] { return _next.has_value() || _withdraw; })) {
+                return;
+            }
+
+            next.swap(_next);
+            withdraw = std::exchange(_withdraw, false);
         }
-    }).detach();
+
+        if (next) {
+            _shown = ttk::Notify::show(*next, _shown);
+        } else if (withdraw) {
+            ttk::Notify::close(std::exchange(_shown, 0));
+        }
+    }
 }

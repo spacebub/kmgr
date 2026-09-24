@@ -43,7 +43,7 @@ void VersionList::arrange(ttk::Typeface & /*type*/) {
 }
 
 void VersionList::paint(const ttk::Painter &painter) {
-    const ttk::Theme::Palette &palette = ttk::Theme::of();
+    const ttk::Theme::Palette &palette = ttk::Theme::palette();
     const double wide = _box.w - (_compact ? 2.0 : 6.0);
 
     painter.push(_box);

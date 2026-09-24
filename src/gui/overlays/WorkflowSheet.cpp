@@ -19,11 +19,14 @@
 #include "ttk/toolkit/Root.h"
 
 namespace {
+    using Palette = ttk::Theme::Palette;
+
     constexpr double STRIP_WIDTH = 340.0;
     constexpr double STRIP_MARGIN = 18.0;
+    constexpr double FOLD_SECONDS = 0.24;
 
     const ttk::Theme::Palette &palette() {
-        return ttk::Theme::of();
+        return ttk::Theme::palette();
     }
 
     double beat(const double now, const double started, const int index, const double pause,
@@ -119,7 +122,7 @@ void WorkflowSheet::Console::paint(const ttk::Painter &painter) {
 }
 
 void WorkflowSheet::Throbber::paint(const ttk::Painter &painter) {
-    const BLRgba32 ink = ttk::Theme::restated(tone, toneDark);
+    const BLRgba32 ink = tone.colour();
 
     for (int index = 0; index < 3; ++index) {
         painter.circle(BLPoint{_box.x + 2.5 + (index * 8.0), _box.y + 2.5}, 2.5,
@@ -139,7 +142,7 @@ bool WorkflowSheet::Throbber::advance(const double now) {
 }
 
 WorkflowSheet::Strip::Strip(WorkflowSheet *sheet)
-        : _sheet(sheet), _edge(palette().accent), _edgeDark(ttk::Theme::dark()) {
+        : _sheet(sheet) {
     _takesPointer = true;
     cursor = ttk::Cursor::Pointer;
 
@@ -147,10 +150,9 @@ WorkflowSheet::Strip::Strip(WorkflowSheet *sheet)
     content->pad(12.0)->spacing(8.0);
 }
 
-void WorkflowSheet::Strip::sync(const BLRgba32 edge) {
-    if (edge.value != _edge.value) {
+void WorkflowSheet::Strip::sync(const ttk::Theme::Tone edge) {
+    if (edge.colour().value != _edge.colour().value) {
         _edge = edge;
-        _edgeDark = ttk::Theme::dark();
         invalidate();
     }
 }
@@ -171,7 +173,7 @@ void WorkflowSheet::Strip::paint(const ttk::Painter &painter) {
 
     painter.round(_box, ttk::Theme::radius, palette().raised);
     painter.outline(_box, ttk::Theme::radius, 1.0,
-                    ttk::Theme::alpha(ttk::Theme::restated(_edge, _edgeDark), holds_pointer() ? 1.0 : 0.6));
+                    ttk::Theme::alpha(_edge.colour(), holds_pointer() ? 1.0 : 0.6));
 
     Widget::paint(painter);
 }
@@ -207,22 +209,22 @@ WorkflowSheet::WorkflowSheet(Reach *reach) : _reach(reach) {
     titles->spacing(3.0);
     titles->stretch = 1.0;
 
-    _title = titles->append(Parts::text("", palette().headingWeight, ttk::Theme::fontTitle, palette().text));
+    _title = titles->append(Parts::text("", palette().headingWeight, ttk::Theme::fontTitle, &Palette::text));
 
     ttk::Box *state = titles->append(ttk::Box::row());
     state->spacing(10.0)->cross(ttk::Box::Place::Centre);
-    _task = state->append(Parts::text("", 400, ttk::Theme::fontSmall, palette().muted));
+    _task = state->append(Parts::text("", 400, ttk::Theme::fontSmall, &Palette::muted));
 
-    _detail = state->append(Parts::text("", 400, ttk::Theme::fontSmall, palette().faint));
+    _detail = state->append(Parts::text("", 400, ttk::Theme::fontSmall, &Palette::faint));
     _detail->mono();
     _detail->stretch = 1.0;
 
-    _running = head->append(Parts::pill("Running", palette().accent, palette().accentSoft));
-    _finished = head->append(Parts::pill("Done", palette().success, palette().successSoft));
+    _running = head->append(Parts::pill("Running", &Palette::accent, &Palette::accentSoft));
+    _finished = head->append(Parts::pill("Done", &Palette::success, &Palette::successSoft));
 
     head->append(Parts::glyph_button(ttk::Glyphs::Glyph::Minimize, ttk::Theme::controlSmall,
-                                     "Put it away and let it run", palette().muted, palette().text,
-                                     palette().hover, [this] { set_minimized(true); }));
+                                     "Put it away and let it run", &Palette::muted, &Palette::text,
+                                     &Palette::hover, [this] { set_minimized(true); }));
 
     _track = column->append(std::make_unique<ProgressTrack>());
 
@@ -236,7 +238,7 @@ WorkflowSheet::WorkflowSheet(Reach *reach) : _reach(reach) {
     ttk::Box *asking = _asking->append(ttk::Box::row());
     asking->pad(9.0)->spacing(10.0)->cross(ttk::Box::Place::Centre);
 
-    _prompt = asking->append(Parts::text("Waiting for input", 400, ttk::Theme::fontSmall, palette().faint));
+    _prompt = asking->append(Parts::text("Waiting for input", 400, ttk::Theme::fontSmall, &Palette::faint));
     _prompt->mono();
 
     _answer = asking->append(std::make_unique<ttk::Field>("", [](const std::string &) {}));
@@ -250,7 +252,7 @@ WorkflowSheet::WorkflowSheet(Reach *reach) : _reach(reach) {
     ttk::Box *foot = column->append(ttk::Box::row());
     foot->spacing(8.0)->cross(ttk::Box::Place::Centre);
 
-    _logPath = foot->append(Parts::text("", 400, ttk::Theme::fontSmall, palette().faint));
+    _logPath = foot->append(Parts::text("", 400, ttk::Theme::fontSmall, &Palette::faint));
     _logPath->mono();
     _logPath->stretch = 1.0;
 
@@ -278,26 +280,28 @@ WorkflowSheet::WorkflowSheet(Reach *reach) : _reach(reach) {
 
     _throbber = stripHead->append(std::make_unique<Throbber>());
 
-    _stripTitle = stripHead->append(Parts::text("", 600, ttk::Theme::fontSmall, palette().text));
+    _stripTitle = stripHead->append(Parts::text("", 600, ttk::Theme::fontSmall, &Palette::text));
     _stripTitle->stretch = 1.0;
 
     stripHead->append(Parts::glyph_button(ttk::Glyphs::Glyph::Restore, ttk::Theme::controlSmall, "Bring it back",
-                                          palette().muted, palette().text, palette().hover,
+                                          &Palette::muted, &Palette::text, &Palette::hover,
                                           [this] { set_minimized(false); }));
 
     _stripClose = stripHead->append(Parts::glyph_button(ttk::Glyphs::Glyph::Close, ttk::Theme::controlSmall,
-                                                        "Dismiss", palette().muted, BLRgba32(0xffffffff),
-                                                        palette().danger, [this] { _reach->workflow.dismiss(); }));
+                                                        "Dismiss", &Palette::muted,
+                                                        ttk::Theme::Tone(BLRgba32(0xffffffff)), &Palette::danger,
+                                                        [this] { _reach->workflow.dismiss(); }));
 
     _stripTrack = _strip->content->append(std::make_unique<ProgressTrack>());
 
     ttk::Box *stripFoot = _strip->content->append(ttk::Box::row());
     stripFoot->spacing(8.0)->cross(ttk::Box::Place::Centre);
-    _stripTask = stripFoot->append(Parts::text("", 400, ttk::Theme::fontSmall, palette().muted));
+    _stripTask = stripFoot->append(Parts::text("", 400, ttk::Theme::fontSmall, &Palette::muted));
     _stripTask->stretch = 1.0;
-    _stripDetail = stripFoot->append(Parts::text("", 400, ttk::Theme::fontSmall, palette().faint));
+    _stripDetail = stripFoot->append(Parts::text("", 400, ttk::Theme::fontSmall, &Palette::faint));
     _stripDetail->mono();
 
+    _strip->set_visible(false);
     set_visible(false);
 }
 
@@ -307,8 +311,17 @@ void WorkflowSheet::set_minimized(const bool value) {
     }
 
     _minimized = value;
-    _panel->set_visible(!value);
-    _strip->set_visible(value);
+
+    if (root() == nullptr || !visible()) {
+        settle();
+    } else {
+        // The panel carries the motion both ways, and the strip is only painted under it.
+        _panel->set_visible(true);
+        _strip->set_visible(false);
+        _fold.run(value ? 1.0F : 0.0F, now(), FOLD_SECONDS, ttk::Anim::Curve::CubicOut);
+        wake();
+    }
+
     _track->wake();
     _stripTrack->wake();
     _throbber->wake();
@@ -319,6 +332,37 @@ void WorkflowSheet::set_minimized(const bool value) {
     }
 
     _reach->touch();
+}
+
+void WorkflowSheet::settle() {
+    _fold.set(_minimized ? 1.0F : 0.0F);
+    _panel->set_visible(!_minimized);
+    _strip->set_visible(_minimized);
+}
+
+bool WorkflowSheet::advance(const double now) {
+    _fold.advance(now);
+
+    if (root() != nullptr) {
+        root()->damage_all();
+    }
+
+    if (_fold.live()) {
+        return true;
+    }
+
+    settle();
+
+    // They went to sleep while the strip was hidden under the fold.
+    _track->wake();
+    _stripTrack->wake();
+    _throbber->wake();
+
+    if (root() != nullptr) {
+        root()->relayout();
+    }
+
+    return false;
 }
 
 void WorkflowSheet::escape() {
@@ -359,7 +403,7 @@ void WorkflowSheet::arrange(ttk::Typeface &type) {
 }
 
 BLRect WorkflowSheet::drawn() const {
-    if (_minimized) {
+    if (_minimized && !_fold.live()) {
         return _strip->drawn();
     }
 
@@ -367,11 +411,46 @@ BLRect WorkflowSheet::drawn() const {
 }
 
 void WorkflowSheet::paint(const ttk::Painter &painter) {
-    if (!_minimized) {
-        painter.fill(drawn(), palette().scrim);
+    if (!_fold.live()) {
+        if (!_minimized) {
+            painter.fill(drawn(), palette().scrim);
+        }
+
+        Widget::paint(painter);
+
+        return;
     }
 
+    const double fold = _fold.value();
+    const BLRect from = _panel->box();
+    const BLRect to = _strip->box();
+
+    painter.fill(drawn(), ttk::Theme::alpha(palette().scrim, 1.0 - fold));
+
+    BLContext &context = painter.context();
+
+    // The strip shows through only once the panel has shrunk most of the way to it.
+    context.save();
+    context.set_global_alpha(std::clamp((fold - 0.5) * 2.0, 0.0, 1.0));
+    _strip->paint(painter);
+    context.restore();
+
+    if (from.w <= 0.0) {
+        return;
+    }
+
+    const double scale = 1.0 + (((to.w / from.w) - 1.0) * fold);
+    const double fromX = from.x + (from.w / 2.0);
+    const double fromY = from.y + (from.h / 2.0);
+
+    context.save();
+    context.translate(fromX + (((to.x + (to.w / 2.0)) - fromX) * fold),
+                      fromY + (((to.y + (to.h / 2.0)) - fromY) * fold));
+    context.scale(scale);
+    context.translate(-fromX, -fromY);
+    context.set_global_alpha(std::clamp((1.0 - fold) * 2.0, 0.0, 1.0));
     Widget::paint(painter);
+    context.restore();
 }
 
 ttk::Widget *WorkflowSheet::at(const double x, const double y) {
@@ -400,6 +479,7 @@ void WorkflowSheet::sync() {
 
     if (const bool shown = workflow.active(); shown != visible()) {
         set_visible(shown);
+        settle();
         _track->wake();
         _stripTrack->wake();
 
@@ -429,10 +509,11 @@ void WorkflowSheet::sync() {
         return;
     }
 
-    const BLRgba32 verdict = workflow.finished() ? (workflow.succeeded() ? palette().success : palette().danger)
-                           : workflow.canceling() ? palette().warning
-                                                  : palette().accent;
-    const BLRgba32 said = workflow.finished() ? verdict : palette().muted;
+    const ttk::Theme::Tone verdict = workflow.finished()
+        ? (workflow.succeeded() ? &Palette::success : &Palette::danger)
+        : workflow.canceling() ? &Palette::warning
+                               : &Palette::accent;
+    const ttk::Theme::Tone said = workflow.finished() ? verdict : ttk::Theme::Tone(&Palette::muted);
 
     _title->set_text(workflow.title());
     _task->set_text(workflow.task());
@@ -442,25 +523,25 @@ void WorkflowSheet::sync() {
 
     _running->set_visible(workflow.running());
     _running->set_text(workflow.canceling() ? "Canceling" : "Running");
-    _running->tones(workflow.canceling() ? palette().warning : palette().accent,
-                    workflow.canceling() ? palette().warningSoft : palette().accentSoft);
+    _running->tones(workflow.canceling() ? &Palette::warning : &Palette::accent,
+                    workflow.canceling() ? &Palette::warningSoft : &Palette::accentSoft);
     _running->invalidate();
 
     _finished->set_visible(workflow.finished());
     _finished->set_text(workflow.succeeded() ? "Done" : "Failed");
-    _finished->tones(workflow.succeeded() ? palette().success : palette().danger,
-                     workflow.succeeded() ? palette().successSoft : palette().dangerSoft);
+    _finished->tones(workflow.succeeded() ? &Palette::success : &Palette::danger,
+                     workflow.succeeded() ? &Palette::successSoft : &Palette::dangerSoft);
     _finished->invalidate();
 
     const int progress = workflow.running() ? workflow.progress() : 100;
-    const BLRgba32 tone = workflow.finished() ? verdict : palette().accent;
+    const ttk::Theme::Tone tone = workflow.finished() ? verdict : ttk::Theme::Tone(&Palette::accent);
 
     _track->set_value(progress);
     _track->set_tone(tone);
 
     _asking->set_visible(workflow.interactive() || !workflow.prompt().empty());
     _prompt->set_text(workflow.prompt().empty() ? "Waiting for input" : workflow.prompt());
-    _prompt->tone(workflow.prompt().empty() ? palette().faint : palette().text);
+    _prompt->tone(workflow.prompt().empty() ? &Palette::faint : &Palette::text);
     _answer->placeholder(workflow.prompt_secret() ? "Password" : "Answer");
     _answer->secret(workflow.prompt_secret());
     _send->set_enabled(workflow.running());
@@ -472,8 +553,7 @@ void WorkflowSheet::sync() {
 
     _strip->sync(verdict);
     _throbber->set_visible(workflow.running());
-    _throbber->tone = workflow.canceling() ? palette().warning : palette().accent;
-    _throbber->toneDark = ttk::Theme::dark();
+    _throbber->tone = workflow.canceling() ? &Palette::warning : &Palette::accent;
 
     if (const bool live = workflow.running() && _minimized; live != _throbber->live) {
         _throbber->live = live;

@@ -21,7 +21,7 @@ namespace Parts {
     }
 
     std::unique_ptr<ttk::Label> text(const std::string &text, const int weight, const float size,
-                                     const BLRgba32 tone) {
+                                     const ttk::Theme::Tone tone) {
         auto made = std::make_unique<ttk::Label>(text);
 
         made->font(weight, size)->tone(tone);
@@ -32,7 +32,7 @@ namespace Parts {
     std::unique_ptr<ttk::Label> note(const std::string &text) {
         auto made = std::make_unique<ttk::Label>(text);
 
-        made->font(400, ttk::Theme::fontSmall)->tone(ttk::Theme::of().faint)->wrap();
+        made->font(400, ttk::Theme::fontSmall)->tone(&ttk::Theme::Palette::faint)->wrap();
 
         return made;
     }
@@ -41,7 +41,7 @@ namespace Parts {
                                      const std::string &opens) {
         auto made = std::make_unique<ttk::Label>(path);
 
-        made->font(400, ttk::Theme::fontTiny)->tone(ttk::Theme::of().faint)->path();
+        made->font(400, ttk::Theme::fontTiny)->tone(&ttk::Theme::Palette::faint)->path();
 
         if (!clickable) {
             made->hint = Desk::pretty(path);
@@ -61,8 +61,8 @@ namespace Parts {
         return made;
     }
 
-    std::unique_ptr<ttk::Pill> pill(const std::string &text, const BLRgba32 tone, const BLRgba32 wash,
-                                    const bool dot) {
+    std::unique_ptr<ttk::Pill> pill(const std::string &text, const ttk::Theme::Tone tone,
+                                    const ttk::Theme::Tone wash, const bool dot) {
         auto made = std::make_unique<ttk::Pill>(text);
 
         made->tones(tone, wash)->dot(dot);
@@ -71,8 +71,8 @@ namespace Parts {
     }
 
     std::unique_ptr<ttk::GlyphButton> glyph_button(const ttk::Glyphs::Glyph glyph, const double size,
-                                                   const std::string &hint, const BLRgba32 rest,
-                                                   const BLRgba32 hot, const BLRgba32 wash,
+                                                   const std::string &hint, const ttk::Theme::Tone rest,
+                                                   const ttk::Theme::Tone hot, const ttk::Theme::Tone wash,
                                                    std::function<void()> clicked) {
         auto made = std::make_unique<ttk::GlyphButton>(glyph, std::move(clicked));
 
@@ -111,10 +111,8 @@ namespace Parts {
         return true;
     }
 
-    Tones lit(const bool on, const BLRgba32 tone, const BLRgba32 wash) {
-        const ttk::Theme::Palette &palette = ttk::Theme::of();
-
-        return on ? Tones{tone, wash} : Tones{palette.faint, palette.mutedSoft};
+    Tones lit(const bool on, const ttk::Theme::Tone tone, const ttk::Theme::Tone wash) {
+        return on ? Tones{tone, wash} : Tones{&ttk::Theme::Palette::faint, &ttk::Theme::Palette::mutedSoft};
     }
 
 }

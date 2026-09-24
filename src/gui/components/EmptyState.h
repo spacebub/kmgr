@@ -22,10 +22,10 @@ public:
         spacing(6.0);
 
         _title = append(std::make_unique<ttk::Label>(title));
-        _title->font(600, ttk::Theme::fontMedium)->tone(ttk::Theme::of().muted);
+        _title->font(600, ttk::Theme::fontMedium)->tone(&ttk::Theme::Palette::muted);
 
         _body = append(std::make_unique<ttk::Label>(body));
-        _body->font(400, ttk::Theme::fontSmall)->tone(ttk::Theme::of().faint)->wrap();
+        _body->font(400, ttk::Theme::fontSmall)->tone(&ttk::Theme::Palette::faint)->wrap();
     }
 
     void set_body(const std::string &body) const {

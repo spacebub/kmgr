@@ -15,19 +15,21 @@
 #include "ttk/draw/Theme.h"
 #include "ttk/draw/Typeface.h"
 
+namespace {
+    using Palette = ttk::Theme::Palette;
+}
+
 HoldingRow::HoldingRow(Reach *reach, Log::Holding holding, std::function<void()> toggled)
         : _reach(reach), _holding(std::move(holding)), _toggled(std::move(toggled)) {
-    const ttk::Theme::Palette &palette = ttk::Theme::of();
-
     _takesPointer = true;
     cursor = ttk::Cursor::Pointer;
 
     _folder = append(Parts::glyph_button(ttk::Glyphs::Glyph::Folder, 28.0, "Open these in your file manager",
-                                         palette.faint, palette.accent, palette.accentSoft,
+                                         &Palette::faint, &Palette::accent, &Palette::accentSoft,
                                          [this] { _reach->logs.open(_holding.name); }));
 
     _bin = append(Parts::glyph_button(ttk::Glyphs::Glyph::Trash, 28.0, "Delete everything filed under this name",
-                                      palette.faint, palette.danger, palette.dangerSoft, [this] {
+                                      &Palette::faint, &Palette::danger, &Palette::dangerSoft, [this] {
         _reach->ask("Delete the logs for " + _holding.name + "?",
                     Format::size(_holding.size) + " over " + Format::runs(_holding.runs)
                         + " is removed. Nothing filed under any other name is touched.",
@@ -55,7 +57,7 @@ void HoldingRow::arrange(ttk::Typeface &type) {
 }
 
 void HoldingRow::paint(const ttk::Painter &painter) {
-    const ttk::Theme::Palette &palette = ttk::Theme::of();
+    const ttk::Theme::Palette &palette = ttk::Theme::palette();
 
     Wash::paint(painter, _box, ttk::Theme::radiusSmall, _open ? 1.0 : 0.0, holds_pointer() ? 1.0 : 0.0);
 

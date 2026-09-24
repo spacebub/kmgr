@@ -15,10 +15,10 @@
 SettingRow::SettingRow(Reach *reach, const std::string &label, const std::string &description,
                        std::function<void(const std::string &)> edited) {
     _label = append(std::make_unique<ttk::Label>(label));
-    _label->font(600, ttk::Theme::fontBody)->tone(ttk::Theme::of().text);
+    _label->font(600, ttk::Theme::fontBody)->tone(&ttk::Theme::Palette::text);
 
     _description = append(std::make_unique<ttk::Label>(description));
-    _description->font(400, ttk::Theme::fontSmall)->tone(ttk::Theme::of().faint)->wrap();
+    _description->font(400, ttk::Theme::fontSmall)->tone(&ttk::Theme::Palette::faint)->wrap();
     _description->set_visible(!description.empty());
 
     _field = append(std::make_unique<PathField>(reach, "", std::move(edited)));
@@ -90,6 +90,6 @@ void SettingRow::paint(const ttk::Painter &painter) {
 
     if (!_last) {
         painter.fill(BLRect{_box.x, _box.y + _box.h - 1.0, _box.w, 1.0},
-                     ttk::Theme::alpha(ttk::Theme::of().border, 0.6));
+                     ttk::Theme::alpha(ttk::Theme::palette().border, 0.6));
     }
 }

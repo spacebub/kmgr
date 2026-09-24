@@ -28,6 +28,6 @@ void Frame::arrange(ttk::Typeface &type) {
 }
 
 void Frame::paint(const ttk::Painter &painter) {
-    painter.fill(_box, ttk::Theme::of().background);
+    painter.fill(_box, ttk::Theme::palette().background);
     Widget::paint(painter);
 }

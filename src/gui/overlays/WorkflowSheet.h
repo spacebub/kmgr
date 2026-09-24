@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "gui/components/ProgressTrack.h"
+#include "ttk/draw/Anim.h"
 #include "ttk/toolkit/controls/Button.h"
 #include "ttk/toolkit/controls/Field.h"
 #include "ttk/toolkit/controls/GlyphButton.h"
@@ -45,6 +46,7 @@ public:
     [[nodiscard]] BLRect drawn() const override;
     Widget *at(double x, double y) override;
     bool press(const ttk::Pointer & /*at*/) override { return true; }
+    bool advance(double now) override;
 
 private:
     class Console : public ttk::Widget {
@@ -74,7 +76,7 @@ private:
     public:
         explicit Strip(WorkflowSheet *sheet);
 
-        void sync(BLRgba32 edge);
+        void sync(ttk::Theme::Tone edge);
 
         void paint(const ttk::Painter &painter) override;
         [[nodiscard]] BLRect drawn() const override;
@@ -85,10 +87,12 @@ private:
 
         ttk::Box *content = nullptr;
 
+    protected:
+        void restyle() override { _edge.restyle(); }
+
     private:
         WorkflowSheet *_sheet;
-        BLRgba32 _edge;
-        bool _edgeDark;
+        ttk::Theme::Tone _edge{&ttk::Theme::Palette::accent};
     };
 
     class Throbber : public ttk::Widget {
@@ -100,9 +104,9 @@ private:
 
         void paint(const ttk::Painter &painter) override;
         bool advance(double now) override;
+        void restyle() override { tone.restyle(); }
 
-        BLRgba32 tone{};
-        bool toneDark = true;
+        ttk::Theme::Tone tone{&ttk::Theme::Palette::accent};
 
         // Only while the strip is up and the run is going.
         bool live = false;
@@ -114,8 +118,15 @@ private:
 
     void send();
 
+    // Ends any fold in flight, leaving only what the minimized state shows.
+    void settle();
+
     Reach *_reach;
     bool _minimized = false;
+
+    // 0 is the full sheet and 1 is folded into the strip. The state changes at once,
+    // so only the painting follows this.
+    ttk::Anim::Tween _fold;
     bool _wasRunning = false;
     bool _hadPrompt = false;
     std::string _shape;

@@ -12,9 +12,13 @@
 #include "ttk/toolkit/layout/Box.h"
 #include "ttk/toolkit/layout/Wrap.h"
 
+namespace {
+    using Palette = ttk::Theme::Palette;
+}
+
 InstalledCard::InstalledCard(const Catalog::Build &kernel, std::function<void(const std::string &)> action)
         : _action(std::move(action)), _name(kernel.name) {
-    const ttk::Theme::Palette &palette = ttk::Theme::of();
+    const ttk::Theme::Palette &palette = ttk::Theme::palette();
 
     inset = true;
 
@@ -24,18 +28,18 @@ InstalledCard::InstalledCard(const Catalog::Build &kernel, std::function<void(co
     ttk::Box *head = layout->append(ttk::Box::row());
     head->spacing(8.0)->cross(ttk::Box::Place::Centre);
 
-    _title = head->append(Parts::text(kernel.name, palette.headingWeight, ttk::Theme::fontLarge, palette.text));
+    _title = head->append(Parts::text(kernel.name, palette.headingWeight, ttk::Theme::fontLarge, &Palette::text));
     _title->stretch = 1.0;
 
-    _running = head->append(Parts::pill("running now", palette.success, palette.successSoft));
+    _running = head->append(Parts::pill("running now", &Palette::success, &Palette::successSoft));
 
     ttk::Wrap *pills = layout->append(std::make_unique<ttk::Wrap>());
     pills->spacing(6.0, 6.0);
 
-    _modules = pills->append(Parts::pill("modules", palette.accent, palette.accentSoft));
-    _image = pills->append(Parts::pill("image", palette.accent, palette.accentSoft));
-    _initramfs = pills->append(Parts::pill("initramfs", palette.accent, palette.accentSoft));
-    _signed = pills->append(Parts::pill("signed", palette.success, palette.successSoft));
+    _modules = pills->append(Parts::pill("modules", &Palette::accent, &Palette::accentSoft));
+    _image = pills->append(Parts::pill("image", &Palette::accent, &Palette::accentSoft));
+    _initramfs = pills->append(Parts::pill("initramfs", &Palette::accent, &Palette::accentSoft));
+    _signed = pills->append(Parts::pill("signed", &Palette::success, &Palette::successSoft));
 
     ttk::Wrap *buttons = layout->append(std::make_unique<ttk::Wrap>());
     buttons->spacing(6.0, 6.0);
@@ -54,8 +58,6 @@ InstalledCard::InstalledCard(const Catalog::Build &kernel, std::function<void(co
 
 void InstalledCard::sync(const Catalog::Build &kernel, const bool idle, const bool signable, const bool archived,
                          const std::string &version) {
-    const ttk::Theme::Palette &palette = ttk::Theme::of();
-
     _title->set_text(kernel.name);
     _running->set_visible(kernel.running);
 
@@ -64,10 +66,10 @@ void InstalledCard::sync(const Catalog::Build &kernel, const bool idle, const bo
         pill->invalidate();
     };
 
-    tint(_modules, Parts::lit(kernel.modules, palette.accent, palette.accentSoft));
-    tint(_image, Parts::lit(kernel.image, palette.accent, palette.accentSoft));
-    tint(_initramfs, Parts::lit(kernel.initramfs, palette.accent, palette.accentSoft));
-    tint(_signed, Parts::lit(kernel.signedImage, palette.success, palette.successSoft));
+    tint(_modules, Parts::lit(kernel.modules, &Palette::accent, &Palette::accentSoft));
+    tint(_image, Parts::lit(kernel.image, &Palette::accent, &Palette::accentSoft));
+    tint(_initramfs, Parts::lit(kernel.initramfs, &Palette::accent, &Palette::accentSoft));
+    tint(_signed, Parts::lit(kernel.signedImage, &Palette::success, &Palette::successSoft));
     _signed->set_text(kernel.signedImage ? "signed" : "unsigned");
 
     _download->set_text("Download " + version);
