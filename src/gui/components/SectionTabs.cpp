@@ -6,6 +6,7 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
+#include <algorithm>
 #include <utility>
 
 #include "gui/components/SectionTabs.h"
@@ -68,9 +69,9 @@ void SectionTabs::arrange(ttk::Typeface &type) {
 
     for (size_t index = 0; index < _tabs.size(); ++index) {
         Held &held = _tabs[index];
-        const bool active = std::cmp_equal(index, _current);
 
-        held.label = type.width(type.at(active ? 600 : 400, ttk::Theme::fontSmall), held.tab.label);
+        held.label = std::max(type.width(type.at(400, ttk::Theme::fontSmall), held.tab.label),
+                              type.width(type.at(600, ttk::Theme::fontSmall), held.tab.label));
         held.note = held.tab.note.empty()
             ? 0.0
             : type.width(type.at(600, ttk::Theme::fontTiny), held.tab.note) + NOTE_PAD;
@@ -102,7 +103,7 @@ void SectionTabs::paint(const ttk::Painter &painter) {
         const double x = held.box.x + ((held.box.w - content) / 2.0);
 
         painter.label(painter.font(active ? 600 : 400, ttk::Theme::fontSmall),
-                      BLRect{x, held.box.y, held.label + 2.0, held.box.h}, ttk::Align::Start, held.tab.label,
+                      BLRect{x, held.box.y, held.label, held.box.h}, ttk::Align::Centre, held.tab.label,
                       active ? palette.accent : lit ? palette.text : palette.muted);
 
         if (held.note > 0.0) {

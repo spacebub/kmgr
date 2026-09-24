@@ -71,6 +71,7 @@ add_executable(kernelmgr_gui
 target_link_libraries(kernelmgr_gui PRIVATE
         kernelmgr_core
         kernelmgr_sanitizers
+        ttk::notify
         ttk::ui)
 
 target_compile_options(kernelmgr_gui PRIVATE ${COMPILE_FLAGS})

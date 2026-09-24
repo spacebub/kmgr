@@ -117,7 +117,8 @@ void TitleBar::arrange(ttk::Typeface &type) {
     double total = 0.0;
 
     for (Tab &tab : _tabs) {
-        tab.width = type.width(type.at(tab.on.value() > 0.5 ? 600 : 400, ttk::Theme::fontBody), tab.label);
+        tab.width = std::max(type.width(type.at(400, ttk::Theme::fontBody), tab.label),
+                             type.width(type.at(600, ttk::Theme::fontBody), tab.label));
         total += tab.width + TAB_SIDES + TAB_GAP;
     }
 

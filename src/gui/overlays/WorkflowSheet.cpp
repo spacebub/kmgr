@@ -294,10 +294,10 @@ WorkflowSheet::WorkflowSheet(Reach *reach) : _reach(reach) {
 
     _stripTrack = _strip->content->append(std::make_unique<ProgressTrack>());
 
-    ttk::Box *stripFoot = _strip->content->append(ttk::Box::row());
-    stripFoot->spacing(8.0)->cross(ttk::Box::Place::Centre);
+    // Stacked, since a transfer's detail alone can take the whole width.
+    ttk::Box *stripFoot = _strip->content->append(ttk::Box::column());
+    stripFoot->spacing(3.0);
     _stripTask = stripFoot->append(Parts::text("", 400, ttk::Theme::fontSmall, &Palette::muted));
-    _stripTask->stretch = 1.0;
     _stripDetail = stripFoot->append(Parts::text("", 400, ttk::Theme::fontSmall, &Palette::faint));
     _stripDetail->mono();
 
