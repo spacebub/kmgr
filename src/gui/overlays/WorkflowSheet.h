@@ -60,16 +60,11 @@ private:
         void paint(const ttk::Painter &painter) override;
 
     private:
-        static constexpr size_t LIMIT = 65000;
+        // Rows kept. Past this the oldest go, as they do off the top of a terminal.
+        static constexpr size_t LIMIT = 4000;
 
         ttk::Scroll *_scroll = nullptr;
         ttk::TextView *_view = nullptr;
-        std::vector<std::string> _lines;
-        std::string _tail;
-        size_t _held = 0;
-        // Output landed while the view was at the end, so it goes there again once
-        // the new height is known.
-        bool _follow = false;
     };
 
     class Strip : public ttk::Widget {

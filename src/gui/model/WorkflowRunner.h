@@ -51,8 +51,8 @@ public:
     // Without its suffix, and empty for a run that is for no kernel in particular.
     [[nodiscard]] const std::string &version() const { return _version; }
 
-    // A console redraws its whole document on every batch, so while nobody is
-    // watching the output is held here and handed over in one piece.
+    // While nobody is watching, the output is held here and handed over in one
+    // piece once somebody is.
     [[nodiscard]] bool watching() const { return _watching; }
     void set_watching(bool watching);
 

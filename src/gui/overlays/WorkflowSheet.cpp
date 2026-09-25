@@ -53,64 +53,31 @@ WorkflowSheet::Console::Console() {
 }
 
 void WorkflowSheet::Console::write(const std::string &text) {
-    const bool atEnd = _lines.empty() || !_scroll->scrollable()
-        || _scroll->offset() >= _scroll->reach() - _scroll->box().h - 1.0;
+    _view->append(text);
 
-    std::string run = _tail + text;
-    size_t from = 0;
+    const size_t dropped = _view->rows() > LIMIT ? _view->rows() - LIMIT : 0;
 
-    if (!_tail.empty()) {
-        _held -= _tail.size();
-        _lines.pop_back();
-    }
-
-    while (true) {
-        const size_t at = run.find('\n', from);
-
-        if (at == std::string::npos) {
-            break;
-        }
-
-        _lines.push_back(run.substr(from, at - from));
-        _held += at - from;
-        from = at + 1;
-    }
-
-    _tail = run.substr(from);
-
-    if (!_tail.empty()) {
-        _lines.push_back(_tail);
-        _held += _tail.size();
-    }
-
-    while (_held > LIMIT && !_lines.empty()) {
-        _held -= _lines.front().size();
-        _lines.erase(_lines.begin());
-    }
-
-    _view->set_rows(_lines);
+    _view->drop_rows(dropped);
 
     if (root() != nullptr) {
-        root()->relayout();
+        _scroll->refit(root()->type(), static_cast<double>(dropped) * _view->row_height(root()->type()));
     }
-
-    _follow = _follow || atEnd;
 }
 
 void WorkflowSheet::Console::clear() {
-    _lines.clear();
-    _tail.clear();
-    _held = 0;
     _view->set_rows({});
     _scroll->scroll_to(0.0);
 }
 
 void WorkflowSheet::Console::arrange(ttk::Typeface &type) {
+    // A view at the end stays at the end through a resize, and lands there the first
+    // time the sheet is laid out with output already in it.
+    const bool ending = _scroll->at_end();
+
     _scroll->place(BLRect{_box.x + 12.0, _box.y + 12.0, std::max(0.0, _box.w - 24.0), std::max(0.0, _box.h - 24.0)},
                    type);
 
-    if (_follow) {
-        _follow = false;
+    if (ending) {
         _scroll->scroll_to(_scroll->reach());
     }
 }
