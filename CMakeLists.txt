@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 project(kernelmgr
-        VERSION 1.0.0
+        VERSION 1.0.1
         DESCRIPTION "Provides a tool for kernel building and management"
         HOMEPAGE_URL "https://github.com/spacebub/kernelmgr")
 
@@ -49,7 +49,7 @@ include(FetchContent)
 
 # A checkout on disk stands in for the fetch:
 #   cmake -B build -DFETCHCONTENT_SOURCE_DIR_TINYTK=/path/to/tinytk
-set(KERNELMGR_TINYTK_VERSION v0.1.8)
+set(KERNELMGR_TINYTK_VERSION v1.1.0)
 
 set(TTK_UI ${GUI} CACHE BOOL "" FORCE)
 set(TTK_HTTP OFF CACHE BOOL "" FORCE)
