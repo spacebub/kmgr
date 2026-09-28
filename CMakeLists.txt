@@ -19,8 +19,12 @@ set(COMPILE_FLAGS
         "-Wall"
         "-Wextra"
         "-Werror"
-        "-Wpedantic"
-        "$<$<CONFIG:DEBUG>:-Og>")
+        "-Wpedantic")
+
+# It lands after CMAKE_CXX_FLAGS on the command line, where the last one wins.
+if (NOT CMAKE_CXX_FLAGS MATCHES "(^| )-O")
+    list(APPEND COMPILE_FLAGS "$<$<CONFIG:DEBUG>:-Og>")
+endif ()
 
 add_library(kernelmgr_sanitizers INTERFACE)
 
