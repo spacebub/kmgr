@@ -33,6 +33,8 @@ namespace {
 
         .mutedSoft = BLRgba32{0xff232b37},
         .success = BLRgba32{0xff43d391},
+        .successHover = BLRgba32{0xff62dca3},
+        .successText = BLRgba32{0xff04170d},
         .successSoft = BLRgba32{0xff12301f},
         .warning = BLRgba32{0xfff0b429},
         .warningSoft = BLRgba32{0xff33270c},
@@ -41,11 +43,6 @@ namespace {
 
         .shadow = BLRgba32{0x66000000},
         .scrim = BLRgba32{0xa8030509},
-
-        .statusLaunching = BLRgba32{0xff7ba2ff},
-        .statusRunning = BLRgba32{0xff43d391},
-        .statusFailing = BLRgba32{0xfff4657a},
-        .statusIdle = BLRgba32{0xffb3bdcd},
 
         .headingWeight = 700,
         .dark = true,
@@ -73,6 +70,8 @@ namespace {
 
         .mutedSoft = BLRgba32{0xffe3e8f1},
         .success = BLRgba32{0xff0a7d4e},
+        .successHover = BLRgba32{0xff086640},
+        .successText = BLRgba32{0xffffffff},
         .successSoft = BLRgba32{0xffe2f7ee},
         .warning = BLRgba32{0xff96620f},
         .warningSoft = BLRgba32{0xfffdf2dc},
@@ -81,11 +80,6 @@ namespace {
 
         .shadow = BLRgba32{0x1f12203a},
         .scrim = BLRgba32{0x6e0c1420},
-
-        .statusLaunching = BLRgba32{0xff2a58d8},
-        .statusRunning = BLRgba32{0xff0a7d4e},
-        .statusFailing = BLRgba32{0xffc62d46},
-        .statusIdle = BLRgba32{0xff4d5769},
 
         .headingWeight = 600,
         .dark = false,

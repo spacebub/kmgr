@@ -53,7 +53,7 @@ include(FetchContent)
 
 # A checkout on disk stands in for the fetch:
 #   cmake -B build -DFETCHCONTENT_SOURCE_DIR_TINYTK=/path/to/tinytk
-set(KERNELMGR_TINYTK_VERSION v1.1.4)
+set(KERNELMGR_TINYTK_VERSION v1.2.1)
 
 set(TTK_UI ${GUI} CACHE BOOL "" FORCE)
 set(TTK_HTTP OFF CACHE BOOL "" FORCE)
