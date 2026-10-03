@@ -17,34 +17,33 @@
 #include "ttk/toolkit/Root.h"
 
 namespace {
-    using Palette = ttk::Theme::Palette;
+using Palette = ttk::Theme::Palette;
 
-    constexpr double TAB_HEIGHT = 34.0;
-    constexpr double TAB_SIDES = 28.0;
-    constexpr double TAB_GAP = 2.0;
+constexpr double TAB_HEIGHT = 34.0;
+constexpr double TAB_SIDES = 28.0;
+constexpr double TAB_GAP = 2.0;
 
-    ttk::Glyphs::Glyph shade_glyph() {
-        switch (ttk::Theme::mode()) {
-            case ttk::Theme::Mode::Light:
-                return ttk::Glyphs::Glyph::Light;
-            case ttk::Theme::Mode::Dark:
-                return ttk::Glyphs::Glyph::Dark;
-            default:
-                return ttk::Glyphs::Glyph::System;
-        }
+ttk::Glyphs::Glyph shade_glyph() {
+    switch (ttk::Theme::mode()) {
+        case ttk::Theme::Mode::Light:
+            return ttk::Glyphs::Glyph::Light;
+        case ttk::Theme::Mode::Dark:
+            return ttk::Glyphs::Glyph::Dark;
+        default:
+            return ttk::Glyphs::Glyph::System;
+    }
+}
+
+std::string shade_hint() {
+    const ttk::Theme::Mode &mode = ttk::Theme::mode();
+
+    if (mode == ttk::Theme::Mode::System) {
+        return "Following the desktop. Click for the light theme";
     }
 
-    std::string shade_hint() {
-        const ttk::Theme::Mode &mode = ttk::Theme::mode();
-
-        if (mode == ttk::Theme::Mode::System) {
-            return "Following the desktop. Click for the light theme";
-        }
-
-        return mode == ttk::Theme::Mode::Light
-            ? "Light theme. Click for the dark one"
-            : "Dark theme. Click to follow the desktop again";
-    }
+    return mode == ttk::Theme::Mode::Light ? "Light theme. Click for the dark one"
+                                           : "Dark theme. Click to follow the desktop again";
+}
 }
 
 TitleBar::TitleBar(Reach *reach, BLImage mark) : _reach(reach), _mark(std::move(mark)) {
@@ -56,12 +55,11 @@ TitleBar::TitleBar(Reach *reach, BLImage mark) : _reach(reach), _mark(std::move(
 
     _shade = append(std::make_unique<ttk::GlyphButton>(shade_glyph(), [this] { _reach->cycleShade(); }));
 
-    _minimize = append(std::make_unique<ttk::GlyphButton>(ttk::Glyphs::Glyph::Minimize,
-                                                           [this] { _reach->window.minimize(); }));
+    _minimize = append(
+            std::make_unique<ttk::GlyphButton>(ttk::Glyphs::Glyph::Minimize, [this] { _reach->window.minimize(); }));
     _maximize = append(std::make_unique<ttk::GlyphButton>(ttk::Glyphs::Glyph::Maximize,
-                                                           [this] { _reach->window.toggle_maximize(); }));
-    _close = append(std::make_unique<ttk::GlyphButton>(ttk::Glyphs::Glyph::Close,
-                                                        [this] { _reach->window.stop(); }));
+                                                          [this] { _reach->window.toggle_maximize(); }));
+    _close = append(std::make_unique<ttk::GlyphButton>(ttk::Glyphs::Glyph::Close, [this] { _reach->window.stop(); }));
     _close->tone(&Palette::muted, ttk::Theme::Tone(BLRgba32(0xffffffff)))->wash(&Palette::danger);
 }
 
@@ -159,8 +157,11 @@ void TitleBar::paint(const ttk::Painter &painter) {
         const BLFont &face = painter.font(400, ttk::Theme::fontBody);
         const double tall = painter.line_height(face);
 
-        painter.tracked(face, BLPoint{bar.x + 16.0 + 22.0 + 9.0, bar.y + ((bar.h - tall) / 2.0)},
-                        "KernelManager", palette.text, 0.2);
+        painter.tracked(face,
+                        BLPoint{bar.x + 16.0 + 22.0 + 9.0, bar.y + ((bar.h - tall) / 2.0)},
+                        "KernelManager",
+                        palette.text,
+                        0.2);
     }
 
     for (size_t index = 0; index < _tabs.size(); ++index) {
@@ -170,8 +171,11 @@ void TitleBar::paint(const ttk::Painter &painter) {
 
         Wash::paint(painter, tab.box, ttk::Theme::radiusSmall, on, lit);
 
-        painter.label(painter.font(on > 0.5 ? 600 : 400, ttk::Theme::fontBody), tab.box, ttk::Align::Centre,
-                      tab.label, on > 0.5 ? palette.accent : palette.muted);
+        painter.label(painter.font(on > 0.5 ? 600 : 400, ttk::Theme::fontBody),
+                      tab.box,
+                      ttk::Align::Centre,
+                      tab.label,
+                      on > 0.5 ? palette.accent : palette.muted);
 
         if (tab.badge && on <= 0.5) {
             painter.circle(BLPoint{tab.box.x + tab.box.w - 7.0 - 3.0, tab.box.y + 6.0 + 3.0}, 3.0, palette.accent);
@@ -182,8 +186,11 @@ void TitleBar::paint(const ttk::Painter &painter) {
         const BLFont &small = painter.font(400, ttk::Theme::fontSmall);
         const double wide = painter.width(small, _trailing);
 
-        painter.label(small, BLRect{_shade->box().x - 8.0 - wide, bar.y, wide + 2.0, bar.h}, ttk::Align::Start,
-                      _trailing, palette.faint);
+        painter.label(small,
+                      BLRect{_shade->box().x - 8.0 - wide, bar.y, wide + 2.0, bar.h},
+                      ttk::Align::Start,
+                      _trailing,
+                      palette.faint);
     }
 
     Widget::paint(painter);
@@ -191,8 +198,7 @@ void TitleBar::paint(const ttk::Painter &painter) {
 
 int TitleBar::tab_at(const double x, const double y) const {
     for (size_t index = 0; index < _tabs.size(); ++index) {
-        if (const BLRect &box = _tabs[index].box;
-            x >= box.x && x < box.x + box.w && y >= box.y && y < box.y + box.h) {
+        if (const BLRect &box = _tabs[index].box; x >= box.x && x < box.x + box.w && y >= box.y && y < box.y + box.h) {
             return static_cast<int>(index);
         }
     }

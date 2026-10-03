@@ -8,8 +8,8 @@
  */
 
 #include <atomic>
-#include <iostream>
 #include <csignal>
+#include <iostream>
 #include <thread>
 
 #include "Completion.h"
@@ -25,8 +25,7 @@
 
 static volatile std::sig_atomic_t s_abort;
 
-static void signal_handler(int)
-{
+static void signal_handler(int) {
     s_abort = 1;
 }
 
@@ -102,7 +101,7 @@ int get_options(const Arguments &arguments, Options *options) {
 
             if (!std::filesystem::is_directory(arguments.path)) {
                 std::cerr << "Could not use " << arguments.path << " as the base directory"
-                    << (error ? ": " + error.message() : "") << "\n";
+                          << (error ? ": " + error.message() : "") << "\n";
 
                 return 1;
             }
@@ -120,10 +119,9 @@ int get_options(const Arguments &arguments, Options *options) {
 
         if (arguments.flags & Parser::AUTOUPDATE) {
             *options = WorkflowFactory::autoupdate();
-            console().line("Updating to " + options->kernel
-                + (options->suffix.empty() ? "" : "-" + options->suffix)
-                + ", replacing " + options->oldKernel
-                + (options->oldSuffix.empty() ? "" : "-" + options->oldSuffix));
+            console().line("Updating to " + options->kernel + (options->suffix.empty() ? "" : "-" + options->suffix)
+                           + ", replacing " + options->oldKernel
+                           + (options->oldSuffix.empty() ? "" : "-" + options->oldSuffix));
         } else {
             options->kernel = arguments.kernel;
             options->suffix = arguments.suffix;
@@ -183,12 +181,10 @@ int execute(const Arguments &arguments, const Options &options) {
         const std::string kernel = Prompt::log_target(arguments);
 
         if (const std::uintmax_t removed = Log::clear(kernel); removed > 0) {
-            console().line("Removed " + Reporter::human_size(static_cast<double>(removed))
-                + " of logs" + (kernel.empty() ? "" : " for " + kernel) + ".");
+            console().line("Removed " + Reporter::human_size(static_cast<double>(removed)) + " of logs"
+                           + (kernel.empty() ? "" : " for " + kernel) + ".");
         } else {
-            console().line(kernel.empty()
-                ? "There were no logs to remove."
-                : "There were no logs for " + kernel + ".");
+            console().line(kernel.empty() ? "There were no logs to remove." : "There were no logs for " + kernel + ".");
         }
     }
 
@@ -206,9 +202,8 @@ int execute(const Arguments &arguments, const Options &options) {
     workflow->on_progress([](const ProgressArgs &args) { console().progress(args); });
 
     console().line(workflow->get_name());
-    workflow->on_input_required([&workflow](const InputRequest &request) {
-        workflow->provide_input(Prompt::read_line(request.secret));
-    });
+    workflow->on_input_required(
+            [&workflow](const InputRequest &request) { workflow->provide_input(Prompt::read_line(request.secret)); });
 
     std::signal(SIGINT, signal_handler);
     std::signal(SIGTERM, signal_handler);

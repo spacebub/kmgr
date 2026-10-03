@@ -17,8 +17,8 @@
 
 #include "gui/app/Reach.h"
 #include "ttk/draw/Anim.h"
-#include "ttk/toolkit/controls/GlyphButton.h"
 #include "ttk/toolkit/Widget.h"
+#include "ttk/toolkit/controls/GlyphButton.h"
 
 class TitleBar : public ttk::Widget {
 public:

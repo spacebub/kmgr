@@ -19,11 +19,11 @@
 #include "ttk/toolkit/layout/Wrap.h"
 
 namespace {
-    using Palette = ttk::Theme::Palette;
+using Palette = ttk::Theme::Palette;
 
-    const ttk::Theme::Palette &palette() {
-        return ttk::Theme::palette();
-    }
+const ttk::Theme::Palette &palette() {
+    return ttk::Theme::palette();
+}
 }
 
 std::string BuildCard::toolchain_label(const std::string &name) {
@@ -45,7 +45,7 @@ int BuildCard::toolchain_index(const std::string &name) {
 }
 
 BuildCard::BuildCard(Reach *reach, const Catalog::Build &build, std::function<void(const std::string &)> action)
-        : _reach(reach), _action(std::move(action)), _build(build) {
+    : _reach(reach), _action(std::move(action)), _build(build) {
     inset = true;
 
     ttk::Box *layout = append(ttk::Box::column());
@@ -65,8 +65,12 @@ BuildCard::BuildCard(Reach *reach, const Catalog::Build &build, std::function<vo
     _options = head->append(Parts::pill("options set", &Palette::accent, &Palette::accentSoft));
 
     // 135 degrees is three of the cog's eight teeth, so it comes to rest looking as it started.
-    _cog = head->append(Parts::glyph_button(ttk::Glyphs::Glyph::Cog, 30.0, "Options and logs for this build",
-                                            &Palette::faint, &Palette::accent, &Palette::accentSoft,
+    _cog = head->append(Parts::glyph_button(ttk::Glyphs::Glyph::Cog,
+                                            30.0,
+                                            "Options and logs for this build",
+                                            &Palette::faint,
+                                            &Palette::accent,
+                                            &Palette::accentSoft,
                                             [this] { _action("options"); }));
     _cog->spin(135.0);
 
@@ -92,7 +96,7 @@ BuildCard::BuildCard(Reach *reach, const Catalog::Build &build, std::function<vo
         _compiler->set_current(index);
         remember();
     }));
-    _compiler->set_options({ "GCC", "LLVM", "Custom" });
+    _compiler->set_options({"GCC", "LLVM", "Custom"});
     _compiler->set_disabled_hint("No custom toolchain flags are set. The settings page takes them");
 
     // --- options ---
@@ -103,20 +107,20 @@ BuildCard::BuildCard(Reach *reach, const Catalog::Build &build, std::function<vo
 
     options->append(std::make_unique<Parts::Rule>());
 
-    _config = options->append(std::make_unique<PathField>(reach, "Configuration (optional)",
-                                                          [this](const std::string &) {
-        annotate();
-        remember();
-    }));
-    _config->browse("Select a kernel configuration", { "*.config", "config*" }, false);
+    _config =
+            options->append(std::make_unique<PathField>(reach, "Configuration (optional)", [this](const std::string &) {
+                annotate();
+                remember();
+            }));
+    _config->browse("Select a kernel configuration", {"*.config", "config*"}, false);
     _config->placeholder("chosen automatically");
 
-    _patch = options->append(std::make_unique<PathField>(reach, "Patch definition (optional)",
-                                                         [this](const std::string &) {
-        annotate();
-        remember();
-    }));
-    _patch->browse("Select a patch definition", { "*-patch.txt", "*.sh" }, false);
+    _patch = options->append(
+            std::make_unique<PathField>(reach, "Patch definition (optional)", [this](const std::string &) {
+                annotate();
+                remember();
+            }));
+    _patch->browse("Select a patch definition", {"*-patch.txt", "*.sh"}, false);
     _patch->placeholder("chosen automatically");
 
     _errors = options->append(std::make_unique<ttk::Toggle>("Continue after errors", [this](const bool value) {
@@ -132,17 +136,29 @@ BuildCard::BuildCard(Reach *reach, const Catalog::Build &build, std::function<vo
 
     _weight = logs->append(Parts::pill("none", &Palette::faint, &Palette::mutedSoft, false));
 
-    logs->append(Parts::glyph_button(ttk::Glyphs::Glyph::Folder, 30.0, "Open this build's logs in your file manager",
-                                     &Palette::faint, &Palette::accent, &Palette::accentSoft,
+    logs->append(Parts::glyph_button(ttk::Glyphs::Glyph::Folder,
+                                     30.0,
+                                     "Open this build's logs in your file manager",
+                                     &Palette::faint,
+                                     &Palette::accent,
+                                     &Palette::accentSoft,
                                      [this] { _reach->logs.open(_build.name); }));
 
-    _bin = logs->append(Parts::glyph_button(ttk::Glyphs::Glyph::Trash, 30.0, "Delete every log this build has written",
-                                            &Palette::faint, &Palette::danger, &Palette::dangerSoft, [this] {
-        _reach->ask("Delete the logs for " + _build.name + "?",
-                    "Every run filed under this build is removed. Other builds of the same "
-                    "version keep theirs, and nothing else is touched.",
-                    "Delete them", true, [this] { _reach->logs.remove_build(_build.name); });
-    }));
+    _bin = logs->append(
+            Parts::glyph_button(ttk::Glyphs::Glyph::Trash,
+                                30.0,
+                                "Delete every log this build has written",
+                                &Palette::faint,
+                                &Palette::danger,
+                                &Palette::dangerSoft,
+                                [this] {
+                                    _reach->ask("Delete the logs for " + _build.name + "?",
+                                                "Every run filed under this build is removed. Other builds of the same "
+                                                "version keep theirs, and nothing else is touched.",
+                                                "Delete them",
+                                                true,
+                                                [this] { _reach->logs.remove_build(_build.name); });
+                                }));
 
     _steps = options->append(std::make_unique<LogSteps>(reach));
 
@@ -166,21 +182,19 @@ BuildCard::BuildCard(Reach *reach, const Catalog::Build &build, std::function<vo
     ttk::Wrap *steps = layout->append(std::make_unique<ttk::Wrap>());
     steps->spacing(6.0, 6.0);
 
-    _patchStep = steps->append(std::make_unique<ttk::Button>("Patch", [this] {
-        _action(_build.patched ? "revert" : "patch");
-    }));
+    _patchStep = steps->append(
+            std::make_unique<ttk::Button>("Patch", [this] { _action(_build.patched ? "revert" : "patch"); }));
     _patchStep->compact();
 
     _configure = steps->append(std::make_unique<ttk::Button>("Configure", [this] { _action("configure"); }));
     _configure->compact()->tooltip(
-        "Put a configuration in place, set the local version and answer new symbols with oldconfig");
+            "Put a configuration in place, set the local version and answer new symbols with oldconfig");
 
     _buildStep = steps->append(std::make_unique<ttk::Button>("Build", [this] { _action("build"); }));
     _buildStep->compact()->tooltip("Run make over the whole tree");
 
     _install = steps->append(std::make_unique<ttk::Button>("Install", [this] { _action("install"); }));
-    _install->compact()->tooltip(
-        "Install modules, image and initramfs, run dkms and refresh grub. Needs a password");
+    _install->compact()->tooltip("Install modules, image and initramfs, run dkms and refresh grub. Needs a password");
 
     auto removing = std::make_unique<ttk::Wrap>();
     ttk::Wrap *removal = removing.get();
@@ -189,8 +203,9 @@ BuildCard::BuildCard(Reach *reach, const Catalog::Build &build, std::function<vo
     layout->append(Parts::above(2.0, std::move(removing)));
 
     _sources = removal->append(std::make_unique<ttk::Button>("Delete sources", [this] { _action("sources"); }));
-    _sources->kind(ttk::Button::Kind::Danger)->compact()
-        ->tooltip("Remove the build directory only. Anything installed from it stays");
+    _sources->kind(ttk::Button::Kind::Danger)
+            ->compact()
+            ->tooltip("Remove the build directory only. Anything installed from it stays");
 
     // Where the panel was left, so opening it again opens it as it was.
     const BuildConfig::Choices chosen = WorkflowRunner::choices(build.version, build.suffix);
@@ -227,12 +242,13 @@ void BuildCard::remember() const {
         return;
     }
 
-    WorkflowRunner::set_choices(_build.version, _build.suffix, BuildConfig::Choices{
-        .config = _config->text(),
-        .patch = _patch->text(),
-        .compiler = toolchain_from(TOOLCHAINS[std::clamp(_compiler->current(), 0, 2)]),
-        .force = _errors->checked
-    });
+    WorkflowRunner::set_choices(
+            _build.version,
+            _build.suffix,
+            BuildConfig::Choices{.config = _config->text(),
+                                 .patch = _patch->text(),
+                                 .compiler = toolchain_from(TOOLCHAINS[std::clamp(_compiler->current(), 0, 2)]),
+                                 .force = _errors->checked});
 
     _reach->touch();
 }
@@ -243,10 +259,10 @@ void BuildCard::resolve() {
 }
 
 void BuildCard::annotate() const {
-    _config->note(!_config->text().empty() ? "Overriding what would be chosen"
+    _config->note(!_config->text().empty()   ? "Overriding what would be chosen"
                   : !_resolvedConfig.empty() ? "Using " + _resolvedConfig
                                              : "None found, a default configuration will be generated");
-    _patch->note(!_patch->text().empty() ? "Overriding what would be chosen"
+    _patch->note(!_patch->text().empty()   ? "Overriding what would be chosen"
                  : !_resolvedPatch.empty() ? "Using " + _resolvedPatch
                                            : "None found, patching will be skipped");
 }
@@ -305,12 +321,11 @@ void BuildCard::sync(const Catalog::Build &build, const bool idle, const bool si
     _made->set_text("made with " + toolchain_label(build.toolchain));
 
     // The saved flags rather than the form's, since those are what a run from here hands make.
-    _compiler->set_disabled(ttk::Text::trim(_reach->settings.customFlags).empty() ? std::vector<int>{ 2 }
-                                                                                   : std::vector<int>{});
-    _compiler->set_hint(build.toolchain.empty()
-        ? "What make is run with. Custom is the flags in the settings"
-        : "This tree was made with " + toolchain_label(build.toolchain)
-            + ". Building it with another one builds it over");
+    _compiler->set_disabled(ttk::Text::trim(_reach->settings.customFlags).empty() ? std::vector<int>{2}
+                                                                                  : std::vector<int>{});
+    _compiler->set_hint(build.toolchain.empty() ? "What make is run with. Custom is the flags in the settings"
+                                                : "This tree was made with " + toolchain_label(build.toolchain)
+                                                          + ". Building it with another one builds it over");
 
     _fold->set_open(expanded);
 
@@ -327,9 +342,8 @@ void BuildCard::sync(const Catalog::Build &build, const bool idle, const bool si
     _upToBuild->set_enabled(idle);
 
     _patchStep->set_text(build.patched ? "Revert" : "Patch");
-    _patchStep->tooltip(build.patched
-        ? "Take the patches back out of the tree, in the order they went in"
-        : "Apply the patches the patch definition names, from the kernel directory");
+    _patchStep->tooltip(build.patched ? "Take the patches back out of the tree, in the order they went in"
+                                      : "Apply the patches the patch definition names, from the kernel directory");
     _patchStep->set_enabled(idle);
     _configure->set_enabled(idle);
     _buildStep->set_enabled(idle);

@@ -92,7 +92,7 @@ void SettingsBridge::load() {
 // The configuration only takes directories that exist, so missing ones are
 // created first rather than quietly dropped.
 bool SettingsBridge::save() {
-    const std::string directories[] = { bootDirectory, grubDirectory, baseDirectory, archiveDirectory };
+    const std::string directories[] = {bootDirectory, grubDirectory, baseDirectory, archiveDirectory};
 
     for (const std::string &directory : directories) {
         if (directory.empty()) {
@@ -111,22 +111,20 @@ bool SettingsBridge::save() {
         }
     }
 
-    const Settings settings {
-        .bootDirectory = bootDirectory,
-        .grubDirectory = grubDirectory,
-        .archiveFormat = ttk::Text::trim(archiveFormat),
-        .kernelCdn = ttk::Text::trim(kernelCdn),
-        .baseDirectory = baseDirectory,
-        .archiveDirectory = archiveDirectory,
-        .elevationCommand = ttk::Text::trim(elevationCommand),
-        .jobs = jobs,
-        .colors = Configuration::get()->colors,
-        .compiler = toolchain_from(compiler),
-        .customToolchainName = ttk::Text::trim(customToolchainName),
-        .customFlags = ttk::Text::trim(customFlags),
-        .theme = Configuration::get()->theme,
-        .notifications = notifications
-    };
+    const Settings settings{.bootDirectory = bootDirectory,
+                            .grubDirectory = grubDirectory,
+                            .archiveFormat = ttk::Text::trim(archiveFormat),
+                            .kernelCdn = ttk::Text::trim(kernelCdn),
+                            .baseDirectory = baseDirectory,
+                            .archiveDirectory = archiveDirectory,
+                            .elevationCommand = ttk::Text::trim(elevationCommand),
+                            .jobs = jobs,
+                            .colors = Configuration::get()->colors,
+                            .compiler = toolchain_from(compiler),
+                            .customToolchainName = ttk::Text::trim(customToolchainName),
+                            .customFlags = ttk::Text::trim(customFlags),
+                            .theme = Configuration::get()->theme,
+                            .notifications = notifications};
 
     Configuration::set(settings);
 

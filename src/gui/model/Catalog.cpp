@@ -16,33 +16,33 @@
 
 namespace {
 
-    Catalog::Build describe(const Kernel &kernel, const std::string &running) {
-        const Kernel::Version version = kernel.get_version();
-        const Kernel::Status status = kernel.get_status();
-        const std::string source = kernel.get_source_directory();
-        const bool extracted = std::filesystem::is_directory(source);
+Catalog::Build describe(const Kernel &kernel, const std::string &running) {
+    const Kernel::Version version = kernel.get_version();
+    const Kernel::Status status = kernel.get_status();
+    const std::string source = kernel.get_source_directory();
+    const bool extracted = std::filesystem::is_directory(source);
 
-        Catalog::Build build;
+    Catalog::Build build;
 
-        build.name = version.get_string();
-        build.extracted = extracted;
-        build.version = version.get_string(Kernel::Version::INCLUDE_ZERO_REVISION);
-        build.suffix = version.suffix;
-        build.source = extracted ? source : std::string{};
-        build.patched = kernel.is_patched();
-        build.toolchain = toolchain_name(Kernel::built_with(version));
-        build.configured = kernel.is_configured();
-        build.built = kernel.is_built();
-        build.modules = (status & Kernel::ModulesInstalled) != 0;
-        build.image = (status & Kernel::ImageInstalled) != 0;
-        build.initramfs = (status & Kernel::InitramsInstalled) != 0;
-        build.installed = (status & (Kernel::ModulesInstalled | Kernel::ImageInstalled)) != 0;
-        build.imagePath = kernel.get_image();
-        build.signedImage = kernel.is_signed();
-        build.running = build.name == running;
+    build.name = version.get_string();
+    build.extracted = extracted;
+    build.version = version.get_string(Kernel::Version::INCLUDE_ZERO_REVISION);
+    build.suffix = version.suffix;
+    build.source = extracted ? source : std::string{};
+    build.patched = kernel.is_patched();
+    build.toolchain = toolchain_name(Kernel::built_with(version));
+    build.configured = kernel.is_configured();
+    build.built = kernel.is_built();
+    build.modules = (status & Kernel::ModulesInstalled) != 0;
+    build.image = (status & Kernel::ImageInstalled) != 0;
+    build.initramfs = (status & Kernel::InitramsInstalled) != 0;
+    build.installed = (status & (Kernel::ModulesInstalled | Kernel::ImageInstalled)) != 0;
+    build.imagePath = kernel.get_image();
+    build.signedImage = kernel.is_signed();
+    build.running = build.name == running;
 
-        return build;
-    }
+    return build;
+}
 }
 
 std::string Catalog::Entry::summary() const {
@@ -148,9 +148,8 @@ void Catalog::refresh() {
         version.suffix.clear();
 
         Entry &entry = find(version);
-        const bool listed = std::ranges::any_of(entry.installed, [&name](const Build &other) {
-            return other.name == name;
-        });
+        const bool listed =
+                std::ranges::any_of(entry.installed, [&name](const Build &other) { return other.name == name; });
 
         if (listed) {
             continue;
@@ -181,7 +180,7 @@ void Catalog::refresh() {
 void Catalog::watch() {
     const Settings *settings = Configuration::get();
 
-    _watcher.watch({ settings->baseDirectory, settings->archiveDirectory });
+    _watcher.watch({settings->baseDirectory, settings->archiveDirectory});
 }
 
 const Catalog::Entry *Catalog::at(const int row) const {

@@ -35,9 +35,7 @@ protected:
     std::atomic<bool> _canceled = false;
     std::atomic<bool> _awaitingSecret = false;
 
-    virtual bool prepare() {
-        return true;
-    }
+    virtual bool prepare() { return true; }
 
     bool execute(const Step &step);
 
@@ -49,9 +47,7 @@ public:
     void cancel() override;
     void provide_input(const std::string &input) override;
 
-    [[nodiscard]] bool is_interactive() const override {
-        return true;
-    }
+    [[nodiscard]] bool is_interactive() const override { return true; }
 };
 
 

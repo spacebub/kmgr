@@ -10,8 +10,8 @@
 #define KERNELMGR_COMMAND_H
 
 
-#include <string>
 #include <functional>
+#include <string>
 
 class Command {
     std::string _command;
@@ -20,7 +20,7 @@ public:
     explicit Command(const std::string &command);
 
     [[nodiscard]] int execute() const;
-    int execute(const std::function<void (const std::string &)> &callback) const;
+    int execute(const std::function<void(const std::string &)> &callback) const;
     [[nodiscard]] std::string capture() const;
 
     static bool exists(const std::string &program);

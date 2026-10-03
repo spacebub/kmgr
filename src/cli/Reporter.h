@@ -23,9 +23,7 @@
 
 class Reporter {
     static constexpr const char *SPINNER[] = {
-        "\u280b", "\u2819", "\u2839", "\u2838", "\u283c",
-        "\u2834", "\u2826", "\u2827", "\u2807", "\u280f"
-    };
+            "\u280b", "\u2819", "\u2839", "\u2838", "\u283c", "\u2834", "\u2826", "\u2827", "\u2807", "\u280f"};
 
     std::mutex _mutex;
     std::string _label;
@@ -37,18 +35,16 @@ class Reporter {
     int _percentage = -1;
     int _frame = 0;
     bool _running = false;
-    bool _expanded = false;    // The step has printed output of its own.
-    bool _painted = false;     // A live line is on screen.
-    bool _printed = false;     // Something has been left on screen for good.
+    bool _expanded = false; // The step has printed output of its own.
+    bool _painted = false;  // A live line is on screen.
+    bool _printed = false;  // Something has been left on screen for good.
     bool _interactive = Ink::interactive();
 
-    static std::string paint(const std::string &text, const char *color) {
-        return Ink::paint(text, color);
-    }
+    static std::string paint(const std::string &text, const char *color) { return Ink::paint(text, color); }
 
 public:
     static std::string human_size(const double bytes) {
-        static constexpr const char *units[] = { "B", "KB", "MB", "GB" };
+        static constexpr const char *units[] = {"B", "KB", "MB", "GB"};
         double value = bytes;
         size_t unit = 0;
 
@@ -61,21 +57,15 @@ public:
     }
 
 private:
-    static int width() {
-        return Ink::columns();
-    }
+    static int width() { return Ink::columns(); }
 
-    static std::string elide(const std::string &text, const size_t room) {
-        return Ink::elide(text, room);
-    }
+    static std::string elide(const std::string &text, const size_t room) { return Ink::elide(text, room); }
 
     [[nodiscard]] std::string elapsed() const {
-        const double seconds = std::chrono::duration<double>(
-            std::chrono::steady_clock::now() - _started).count();
+        const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - _started).count();
 
-        return seconds >= 60
-            ? std::format("{:.0f}m{:02.0f}s", std::floor(seconds / 60), std::fmod(seconds, 60))
-            : std::format("{:.1f}s", seconds);
+        return seconds >= 60 ? std::format("{:.0f}m{:02.0f}s", std::floor(seconds / 60), std::fmod(seconds, 60))
+                             : std::format("{:.1f}s", seconds);
     }
 
     void repaint() {
@@ -97,21 +87,18 @@ private:
                 bar += cell < filled ? "\u2501" : "\u2500";
             }
 
-            trail = "  " + paint(bar, CYAN)
-                + std::format(" {:3}%", _percentage)
-                + (_detail.empty() ? "" : "  " + paint(_detail, DIM));
+            trail = "  " + paint(bar, CYAN) + std::format(" {:3}%", _percentage)
+                    + (_detail.empty() ? "" : "  " + paint(_detail, DIM));
         }
 
         // Measure the text, not the colour escapes.
-        const size_t used = _percentage >= 0
-            ? 3 + std::clamp(columns - static_cast<int>(_detail.length()) - 24, 8, 24)
-                + 6 + (_detail.empty() ? 0 : _detail.length() + 2)
-            : 3;
+        const size_t used = _percentage >= 0 ? 3 + std::clamp(columns - static_cast<int>(_detail.length()) - 24, 8, 24)
+                                                       + 6 + (_detail.empty() ? 0 : _detail.length() + 2)
+                                             : 3;
 
-        std::cout << "\r" ERASE
-            << " " << paint(SPINNER[_frame % std::size(SPINNER)], CYAN)
-            << " " << elide(_label, columns > static_cast<int>(used) + 8 ? columns - used - 2 : 8)
-            << trail << std::flush;
+        std::cout << "\r" ERASE << " " << paint(SPINNER[_frame % std::size(SPINNER)], CYAN) << " "
+                  << elide(_label, columns > static_cast<int>(used) + 8 ? columns - used - 2 : 8) << trail
+                  << std::flush;
         _painted = true;
     }
 
@@ -130,12 +117,10 @@ private:
 
         clear();
 
-        const std::string mark = success
-            ? paint("\u2714", GREEN)
-            : paint("\u2718", RED);
+        const std::string mark = success ? paint("\u2714", GREEN) : paint("\u2718", RED);
 
-        std::cout << " " << mark << " " << elide(_label, width() - 14)
-            << " " << paint(elapsed(), DIM) << "\n" << std::flush;
+        std::cout << " " << mark << " " << elide(_label, width() - 14) << " " << paint(elapsed(), DIM) << "\n"
+                  << std::flush;
 
         _printed = true;
         _running = false;
@@ -205,9 +190,8 @@ public:
         const auto now = std::chrono::steady_clock::now();
 
         if (const double seconds = std::chrono::duration<double>(now - _sampled).count(); seconds >= 0.35) {
-            const double sample = args.completed >= _sampledBytes
-                ? static_cast<double>(args.completed - _sampledBytes) / seconds
-                : 0;
+            const double sample =
+                    args.completed >= _sampledBytes ? static_cast<double>(args.completed - _sampledBytes) / seconds : 0;
 
             _rate = _rate > 0 ? _rate * 0.6 + sample * 0.4 : sample;
             _sampledBytes = args.completed;
@@ -215,9 +199,8 @@ public:
         }
 
         _percentage = args.percentage();
-        _detail = human_size(static_cast<double>(args.completed))
-            + " / " + human_size(static_cast<double>(args.total))
-            + (_rate > 1 ? "  " + human_size(_rate) + "/s" : "");
+        _detail = human_size(static_cast<double>(args.completed)) + " / " + human_size(static_cast<double>(args.total))
+                  + (_rate > 1 ? "  " + human_size(_rate) + "/s" : "");
 
         repaint();
     }
@@ -229,9 +212,7 @@ public:
         repaint();
     }
 
-    [[nodiscard]] bool interactive() const {
-        return _interactive;
-    }
+    [[nodiscard]] bool interactive() const { return _interactive; }
 };
 
 

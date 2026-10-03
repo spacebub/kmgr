@@ -75,8 +75,7 @@ public:
     void pull();
 
     [[nodiscard]] static BuildConfig::Choices choices(const std::string &version, const std::string &suffix);
-    static void set_choices(const std::string &version, const std::string &suffix,
-                            const BuildConfig::Choices &values);
+    static void set_choices(const std::string &version, const std::string &suffix, const BuildConfig::Choices &values);
 
     void provide_input(const std::string &input);
     void cancel();

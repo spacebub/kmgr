@@ -53,9 +53,14 @@ private:
     void go(Page page);
     void show(const std::string &version);
     void cycle_shade();
-    void ask(const std::string &title, const std::string &body, const std::string &accept, bool danger,
+    void ask(const std::string &title,
+             const std::string &body,
+             const std::string &accept,
+             bool danger,
              std::function<void()> accepted);
-    void pick(const std::string &title, const std::vector<std::string> &filters, bool directories,
+    void pick(const std::string &title,
+              const std::vector<std::string> &filters,
+              bool directories,
               std::function<void(const std::string &)> chosen);
     bool shortcut(const ttk::Key &pressed);
     void ask_about_notifications();

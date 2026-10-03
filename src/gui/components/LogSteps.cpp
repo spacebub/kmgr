@@ -6,8 +6,8 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
-#include "gui/app/Reach.h"
 #include "gui/components/LogSteps.h"
+#include "gui/app/Reach.h"
 #include "gui/components/Parts.h"
 #include "gui/model/Format.h"
 #include "ttk/draw/Theme.h"
@@ -16,7 +16,7 @@
 #include "ttk/toolkit/controls/Label.h"
 
 namespace {
-    using Palette = ttk::Theme::Palette;
+using Palette = ttk::Theme::Palette;
 }
 
 LogSteps::LogSteps(Reach *reach) : Box(Flow::Column), _reach(reach) {
@@ -127,14 +127,20 @@ void LogSteps::set_steps(const std::string &build, const std::vector<Log::Filed>
         const int runs = step.runs;
 
         ttk::GlyphButton *bin = row->append(Parts::glyph_button(
-            ttk::Glyphs::Glyph::Trash, 26.0, "Delete what this step has filed here", &Palette::faint,
-            &Palette::danger, &Palette::dangerSoft, [this, operation, size, runs] {
-                _reach->ask("Delete the " + step_phrase(operation) + " logs for " + _build + "?",
-                            size + " over " + Format::runs(runs)
-                                + " is removed. Everything filed here under the other steps stays.",
-                            "Delete them", true,
-                            [this, operation] { _reach->logs.remove_step(_build, operation); });
-            }));
+                ttk::Glyphs::Glyph::Trash,
+                26.0,
+                "Delete what this step has filed here",
+                &Palette::faint,
+                &Palette::danger,
+                &Palette::dangerSoft,
+                [this, operation, size, runs] {
+                    _reach->ask("Delete the " + step_phrase(operation) + " logs for " + _build + "?",
+                                size + " over " + Format::runs(runs)
+                                        + " is removed. Everything filed here under the other steps stays.",
+                                "Delete them",
+                                true,
+                                [this, operation] { _reach->logs.remove_step(_build, operation); });
+                }));
 
         bin->set_enabled(_idle);
         _bins.push_back(bin);

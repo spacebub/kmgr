@@ -17,16 +17,16 @@
 
 // Kept inside the build directory, so deleting or unpacking it again clears it.
 namespace BuildConfig {
-    struct Choices {
-        std::string config;
-        std::string patch;
-        Toolchain compiler = Toolchain::Unknown;
-        bool force = false;
-    };
+struct Choices {
+    std::string config;
+    std::string patch;
+    Toolchain compiler = Toolchain::Unknown;
+    bool force = false;
+};
 
-    std::optional<Choices> read(const Kernel::Version &version);
+std::optional<Choices> read(const Kernel::Version &version);
 
-    bool write(const Kernel::Version &version, const Choices &choices);
+bool write(const Kernel::Version &version, const Choices &choices);
 }
 
 

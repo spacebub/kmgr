@@ -40,10 +40,10 @@ struct Settings {
 };
 
 namespace Configuration {
-    void save();
+void save();
 
-    const Settings* get();
-    void set(const Settings &settings);
+const Settings *get();
+void set(const Settings &settings);
 }
 
 

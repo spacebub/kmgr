@@ -6,9 +6,9 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
+#include "gui/model/SystemStatus.h"
 #include "core/Configuration.h"
 #include "core/SystemInfo.h"
-#include "gui/model/SystemStatus.h"
 
 SystemStatus::SystemStatus(ttk::Clock *clock) : _clock(clock) {
     refresh();

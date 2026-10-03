@@ -10,12 +10,12 @@
 #define KERNELMGR_PROMPT_H
 
 
-#include <string>
 #include <cctype>
 #include <cstdint>
-#include <vector>
+#include <string>
 #include <termios.h>
 #include <unistd.h>
+#include <vector>
 
 #include "core/Kernel.h"
 #include "core/KernelArchive.h"
@@ -65,9 +65,7 @@ inline bool confirmed(const std::string &question) {
 inline std::string clean_target(const Options &options) {
     const bool replaced = !options.oldKernel.empty();
     const std::string version = replaced ? options.oldKernel : options.kernel;
-    const std::string suffix = replaced && !options.oldSuffix.empty()
-        ? options.oldSuffix
-        : options.suffix;
+    const std::string suffix = replaced && !options.oldSuffix.empty() ? options.oldSuffix : options.suffix;
 
     Kernel::Version parsed = Kernel::get_version(version);
     parsed.suffix = suffix;
@@ -102,9 +100,8 @@ inline bool confirm_clean(const Arguments &arguments, const Options &options) {
     }
 
     if (options.stages & Options::CLEAN_ARCHIVE) {
-        going.emplace_back(options.kernel.empty()
-            ? "every kernel archive"
-            : KernelArchive(Kernel::get_version(options.kernel)).get_location());
+        going.emplace_back(options.kernel.empty() ? "every kernel archive"
+                                                  : KernelArchive(Kernel::get_version(options.kernel)).get_location());
     }
 
     if (Stages::cleans(arguments, "logs")) {
@@ -112,7 +109,7 @@ inline bool confirm_clean(const Arguments &arguments, const Options &options) {
 
         if (const std::uintmax_t weight = Log::weigh(kernel); weight > 0) {
             going.push_back(Reporter::human_size(static_cast<double>(weight)) + " of logs"
-                + (kernel.empty() ? " for every kernel" : " for " + kernel));
+                            + (kernel.empty() ? " for every kernel" : " for " + kernel));
         }
     }
 

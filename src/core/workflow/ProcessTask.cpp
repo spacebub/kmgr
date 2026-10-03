@@ -10,7 +10,7 @@
 #include "core/Elevation.h"
 
 ProcessTask::ProcessTask(std::string name, const int position)
-        : Task(std::move(name), std::make_unique<Progress>()), _position(position) {
+    : Task(std::move(name), std::make_unique<Progress>()), _position(position) {
 }
 
 bool ProcessTask::run() {
@@ -112,7 +112,7 @@ bool ProcessTask::execute(const Step &step) {
         _awaitingSecret = prompt.secret;
 
         if (_on_input_required) {
-            _on_input_required(InputRequest { .prompt = prompt.text, .secret = prompt.secret });
+            _on_input_required(InputRequest{.prompt = prompt.text, .secret = prompt.secret});
         }
     });
 
@@ -143,8 +143,8 @@ bool ProcessTask::execute(const Step &step) {
         return false;
     }
 
-    const std::string message = (step.label.empty() ? step.command : step.label)
-        + " failed with status " + std::to_string(status);
+    const std::string message =
+            (step.label.empty() ? step.command : step.label) + " failed with status " + std::to_string(status);
 
     if (step.optional) {
         report("(skipped) " + message);

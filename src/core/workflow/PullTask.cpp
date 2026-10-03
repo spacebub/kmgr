@@ -6,9 +6,9 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
-#include <filesystem>
 #include "PullTask.h"
 #include "core/Configuration.h"
+#include <filesystem>
 
 PullTask::PullTask() : ProcessTask("Pull task", 0) {
 }
@@ -21,13 +21,11 @@ bool PullTask::prepare() {
             continue;
         }
 
-        _steps.push_back(Step {
-            .label = "Updating " + entry.path().filename().string(),
-            .command = "git pull --ff-only",
-            .directory = entry.path(),
-            .elevated = false,
-            .optional = true
-        });
+        _steps.push_back(Step{.label = "Updating " + entry.path().filename().string(),
+                              .command = "git pull --ff-only",
+                              .directory = entry.path(),
+                              .elevated = false,
+                              .optional = true});
     }
 
     if (_steps.empty()) {

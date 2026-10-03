@@ -14,14 +14,16 @@
 #include <string>
 
 #include "gui/components/PathField.h"
-#include "ttk/toolkit/controls/Label.h"
 #include "ttk/toolkit/Widget.h"
+#include "ttk/toolkit/controls/Label.h"
 
 struct Reach;
 
 class SettingRow : public ttk::Widget {
 public:
-    SettingRow(Reach *reach, const std::string &label, const std::string &description,
+    SettingRow(Reach *reach,
+               const std::string &label,
+               const std::string &description,
                std::function<void(const std::string &)> edited);
 
     SettingRow *browse(const std::string &title);

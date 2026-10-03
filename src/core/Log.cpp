@@ -14,29 +14,29 @@
 #include <mutex>
 #include <vector>
 
-#include "Log.h"
 #include "Configuration.h"
+#include "Log.h"
 
 namespace {
-    std::mutex s_mutex;
-    std::ofstream s_file;
-    std::string s_path;
-    Log::Sink s_sink;
+std::mutex s_mutex;
+std::ofstream s_file;
+std::string s_path;
+Log::Sink s_sink;
 
-    std::string decorate(const Log::Level level, const std::string &message) {
-        switch (level) {
-            case Log::Level::Step:
-                return "\n==> " + message + "\n";
-            case Log::Level::Output:
-                return message;
-            case Log::Level::Warning:
-                return "[warning] " + message + "\n";
-            case Log::Level::Error:
-                return "[error] " + message + "\n";
-            default:
-                return message + "\n";
-        }
+std::string decorate(const Log::Level level, const std::string &message) {
+    switch (level) {
+        case Log::Level::Step:
+            return "\n==> " + message + "\n";
+        case Log::Level::Output:
+            return message;
+        case Log::Level::Warning:
+            return "[warning] " + message + "\n";
+        case Log::Level::Error:
+            return "[error] " + message + "\n";
+        default:
+            return message + "\n";
     }
+}
 }
 
 std::string Log::open(const std::string &kernel, const std::string &operation) {
@@ -87,85 +87,83 @@ std::string Log::path() {
 }
 
 namespace {
-    std::vector<std::filesystem::path> targets(const std::string &kernel, const Log::Scope scope) {
-        std::vector<std::filesystem::path> found;
-        std::error_code error;
+std::vector<std::filesystem::path> targets(const std::string &kernel, const Log::Scope scope) {
+    std::vector<std::filesystem::path> found;
+    std::error_code error;
 
-        for (std::filesystem::directory_iterator it(Log::directory(), error), end;
-                !error && it != end; it.increment(error)) {
-            if (!it->is_directory(error)) {
-                continue;
-            }
-
-            const std::string name = it->path().filename().string();
-            const bool covered = scope == Log::Scope::Build
-                ? name == kernel
-                : kernel.empty() || name == kernel || name.starts_with(kernel + "-");
-
-            if (covered) {
-                found.push_back(it->path());
-            }
+    for (std::filesystem::directory_iterator it(Log::directory(), error), end; !error && it != end;
+         it.increment(error)) {
+        if (!it->is_directory(error)) {
+            continue;
         }
 
-        return found;
-    }
+        const std::string name = it->path().filename().string();
+        const bool covered = scope == Log::Scope::Build
+                                     ? name == kernel
+                                     : kernel.empty() || name == kernel || name.starts_with(kernel + "-");
 
-    // Close any log a run is writing, so the file is not pulled out from under it.
-    void release_under(const std::vector<std::filesystem::path> &going) {
-        std::lock_guard lock(s_mutex);
-
-        for (const std::filesystem::path &target : going) {
-            if (s_file.is_open()
-                    && (s_path == target.string() || s_path.starts_with(target.string() + "/"))) {
-                s_file.close();
-                s_path.clear();
-
-                return;
-            }
+        if (covered) {
+            found.push_back(it->path());
         }
     }
 
-    int count_files(const std::filesystem::path &directory) {
-        int files = 0;
-        std::error_code error;
+    return found;
+}
 
-        for (std::filesystem::directory_iterator it(directory, error), end;
-                !error && it != end; it.increment(error)) {
-            if (it->is_regular_file(error)) {
-                files++;
-            }
+// Close any log a run is writing, so the file is not pulled out from under it.
+void release_under(const std::vector<std::filesystem::path> &going) {
+    std::lock_guard lock(s_mutex);
+
+    for (const std::filesystem::path &target : going) {
+        if (s_file.is_open() && (s_path == target.string() || s_path.starts_with(target.string() + "/"))) {
+            s_file.close();
+            s_path.clear();
+
+            return;
         }
+    }
+}
 
-        return files;
+int count_files(const std::filesystem::path &directory) {
+    int files = 0;
+    std::error_code error;
+
+    for (std::filesystem::directory_iterator it(directory, error), end; !error && it != end; it.increment(error)) {
+        if (it->is_regular_file(error)) {
+            files++;
+        }
     }
 
-    int count_runs(const std::filesystem::path &directory) {
-        int runs = 0;
-        std::error_code error;
+    return files;
+}
 
-        for (std::filesystem::recursive_directory_iterator it(directory, error), end;
-                !error && it != end; it.increment(error)) {
-            if (it->is_regular_file(error)) {
-                runs++;
-            }
+int count_runs(const std::filesystem::path &directory) {
+    int runs = 0;
+    std::error_code error;
+
+    for (std::filesystem::recursive_directory_iterator it(directory, error), end; !error && it != end;
+         it.increment(error)) {
+        if (it->is_regular_file(error)) {
+            runs++;
         }
-
-        return runs;
     }
 
-    std::uintmax_t weigh_directory(const std::filesystem::path &directory) {
-        std::uintmax_t total = 0;
-        std::error_code error;
+    return runs;
+}
 
-        for (std::filesystem::recursive_directory_iterator it(directory, error), end;
-                !error && it != end; it.increment(error)) {
-            if (it->is_regular_file(error)) {
-                total += it->file_size(error);
-            }
+std::uintmax_t weigh_directory(const std::filesystem::path &directory) {
+    std::uintmax_t total = 0;
+    std::error_code error;
+
+    for (std::filesystem::recursive_directory_iterator it(directory, error), end; !error && it != end;
+         it.increment(error)) {
+        if (it->is_regular_file(error)) {
+            total += it->file_size(error);
         }
-
-        return total;
     }
+
+    return total;
+}
 }
 
 std::string Log::directory() {
@@ -211,19 +209,16 @@ std::vector<Log::Holding> Log::holdings() {
     std::vector<Holding> found;
     std::error_code error;
 
-    for (std::filesystem::directory_iterator it(directory(), error), end;
-            !error && it != end; it.increment(error)) {
+    for (std::filesystem::directory_iterator it(directory(), error), end; !error && it != end; it.increment(error)) {
         std::error_code inner;
 
         if (!it->is_directory(inner)) {
             continue;
         }
 
-        found.push_back(Holding {
-            .name = it->path().filename().string(),
-            .size = weigh_directory(it->path()),
-            .runs = count_runs(it->path())
-        });
+        found.push_back(Holding{.name = it->path().filename().string(),
+                                .size = weigh_directory(it->path()),
+                                .runs = count_runs(it->path())});
     }
 
     std::ranges::sort(found, [](const Holding &a, const Holding &b) {
@@ -237,18 +232,16 @@ std::vector<Log::Holding> Log::holdings() {
 std::vector<Log::Filed> Log::filed(const std::string &build) {
     const std::filesystem::path base = directory(build);
     std::vector<Filed> steps;
-    Filed whole { .operation = {}, .size = 0, .runs = 0 };
+    Filed whole{.operation = {}, .size = 0, .runs = 0};
     std::error_code error;
 
     for (std::filesystem::directory_iterator it(base, error), end; !error && it != end; it.increment(error)) {
         std::error_code inner;
 
         if (it->is_directory(inner)) {
-            steps.push_back(Filed {
-                .operation = it->path().filename().string(),
-                .size = weigh_directory(it->path()),
-                .runs = count_files(it->path())
-            });
+            steps.push_back(Filed{.operation = it->path().filename().string(),
+                                  .size = weigh_directory(it->path()),
+                                  .runs = count_files(it->path())});
         } else if (it->is_regular_file(inner)) {
             whole.size += it->file_size(inner);
             whole.runs++;
@@ -272,7 +265,7 @@ std::uintmax_t Log::clear_step(const std::string &build, const std::string &oper
         const std::uintmax_t weight = weigh_directory(target);
         std::error_code error;
 
-        release_under({ target });
+        release_under({target});
         std::filesystem::remove_all(target, error);
 
         return error ? 0 : weight;

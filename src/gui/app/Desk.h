@@ -13,17 +13,17 @@
 #include <string>
 
 namespace Desk {
-    bool reveal(const std::string &path);
+bool reveal(const std::string &path);
 
-    [[nodiscard]] std::string pretty(const std::string &path);
+[[nodiscard]] std::string pretty(const std::string &path);
 
-    void copy(const std::string &text);
+void copy(const std::string &text);
 
-    [[nodiscard]] bool is_directory(const std::string &path);
-    [[nodiscard]] bool is_file(const std::string &path);
+[[nodiscard]] bool is_directory(const std::string &path);
+[[nodiscard]] bool is_file(const std::string &path);
 
-    [[nodiscard]] std::string resolved_config(const std::string &version, const std::string &suffix);
-    [[nodiscard]] std::string resolved_patch(const std::string &version, const std::string &suffix);
+[[nodiscard]] std::string resolved_config(const std::string &version, const std::string &suffix);
+[[nodiscard]] std::string resolved_patch(const std::string &version, const std::string &suffix);
 }
 
 

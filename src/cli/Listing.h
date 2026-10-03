@@ -54,8 +54,7 @@ size_t widest(Iterator first, Iterator last) {
 }
 
 static void heading(const std::string &title, const size_t count) {
-    std::cout << "\n" << Ink::paint(title, BOLD)
-        << "  " << Ink::paint(std::to_string(count), DIM) << "\n";
+    std::cout << "\n" << Ink::paint(title, BOLD) << "  " << Ink::paint(std::to_string(count), DIM) << "\n";
 }
 
 static void nothing(const std::string &what) {
@@ -82,8 +81,8 @@ inline int run() {
     fact("Archives", Ink::pretty(settings->archiveDirectory));
 
     if (const std::uintmax_t logs = Log::weigh(); logs > 0) {
-        fact("Logs", Reporter::human_size(static_cast<double>(logs))
-            + Ink::paint(" in " + Ink::pretty(Log::directory()), DIM));
+        fact("Logs",
+             Reporter::human_size(static_cast<double>(logs)) + Ink::paint(" in " + Ink::pretty(Log::directory()), DIM));
     }
 
     heading("ARCHIVES", archives.size());
@@ -98,9 +97,8 @@ inline int run() {
         const std::string name = archive.get_version().get_string();
         const std::string size = size_of(archive.get_location());
 
-        std::cout << "  " << pad(Ink::paint(name, BOLD), name.length(), column)
-            << lead(size, 9) << "   "
-            << Ink::paint(archive.get_name(), DIM) << "\n";
+        std::cout << "  " << pad(Ink::paint(name, BOLD), name.length(), column) << lead(size, 9) << "   "
+                  << Ink::paint(archive.get_name(), DIM) << "\n";
     }
 
     heading("EXTRACTED", extracted.size());
@@ -115,8 +113,7 @@ inline int run() {
         const bool patched = kernel.is_patched();
         const bool configured = kernel.is_configured();
         const bool built = kernel.is_built();
-        const bool here = (kernel.get_status()
-            & (Kernel::ModulesInstalled | Kernel::ImageInstalled)) != 0;
+        const bool here = (kernel.get_status() & (Kernel::ModulesInstalled | Kernel::ImageInstalled)) != 0;
 
         const std::string name = kernel.get_version().get_string();
         const std::string first = configured ? "configured" : "not configured";
@@ -127,10 +124,8 @@ inline int run() {
         const std::string mark = patched ? "patched" : "";
 
         std::cout << "  " << pad(Ink::paint(name, BOLD), name.length(), column)
-            << pad(flag(mark, patched), mark.length(), 9)
-            << pad(flag(first, configured), first.length(), 16)
-            << pad(flag(second, built), second.length(), 11)
-            << flag(third, here) << "\n";
+                  << pad(flag(mark, patched), mark.length(), 9) << pad(flag(first, configured), first.length(), 16)
+                  << pad(flag(second, built), second.length(), 11) << flag(third, here) << "\n";
     }
 
     heading("INSTALLED", installed.size());
@@ -150,11 +145,11 @@ inline int run() {
         const bool now = name == running;
 
         std::cout << "  " << pad(Ink::paint(name, BOLD), name.length(), column)
-            << pad(flag("modules", (status & Kernel::ModulesInstalled) != 0), 7, 9)
-            << pad(flag("image", (status & Kernel::ImageInstalled) != 0), 5, 7)
-            << pad(flag("initramfs", (status & Kernel::InitramsInstalled) != 0), 9, 11)
-            << (now ? pad(flag(mark, endorsed), mark.length(), 10) : flag(mark, endorsed))
-            << (now ? Ink::paint("running now", GREEN) : "") << "\n";
+                  << pad(flag("modules", (status & Kernel::ModulesInstalled) != 0), 7, 9)
+                  << pad(flag("image", (status & Kernel::ImageInstalled) != 0), 5, 7)
+                  << pad(flag("initramfs", (status & Kernel::InitramsInstalled) != 0), 9, 11)
+                  << (now ? pad(flag(mark, endorsed), mark.length(), 10) : flag(mark, endorsed))
+                  << (now ? Ink::paint("running now", GREEN) : "") << "\n";
     }
 
     std::cout << "\n";

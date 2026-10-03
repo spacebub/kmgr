@@ -16,18 +16,21 @@
 // Two layers rather than one blended colour: the washes differ widely in alpha,
 // and a blend runs the alpha up before the colour moves, which reads as a flash.
 namespace Wash {
-    inline void paint(const ttk::Painter &painter, const BLRect &box, const double rounding,
-                      const double selected, const double hovered) {
-        const ttk::Theme::Palette &palette = ttk::Theme::palette();
+inline void paint(const ttk::Painter &painter,
+                  const BLRect &box,
+                  const double rounding,
+                  const double selected,
+                  const double hovered) {
+    const ttk::Theme::Palette &palette = ttk::Theme::palette();
 
-        if (selected > 0.0) {
-            painter.round(box, rounding, ttk::Theme::alpha(palette.accentSoft, selected));
-        }
-
-        if (hovered > 0.0 && selected <= 0.0) {
-            painter.round(box, rounding, ttk::Theme::alpha(palette.hover, hovered));
-        }
+    if (selected > 0.0) {
+        painter.round(box, rounding, ttk::Theme::alpha(palette.accentSoft, selected));
     }
+
+    if (hovered > 0.0 && selected <= 0.0) {
+        painter.round(box, rounding, ttk::Theme::alpha(palette.hover, hovered));
+    }
+}
 }
 
 

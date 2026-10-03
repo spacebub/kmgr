@@ -14,10 +14,10 @@
 #include <string>
 
 namespace Elevation {
-    void remember(const std::string &secret);
-    std::optional<std::string> recall();
-    void forget();
-    bool remembered();
+void remember(const std::string &secret);
+std::optional<std::string> recall();
+void forget();
+bool remembered();
 }
 
 

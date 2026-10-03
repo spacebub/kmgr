@@ -13,7 +13,7 @@
 #include "ttk/draw/Theme.h"
 
 namespace {
-    constexpr double MARGIN = 20.0;
+constexpr double MARGIN = 20.0;
 }
 
 void Frame::arrange(ttk::Typeface &type) {

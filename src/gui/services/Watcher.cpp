@@ -15,11 +15,10 @@
 #include "gui/services/Watcher.h"
 
 namespace {
-    constexpr double SETTLE_SECONDS = 0.6;
+constexpr double SETTLE_SECONDS = 0.6;
 }
 
-Watcher::Watcher(ttk::Clock *clock, std::function<void()> settled)
-        : _clock(clock), _settled(std::move(settled)) {
+Watcher::Watcher(ttk::Clock *clock, std::function<void()> settled) : _clock(clock), _settled(std::move(settled)) {
     _inotify = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
 
     if (_inotify < 0 || pipe(_wake) != 0) {
@@ -31,11 +30,11 @@ Watcher::Watcher(ttk::Clock *clock, std::function<void()> settled)
 
 Watcher::~Watcher() {
     if (_thread.joinable()) {
-        (void) write(_wake[1], "x", 1);
+        (void)write(_wake[1], "x", 1);
         _thread.join();
     }
 
-    for (const int fd : { _inotify, _wake[0], _wake[1] }) {
+    for (const int fd : {_inotify, _wake[0], _wake[1]}) {
         if (fd >= 0) {
             close(fd);
         }
@@ -60,9 +59,10 @@ void Watcher::watch(const std::vector<std::string> &directories) {
             continue;
         }
 
-        if (const int watch = inotify_add_watch(_inotify, directory.c_str(),
+        if (const int watch = inotify_add_watch(_inotify,
+                                                directory.c_str(),
                                                 IN_CREATE | IN_DELETE | IN_MOVED_FROM | IN_MOVED_TO | IN_ATTRIB
-                                                    | IN_DELETE_SELF | IN_MOVE_SELF);
+                                                        | IN_DELETE_SELF | IN_MOVE_SELF);
             watch >= 0) {
             _watches.push_back(watch);
         }
@@ -73,10 +73,8 @@ void Watcher::listen() {
     std::array<char, 4096> buffer{};
 
     while (true) {
-        pollfd waiting[2] = {
-            { .fd = _inotify, .events = POLLIN, .revents = 0 },
-            { .fd = _wake[0], .events = POLLIN, .revents = 0 }
-        };
+        pollfd waiting[2] = {{.fd = _inotify, .events = POLLIN, .revents = 0},
+                             {.fd = _wake[0], .events = POLLIN, .revents = 0}};
 
         if (poll(waiting, 2, -1) < 0) {
             continue;

@@ -6,17 +6,17 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
-#include <sys/utsname.h>
+#include "yyjson.h"
 #include <algorithm>
 #include <filesystem>
 #include <format>
 #include <fstream>
 #include <set>
-#include "yyjson.h"
+#include <sys/utsname.h>
 
-#include "Kernel.h"
-#include "Download.h"
 #include "Configuration.h"
+#include "Download.h"
+#include "Kernel.h"
 
 constexpr auto RELEASES_ENDPOINT = "https://kernel.org/releases.json";
 
@@ -31,7 +31,7 @@ Kernel Kernel::get_current() {
     return Kernel(osInfo.release);
 }
 
-Kernel Kernel::get_latest(const std::function<void (const Version &)> &callback) {
+Kernel Kernel::get_latest(const std::function<void(const Version &)> &callback) {
     const std::string releasesJson = Download(RELEASES_ENDPOINT).get_page();
 
     yyjson_doc *doc = yyjson_read(releasesJson.c_str(), releasesJson.size(), YYJSON_READ_NOFLAG);
@@ -56,8 +56,8 @@ std::vector<Kernel> Kernel::list_extracted() {
     // A missing base directory is an empty list, not an error.
     std::error_code error;
 
-    for (std::filesystem::directory_iterator it(Configuration::get()->baseDirectory, error), end;
-            !error && it != end; it.increment(error)) {
+    for (std::filesystem::directory_iterator it(Configuration::get()->baseDirectory, error), end; !error && it != end;
+         it.increment(error)) {
         const std::string filename = it->path().filename();
 
         if (!it->is_directory() || !filename.starts_with("linux-")) {
@@ -74,9 +74,8 @@ std::vector<Kernel> Kernel::list_extracted() {
     std::ranges::sort(kernels, [](const Kernel &a, const Kernel &b) {
         const std::strong_ordering order = a.get_version() <=> b.get_version();
 
-        return order == std::strong_ordering::equal
-            ? a.get_version().suffix < b.get_version().suffix
-            : order == std::strong_ordering::greater;
+        return order == std::strong_ordering::equal ? a.get_version().suffix < b.get_version().suffix
+                                                    : order == std::strong_ordering::greater;
     });
 
     return kernels;
@@ -86,7 +85,7 @@ std::vector<Kernel> Kernel::list_extracted() {
 std::vector<Kernel> Kernel::list_installed() {
     std::set<std::string> names;
 
-    for (const std::string &directory : { std::string("/usr/lib/modules"), std::string("/lib/modules") }) {
+    for (const std::string &directory : {std::string("/usr/lib/modules"), std::string("/lib/modules")}) {
         if (!std::filesystem::is_directory(directory)) {
             continue;
         }
@@ -125,9 +124,8 @@ std::vector<Kernel> Kernel::list_installed() {
     std::ranges::sort(kernels, [](const Kernel &a, const Kernel &b) {
         const std::strong_ordering order = a.get_version() <=> b.get_version();
 
-        return order == std::strong_ordering::equal
-            ? a.get_version().suffix < b.get_version().suffix
-            : order == std::strong_ordering::greater;
+        return order == std::strong_ordering::equal ? a.get_version().suffix < b.get_version().suffix
+                                                    : order == std::strong_ordering::greater;
     });
 
     return kernels;
@@ -160,9 +158,10 @@ Kernel::Version Kernel::get_version(const std::string &suffixedVersion) {
         }
     }
 
-    versionNumbers[counter] = std::stoi(separatorIndex == std::string::npos
-            ? suffixedVersion.substr(last + 1)
-            : suffixedVersion.substr(last + 1, suffixedVersion.length() - version.suffix.length() - last - 2));
+    versionNumbers[counter] = std::stoi(
+            separatorIndex == std::string::npos
+                    ? suffixedVersion.substr(last + 1)
+                    : suffixedVersion.substr(last + 1, suffixedVersion.length() - version.suffix.length() - last - 2));
 
     version.major = versionNumbers[0];
     version.minor = versionNumbers[1];
@@ -189,8 +188,7 @@ Kernel::Status Kernel::get_status() const {
     Status status = NotInstalled;
     const std::string version = get_version().get_string();
 
-    if (std::filesystem::exists("/usr/lib/modules/" + version)
-            || std::filesystem::exists("/lib/modules/" + version)) {
+    if (std::filesystem::exists("/usr/lib/modules/" + version) || std::filesystem::exists("/lib/modules/" + version)) {
         status = status | ModulesInstalled;
     }
     if (!get_image().empty()) {
@@ -204,7 +202,8 @@ Kernel::Status Kernel::get_status() const {
 }
 
 static std::string package_of(const std::string &version) {
-    for (const std::filesystem::path &directory : { std::filesystem::path("/usr/lib/modules"), std::filesystem::path("/lib/modules") }) {
+    for (const std::filesystem::path &directory :
+         {std::filesystem::path("/usr/lib/modules"), std::filesystem::path("/lib/modules")}) {
         const std::filesystem::path marker = directory / version / "pkgbase";
 
         if (!std::filesystem::exists(marker)) {
@@ -248,8 +247,7 @@ std::string Kernel::get_initramfs() const {
     }
 
     if (const std::string package = package_of(version); !package.empty()) {
-        if (const std::string packaged = boot + "/initramfs-" + package + ".img";
-                std::filesystem::exists(packaged)) {
+        if (const std::string packaged = boot + "/initramfs-" + package + ".img"; std::filesystem::exists(packaged)) {
             return packaged;
         }
     }
@@ -274,9 +272,9 @@ bool Kernel::is_signed() const {
 
     const auto read32 = [&header](const size_t offset) {
         return static_cast<uint32_t>(static_cast<unsigned char>(header[offset]))
-            | static_cast<uint32_t>(static_cast<unsigned char>(header[offset + 1])) << 8
-            | static_cast<uint32_t>(static_cast<unsigned char>(header[offset + 2])) << 16
-            | static_cast<uint32_t>(static_cast<unsigned char>(header[offset + 3])) << 24;
+               | static_cast<uint32_t>(static_cast<unsigned char>(header[offset + 1])) << 8
+               | static_cast<uint32_t>(static_cast<unsigned char>(header[offset + 2])) << 16
+               | static_cast<uint32_t>(static_cast<unsigned char>(header[offset + 3])) << 24;
     };
 
     if (header[0] != 'M' || header[1] != 'Z') {
@@ -290,7 +288,7 @@ bool Kernel::is_signed() const {
     }
 
     const uint16_t magic = static_cast<uint16_t>(static_cast<unsigned char>(header[pe + 24]))
-        | static_cast<uint16_t>(static_cast<unsigned char>(header[pe + 25])) << 8;
+                           | static_cast<uint16_t>(static_cast<unsigned char>(header[pe + 25])) << 8;
 
     // The certificate table is the fifth data directory of the optional header.
     const size_t directory = pe + 24 + (magic == 0x20b ? 112 : 96) + 4 * 8;
@@ -306,35 +304,39 @@ std::string Kernel::get_source_directory(const Version &version) {
     return Configuration::get()->baseDirectory + "/linux-" + version.get_string();
 }
 
-bool Kernel::is_configured() const { return is_configured(_version); }
-bool Kernel::is_built() const { return is_built(_version); }
-bool Kernel::is_patched() const { return is_patched(_version); }
+bool Kernel::is_configured() const {
+    return is_configured(_version);
+}
+bool Kernel::is_built() const {
+    return is_built(_version);
+}
+bool Kernel::is_patched() const {
+    return is_patched(_version);
+}
 
 bool Kernel::is_configured(const Version &version) {
     const std::string source = get_source_directory(version);
 
-    return std::filesystem::is_directory(source)
-        && std::filesystem::exists(source + "/.config");
+    return std::filesystem::is_directory(source) && std::filesystem::exists(source + "/.config");
 }
 
 bool Kernel::is_built(const Version &version) {
     const std::string source = get_source_directory(version);
 
     return std::filesystem::is_directory(source)
-        && (std::filesystem::exists(source + "/arch/x86/boot/bzImage")
-            || std::filesystem::exists(source + "/vmlinux"));
+           && (std::filesystem::exists(source + "/arch/x86/boot/bzImage")
+               || std::filesystem::exists(source + "/vmlinux"));
 }
 
 namespace {
-    Toolchain toolchain_of(const std::string &line) {
-        if (line.find("clang") != std::string::npos || line.find("Clang") != std::string::npos) {
-            return Toolchain::Llvm;
-        }
-
-        return line.find("gcc") != std::string::npos || line.find("GCC") != std::string::npos
-            ? Toolchain::Gcc
-            : Toolchain::Unknown;
+Toolchain toolchain_of(const std::string &line) {
+    if (line.find("clang") != std::string::npos || line.find("Clang") != std::string::npos) {
+        return Toolchain::Llvm;
     }
+
+    return line.find("gcc") != std::string::npos || line.find("GCC") != std::string::npos ? Toolchain::Gcc
+                                                                                          : Toolchain::Unknown;
+}
 }
 
 Toolchain Kernel::built_with(const Version &version) {
@@ -377,9 +379,9 @@ Toolchain Kernel::built_with(const Version &version) {
 }
 
 namespace {
-    std::string patch_marker(const Kernel::Version &version) {
-        return Kernel::get_source_directory(version) + "/.kernelmgr-patched";
-    }
+std::string patch_marker(const Kernel::Version &version) {
+    return Kernel::get_source_directory(version) + "/.kernelmgr-patched";
+}
 }
 
 bool Kernel::is_patched(const Version &version) {

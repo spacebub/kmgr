@@ -57,7 +57,7 @@ void Progress::poll() const {
         return;
     }
 
-    _onProgress(ProgressArgs { .total = _total, .completed = _completed });
+    _onProgress(ProgressArgs{.total = _total, .completed = _completed});
 }
 
 void Progress::end(const bool canceled) {
@@ -70,6 +70,6 @@ void Progress::end(const bool canceled) {
     _completed = 0;
 
     if (_onEnd) {
-        _onEnd(ProgressEndArgs { .canceled = canceled });
+        _onEnd(ProgressEndArgs{.canceled = canceled});
     }
 }

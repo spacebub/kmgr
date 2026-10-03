@@ -6,14 +6,13 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
-#include <filesystem>
 #include "DownloadTask.h"
+#include <filesystem>
 
 #include "core/Download.h"
 
-DownloadTask::DownloadTask(const std::string &url,
-                           const std::string &destination)
-                           : Task("Download task", std::make_unique<Progress>()) {
+DownloadTask::DownloadTask(const std::string &url, const std::string &destination)
+    : Task("Download task", std::make_unique<Progress>()) {
     _url = url;
     _destination = destination;
 }

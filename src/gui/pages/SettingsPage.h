@@ -18,6 +18,7 @@
 #include "gui/components/LogSteps.h"
 #include "gui/components/SettingRow.h"
 #include "ttk/draw/Anim.h"
+#include "ttk/toolkit/Widget.h"
 #include "ttk/toolkit/controls/Button.h"
 #include "ttk/toolkit/controls/Field.h"
 #include "ttk/toolkit/controls/Label.h"
@@ -26,7 +27,6 @@
 #include "ttk/toolkit/layout/Box.h"
 #include "ttk/toolkit/layout/Panel.h"
 #include "ttk/toolkit/layout/Scroll.h"
-#include "ttk/toolkit/Widget.h"
 
 struct Reach;
 
@@ -88,8 +88,8 @@ private:
     };
 
     // In switch order, spelled the way the settings file writes them.
-    static constexpr const char *TOOLCHAINS[] = { "gcc", "llvm", "custom" };
-    static constexpr const char *SECTIONS[] = { "General", "Build", "Password", "Logs" };
+    static constexpr const char *TOOLCHAINS[] = {"gcc", "llvm", "custom"};
+    static constexpr const char *SECTIONS[] = {"General", "Build", "Password", "Logs"};
 
     [[nodiscard]] int wanted_jobs() const;
     [[nodiscard]] bool dirty() const;

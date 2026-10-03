@@ -13,11 +13,11 @@
 #include "ttk/toolkit/layout/Wrap.h"
 
 namespace {
-    using Palette = ttk::Theme::Palette;
+using Palette = ttk::Theme::Palette;
 }
 
 InstalledCard::InstalledCard(const Catalog::Build &kernel, std::function<void(const std::string &)> action)
-        : _action(std::move(action)), _name(kernel.name) {
+    : _action(std::move(action)), _name(kernel.name) {
     const ttk::Theme::Palette &palette = ttk::Theme::palette();
 
     inset = true;
@@ -46,8 +46,9 @@ InstalledCard::InstalledCard(const Catalog::Build &kernel, std::function<void(co
 
     // Only worth offering when there is nothing left to rebuild from.
     _download = buttons->append(std::make_unique<ttk::Button>("Download", [this] { _action("download"); }));
-    _download->kind(ttk::Button::Kind::Primary)->compact()
-        ->tooltip("Fetch the archive this kernel came from, to have something to rebuild it from");
+    _download->kind(ttk::Button::Kind::Primary)
+            ->compact()
+            ->tooltip("Fetch the archive this kernel came from, to have something to rebuild it from");
 
     _sign = buttons->append(std::make_unique<ttk::Button>("Sign", [this] { _action("sign"); }));
     _sign->compact();
@@ -56,7 +57,10 @@ InstalledCard::InstalledCard(const Catalog::Build &kernel, std::function<void(co
     _remove->kind(ttk::Button::Kind::Danger)->compact();
 }
 
-void InstalledCard::sync(const Catalog::Build &kernel, const bool idle, const bool signable, const bool archived,
+void InstalledCard::sync(const Catalog::Build &kernel,
+                         const bool idle,
+                         const bool signable,
+                         const bool archived,
                          const std::string &version) {
     _title->set_text(kernel.name);
     _running->set_visible(kernel.running);

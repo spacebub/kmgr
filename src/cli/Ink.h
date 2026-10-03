@@ -28,56 +28,54 @@
 #define CYAN "\x1B[36m"
 
 namespace Ink {
-    inline bool interactive() {
-        static const bool tty = isatty(STDOUT_FILENO) == 1;
+inline bool interactive() {
+    static const bool tty = isatty(STDOUT_FILENO) == 1;
 
-        return tty;
+    return tty;
+}
+
+inline bool colored() {
+    static const bool on = interactive() && getenv("NO_COLOR") == nullptr && Configuration::get()->colors;
+
+    return on;
+}
+
+inline std::string paint(const std::string &text, const char *color) {
+    return colored() ? std::string(color) + text + RESET : text;
+}
+
+inline int columns() {
+    winsize size{};
+
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &size) == 0 && size.ws_col > 20) {
+        return size.ws_col;
     }
 
-    inline bool colored() {
-        static const bool on = interactive()
-            && getenv("NO_COLOR") == nullptr
-            && Configuration::get()->colors;
+    return 80;
+}
 
-        return on;
+inline std::string elide(const std::string &text, const size_t room) {
+    if (text.length() <= room || room < 12) {
+        return text;
     }
 
-    inline std::string paint(const std::string &text, const char *color) {
-        return colored() ? std::string(color) + text + RESET : text;
+    const size_t head = room * 2 / 5;
+    const size_t tail = room - head - 1;
+
+    return text.substr(0, head) + "…" + text.substr(text.length() - tail);
+}
+
+inline std::string pretty(const std::string &path) {
+    const char *home = getenv("HOME");
+
+    if (home == nullptr || *home == '\0') {
+        return path;
     }
 
-    inline int columns() {
-        winsize size{};
+    const std::string prefix = std::string(home) + "/";
 
-        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &size) == 0 && size.ws_col > 20) {
-            return size.ws_col;
-        }
-
-        return 80;
-    }
-
-    inline std::string elide(const std::string &text, const size_t room) {
-        if (text.length() <= room || room < 12) {
-            return text;
-        }
-
-        const size_t head = room * 2 / 5;
-        const size_t tail = room - head - 1;
-
-        return text.substr(0, head) + "…" + text.substr(text.length() - tail);
-    }
-
-    inline std::string pretty(const std::string &path) {
-        const char *home = getenv("HOME");
-
-        if (home == nullptr || *home == '\0') {
-            return path;
-        }
-
-        const std::string prefix = std::string(home) + "/";
-
-        return path.starts_with(prefix) ? "~/" + path.substr(prefix.length()) : path;
-    }
+    return path.starts_with(prefix) ? "~/" + path.substr(prefix.length()) : path;
+}
 }
 
 

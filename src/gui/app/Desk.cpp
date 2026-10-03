@@ -16,36 +16,36 @@
 
 namespace Desk {
 
-    bool reveal(const std::string &path) {
-        return !path.empty() && ttk::Desktop::open(path);
-    }
+bool reveal(const std::string &path) {
+    return !path.empty() && ttk::Desktop::open(path);
+}
 
-    std::string pretty(const std::string &path) {
-        return ttk::Format::pretty_path(path);
-    }
+std::string pretty(const std::string &path) {
+    return ttk::Format::pretty_path(path);
+}
 
-    void copy(const std::string &text) {
-        ttk::Clipboard::write(text);
-    }
+void copy(const std::string &text) {
+    ttk::Clipboard::write(text);
+}
 
-    bool is_directory(const std::string &path) {
-        std::error_code error;
+bool is_directory(const std::string &path) {
+    std::error_code error;
 
-        return std::filesystem::is_directory(path, error);
-    }
+    return std::filesystem::is_directory(path, error);
+}
 
-    bool is_file(const std::string &path) {
-        std::error_code error;
+bool is_file(const std::string &path) {
+    std::error_code error;
 
-        return std::filesystem::is_regular_file(path, error);
-    }
+    return std::filesystem::is_regular_file(path, error);
+}
 
-    std::string resolved_config(const std::string &version, const std::string &suffix) {
-        return Kernel::find_config(Kernel::get_version(version, suffix));
-    }
+std::string resolved_config(const std::string &version, const std::string &suffix) {
+    return Kernel::find_config(Kernel::get_version(version, suffix));
+}
 
-    std::string resolved_patch(const std::string &version, const std::string &suffix) {
-        return Kernel::find_patch(Kernel::get_version(version, suffix));
-    }
+std::string resolved_patch(const std::string &version, const std::string &suffix) {
+    return Kernel::find_patch(Kernel::get_version(version, suffix));
+}
 
 }

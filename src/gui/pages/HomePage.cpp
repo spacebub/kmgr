@@ -6,21 +6,21 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
+#include "gui/pages/HomePage.h"
 #include "gui/app/Desk.h"
 #include "gui/app/Reach.h"
 #include "gui/components/Parts.h"
-#include "gui/pages/HomePage.h"
 #include "ttk/draw/Theme.h"
 #include "ttk/toolkit/Root.h"
 #include "ttk/toolkit/layout/Panel.h"
 #include "ttk/toolkit/layout/Spacer.h"
 
 namespace {
-    using Palette = ttk::Theme::Palette;
+using Palette = ttk::Theme::Palette;
 
-    const ttk::Theme::Palette &palette() {
-        return ttk::Theme::palette();
-    }
+const ttk::Theme::Palette &palette() {
+    return ttk::Theme::palette();
+}
 }
 
 void HomePage::Arrow::paint(const ttk::Painter &painter) {
@@ -69,8 +69,7 @@ HomePage::HomePage(Reach *reach) : Box(Flow::Column), _reach(reach) {
     // Only shown when the versions above do not already say it.
     _status = news->append(Parts::pill("", &Palette::success, &Palette::successSoft));
 
-    _ahead = news->append(Parts::text("Nothing newer has been released.", 400, ttk::Theme::fontBody,
-                                      &Palette::muted));
+    _ahead = news->append(Parts::text("Nothing newer has been released.", 400, ttk::Theme::fontBody, &Palette::muted));
 
     _retry = news->append(std::make_unique<ttk::Button>("Retry", [this] { _reach->system.check_latest(); }));
     _retry->tooltip("Ask kernel.org again");
@@ -80,9 +79,11 @@ HomePage::HomePage(Reach *reach) : Box(Flow::Column), _reach(reach) {
 
         _reach->ask("Update to " + system.latest() + "?",
                     system.latest() + (system.suffix().empty() ? "" : "-" + system.suffix())
-                        + " is downloaded, built and installed, then " + system.release()
-                        + " is removed. Steps that touch /boot and /usr/lib ask for your password.",
-                    "Start the update", false, [this] { _reach->workflow.update(); });
+                            + " is downloaded, built and installed, then " + system.release()
+                            + " is removed. Steps that touch /boot and /usr/lib ask for your password.",
+                    "Start the update",
+                    false,
+                    [this] { _reach->workflow.update(); });
     }));
     _update->kind(ttk::Button::Kind::Primary);
 
@@ -100,10 +101,11 @@ HomePage::HomePage(Reach *reach) : Box(Flow::Column), _reach(reach) {
     caption->cross(Place::Centre);
     caption->append(Parts::section("ON THIS MACHINE"))->stretch = 1.0;
     caption->append(std::make_unique<ttk::Button>("Open Kernels", [this] { _reach->show(""); }))
-        ->kind(ttk::Button::Kind::Ghost)->compact();
+            ->kind(ttk::Button::Kind::Ghost)
+            ->compact();
 
     _empty = listing->append(std::make_unique<EmptyState>(
-        "Nothing here yet", "Kernels lets you fetch a version from kernel.org and build it."));
+            "Nothing here yet", "Kernels lets you fetch a version from kernel.org and build it."));
 
     _preview = listing->append(std::make_unique<VersionList>(true, [this](const int row) {
         if (const Catalog::Entry *entry = _reach->catalog.at(row); entry != nullptr) {
@@ -173,19 +175,18 @@ void HomePage::sync() {
 
     const std::string jobs = std::to_string(settings.jobs > 0 ? settings.jobs : SettingsBridge::detected_jobs());
 
-    _facts->set_text((system.suffix().empty() ? "no suffix" : system.suffix())
-                     + "   ·   built with " + system.compiler()
-                     + "   ·   " + (system.image_installed()
-                                        ? (system.image_signed() ? "image signed" : "image unsigned")
-                                        : "no image installed")
-                     + "   ·   " + (system.secure_boot() ? "sbctl ready" : "no sbctl")
-                     + "   ·   " + jobs + " build jobs");
+    _facts->set_text((system.suffix().empty() ? "no suffix" : system.suffix()) + "   ·   built with "
+                     + system.compiler() + "   ·   "
+                     + (system.image_installed() ? (system.image_signed() ? "image signed" : "image unsigned")
+                                                 : "no image installed")
+                     + "   ·   " + (system.secure_boot() ? "sbctl ready" : "no sbctl") + "   ·   " + jobs
+                     + " build jobs");
 
     _status->set_visible(!update);
     _status->set_text(status());
 
-    if (const std::string shape = system.current() + '\n' + system.latest() + '\n' + _facts->text() + '\n'
-            + status() + (system.checking() ? "c" : "");
+    if (const std::string shape = system.current() + '\n' + system.latest() + '\n' + _facts->text() + '\n' + status()
+                                  + (system.checking() ? "c" : "");
         shape != _shape) {
         _shape = shape;
 
@@ -194,9 +195,11 @@ void HomePage::sync() {
         }
     }
 
+    // clang-format off
     const Parts::Tones tones = system.checking()       ? Parts::Tones{&Palette::muted, &Palette::mutedSoft}
                              : !system.latest_known()  ? Parts::Tones{&Palette::warning, &Palette::warningSoft}
                                                        : Parts::Tones{&Palette::success, &Palette::successSoft};
+    // clang-format on
     _status->tones(tones.tone, tones.wash);
     _status->invalidate();
 
@@ -217,12 +220,10 @@ void HomePage::sync() {
         std::vector<VersionList::Row> rows;
 
         for (const Catalog::Entry &entry : catalog.entries()) {
-            rows.push_back(VersionList::Row{
-                .version = entry.name,
-                .summary = entry.summary(),
-                .running = entry.running,
-                .installed = static_cast<int>(entry.installed.size())
-            });
+            rows.push_back(VersionList::Row{.version = entry.name,
+                                            .summary = entry.summary(),
+                                            .running = entry.running,
+                                            .installed = static_cast<int>(entry.installed.size())});
         }
 
         _preview->set_rows(std::move(rows));

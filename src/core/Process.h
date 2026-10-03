@@ -38,8 +38,8 @@ private:
     std::string _line;
     bool _prompted = false;
 
-    std::function<void (const std::string &data)> _onOutput = nullptr;
-    std::function<void (const Prompt &prompt)> _onPrompt = nullptr;
+    std::function<void(const std::string &data)> _onOutput = nullptr;
+    std::function<void(const Prompt &prompt)> _onPrompt = nullptr;
 
     void consume(const char *data, size_t size);
     void check_prompt();
@@ -53,8 +53,8 @@ public:
     Process &with_environment(const std::string &variable, const std::string &value);
     Process &elevated();
 
-    void on_output(const std::function<void (const std::string &data)> &callback);
-    void on_prompt(const std::function<void (const Prompt &prompt)> &callback);
+    void on_output(const std::function<void(const std::string &data)> &callback);
+    void on_prompt(const std::function<void(const Prompt &prompt)> &callback);
 
     [[nodiscard]] const std::string &get_command() const;
     [[nodiscard]] bool is_running() const;

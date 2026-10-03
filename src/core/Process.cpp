@@ -7,65 +7,64 @@
  *	spacebub <spacebubs@proton.me>
  */
 #include <algorithm>
+#include <csignal>
 #include <cstring>
 #include <poll.h>
 #include <pty.h>
-#include <csignal>
 #include <stdexcept>
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "Process.h"
 #include "Configuration.h"
+#include "Process.h"
 
 namespace {
-    constexpr int POLL_INTERVAL = 100;
-    constexpr int PROMPT_IDLE_INTERVAL = 600;
-    constexpr size_t BUFFER_SIZE = 8192;
-    constexpr size_t MAX_LINE = 4096;
+constexpr int POLL_INTERVAL = 100;
+constexpr int PROMPT_IDLE_INTERVAL = 600;
+constexpr size_t BUFFER_SIZE = 8192;
+constexpr size_t MAX_LINE = 4096;
 
-    bool is_secret(const std::string &line) {
-        std::string lowered = line;
-        std::ranges::transform(lowered, lowered.begin(), tolower);
+bool is_secret(const std::string &line) {
+    std::string lowered = line;
+    std::ranges::transform(lowered, lowered.begin(), tolower);
 
-        return lowered.find("password") != std::string::npos
-            || lowered.find("passphrase") != std::string::npos;
-    }
+    return lowered.find("password") != std::string::npos || lowered.find("passphrase") != std::string::npos;
+}
 
-    // Escape sequences are of no use to a log view and would break prompt matching.
-    std::string sanitize(const char *data, const size_t size) {
-        std::string clean;
-        clean.reserve(size);
+// Escape sequences are of no use to a log view and would break prompt matching.
+std::string sanitize(const char *data, const size_t size) {
+    std::string clean;
+    clean.reserve(size);
 
-        for (size_t index = 0; index < size; ++index) {
-            const char character = data[index];
+    for (size_t index = 0; index < size; ++index) {
+        const char character = data[index];
 
-            if (character == '\x1B') {
-                size_t next = index + 1;
+        if (character == '\x1B') {
+            size_t next = index + 1;
 
-                if (next < size && (data[next] == '[' || data[next] == ']')) {
-                    const bool osc = data[next] == ']';
+            if (next < size && (data[next] == '[' || data[next] == ']')) {
+                const bool osc = data[next] == ']';
 
-                    for (++next; next < size; ++next) {
-                        if (osc ? data[next] == '\a' : data[next] >= '@' && data[next] <= '~') {
-                            break;
-                        }
+                for (++next; next < size; ++next) {
+                    if (osc ? data[next] == '\a' : data[next] >= '@' && data[next] <= '~') {
+                        break;
                     }
                 }
-
-                index = next;
-                continue;
             }
 
-            if (character == '\r' || character == '\b') {
-                continue;
-            }
-
-            clean += character;
+            index = next;
+            continue;
         }
 
-        return clean;
+        if (character == '\r' || character == '\b') {
+            continue;
+        }
+
+        clean += character;
     }
+
+    return clean;
+}
 }
 
 Process::Process(std::string command) : _command(std::move(command)) {
@@ -143,14 +142,9 @@ int Process::run() {
     char shell[] = "/bin/sh";
     char flag[] = "-c";
     std::string command = _command;
-    char *const argv[] = { shell, flag, command.data(), nullptr };
+    char *const argv[] = {shell, flag, command.data(), nullptr};
 
-    constexpr winsize size {
-        .ws_row = 50,
-        .ws_col = 200,
-        .ws_xpixel = 0,
-        .ws_ypixel = 0
-    };
+    constexpr winsize size{.ws_row = 50, .ws_col = 200, .ws_xpixel = 0, .ws_ypixel = 0};
 
     int master = -1;
     const pid_t pid = forkpty(&master, nullptr, nullptr, &size);
@@ -174,7 +168,7 @@ int Process::run() {
     _prompted = false;
 
     char buffer[BUFFER_SIZE];
-    pollfd descriptor { .fd = master, .events = POLLIN, .revents = 0 };
+    pollfd descriptor{.fd = master, .events = POLLIN, .revents = 0};
     int idle = 0;
     bool killed = false;
 
@@ -291,5 +285,5 @@ void Process::check_prompt() {
     }
 
     _prompted = true;
-    _onPrompt(Prompt { .text = prompt, .secret = is_secret(prompt) });
+    _onPrompt(Prompt{.text = prompt, .secret = is_secret(prompt)});
 }

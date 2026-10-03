@@ -25,49 +25,49 @@
 struct Reach;
 
 namespace Parts {
-    std::unique_ptr<ttk::Label> section(const std::string &text);
+std::unique_ptr<ttk::Label> section(const std::string &text);
 
-    std::unique_ptr<ttk::Label> text(const std::string &text, int weight, float size, ttk::Theme::Tone tone);
+std::unique_ptr<ttk::Label> text(const std::string &text, int weight, float size, ttk::Theme::Tone tone);
 
-    std::unique_ptr<ttk::Label> note(const std::string &text);
+std::unique_ptr<ttk::Label> note(const std::string &text);
 
-    // Clickable, it opens `opens`, or the path itself when that is empty.
-    std::unique_ptr<ttk::Label> path(Reach *reach, const std::string &path, bool clickable,
-                                     const std::string &opens = {});
+// Clickable, it opens `opens`, or the path itself when that is empty.
+std::unique_ptr<ttk::Label> path(Reach *reach, const std::string &path, bool clickable, const std::string &opens = {});
 
-    std::unique_ptr<ttk::Pill> pill(const std::string &text, ttk::Theme::Tone tone, ttk::Theme::Tone wash,
-                                    bool dot = true);
+std::unique_ptr<ttk::Pill> pill(const std::string &text, ttk::Theme::Tone tone, ttk::Theme::Tone wash, bool dot = true);
 
-    std::unique_ptr<ttk::GlyphButton> glyph_button(ttk::Glyphs::Glyph glyph, double size,
-                                                   const std::string &hint, ttk::Theme::Tone rest,
-                                                   ttk::Theme::Tone hot, ttk::Theme::Tone wash,
-                                                   std::function<void()> clicked);
+std::unique_ptr<ttk::GlyphButton> glyph_button(ttk::Glyphs::Glyph glyph,
+                                               double size,
+                                               const std::string &hint,
+                                               ttk::Theme::Tone rest,
+                                               ttk::Theme::Tone hot,
+                                               ttk::Theme::Tone wash,
+                                               std::function<void()> clicked);
 
-    std::unique_ptr<ttk::Box> above(double top, ttk::Widget::Ptr child);
+std::unique_ptr<ttk::Box> above(double top, ttk::Widget::Ptr child);
 
-    std::unique_ptr<ttk::Box> centred(ttk::Widget::Ptr child);
+std::unique_ptr<ttk::Box> centred(ttk::Widget::Ptr child);
 
-    class Rule : public ttk::Widget {
-    public:
-        explicit Rule(const double opacity = 1.0) : _opacity(opacity) { fixedHeight = 1.0; }
+class Rule : public ttk::Widget {
+public:
+    explicit Rule(const double opacity = 1.0) : _opacity(opacity) { fixedHeight = 1.0; }
 
-        void paint(const ttk::Painter &painter) override {
-            painter.fill(BLRect{_box.x, _box.y, _box.w, 1.0},
-                         ttk::Theme::alpha(ttk::Theme::palette().border, _opacity));
-        }
+    void paint(const ttk::Painter &painter) override {
+        painter.fill(BLRect{_box.x, _box.y, _box.w, 1.0}, ttk::Theme::alpha(ttk::Theme::palette().border, _opacity));
+    }
 
-    private:
-        double _opacity;
-    };
+private:
+    double _opacity;
+};
 
-    struct Tones {
-        ttk::Theme::Tone tone;
-        ttk::Theme::Tone wash;
-    };
+struct Tones {
+    ttk::Theme::Tone tone;
+    ttk::Theme::Tone wash;
+};
 
-    Tones lit(bool on, ttk::Theme::Tone tone, ttk::Theme::Tone wash);
+Tones lit(bool on, ttk::Theme::Tone tone, ttk::Theme::Tone wash);
 
-    bool shown(const ttk::Widget *widget);
+bool shown(const ttk::Widget *widget);
 }
 
 

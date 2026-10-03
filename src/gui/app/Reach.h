@@ -51,12 +51,18 @@ struct Reach {
 
     std::function<void()> refresh;
 
-    std::function<void(const std::string &title, const std::string &body,
-                       const std::string &accept, bool danger,
-                       std::function<void()> accepted)> ask;
+    std::function<void(const std::string &title,
+                       const std::string &body,
+                       const std::string &accept,
+                       bool danger,
+                       std::function<void()> accepted)>
+            ask;
 
-    std::function<void(const std::string &title, const std::vector<std::string> &filters,
-                       bool directories, std::function<void(const std::string &)> chosen)> pick;
+    std::function<void(const std::string &title,
+                       const std::vector<std::string> &filters,
+                       bool directories,
+                       std::function<void(const std::string &)> chosen)>
+            pick;
 };
 
 

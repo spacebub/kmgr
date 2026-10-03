@@ -25,8 +25,7 @@ protected:
     bool prepare() override;
 
 public:
-    explicit ConfigureTask(Kernel::Version version, std::string config = {},
-                           Toolchain compiler = Toolchain::Gcc);
+    explicit ConfigureTask(Kernel::Version version, std::string config = {}, Toolchain compiler = Toolchain::Gcc);
 };
 
 

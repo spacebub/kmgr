@@ -16,15 +16,16 @@
 #include "gui/model/WorkflowRunner.h"
 
 namespace {
-    constexpr double FLUSH_SECONDS = 0.16;
+constexpr double FLUSH_SECONDS = 0.16;
 
-    // Output kept while nobody is watching. It is cut back only once it grows well
-    // past this, since each cut moves everything that is kept.
-    constexpr std::string::size_type OUTPUT_LIMIT = 65000;
+// Output kept while nobody is watching. It is cut back only once it grows well
+// past this, since each cut moves everything that is kept.
+constexpr std::string::size_type OUTPUT_LIMIT = 65000;
 }
 
 WorkflowRunner::WorkflowRunner(ttk::Clock *clock, ttk::Notifier *notifier, DesktopAlert *alert)
-        : _clock(clock), _notifier(notifier), _alert(alert) {}
+    : _clock(clock), _notifier(notifier), _alert(alert) {
+}
 
 WorkflowRunner::~WorkflowRunner() {
     if (_running) {
@@ -81,7 +82,8 @@ BuildConfig::Choices WorkflowRunner::choices(const std::string &version, const s
     return choices;
 }
 
-void WorkflowRunner::set_choices(const std::string &version, const std::string &suffix,
+void WorkflowRunner::set_choices(const std::string &version,
+                                 const std::string &suffix,
                                  const BuildConfig::Choices &values) {
     // Unknown is saved as GCC, which is what a build with no answer is made with.
     BuildConfig::Choices choices = values;
@@ -267,8 +269,7 @@ void WorkflowRunner::start(const Options &options, const std::string &nothingToD
     // every build of its version.
     _version = workflow->get_kernel();
 
-    if (const std::string tail = "-" + options.suffix;
-        !options.suffix.empty() && _version.ends_with(tail)) {
+    if (const std::string tail = "-" + options.suffix; !options.suffix.empty() && _version.ends_with(tail)) {
         _version.resize(_version.size() - tail.size());
     }
 
@@ -339,7 +340,8 @@ void WorkflowRunner::run(const std::shared_ptr<Workflow> &workflow) {
             // Nothing moves until this is answered, so the desktop is told too and the
             // alert stays up.
             _alert->post(_description + " · " + _title,
-                         _prompt.empty() ? "Waiting for input." : _prompt, DesktopAlert::Urgency::Critical);
+                         _prompt.empty() ? "Waiting for input." : _prompt,
+                         DesktopAlert::Urgency::Critical);
 
             touch();
         });
@@ -436,9 +438,7 @@ void WorkflowRunner::measure() {
     const auto now = std::chrono::steady_clock::now();
 
     if (const double seconds = std::chrono::duration<double>(now - _sampledAt).count(); seconds >= 0.35) {
-        const double rate = _completed >= _sampled
-            ? static_cast<double>(_completed - _sampled) / seconds
-            : 0;
+        const double rate = _completed >= _sampled ? static_cast<double>(_completed - _sampled) / seconds : 0;
 
         _rate = _rate > 0 ? _rate * 0.6 + rate * 0.4 : rate;
         _sampled = _completed;

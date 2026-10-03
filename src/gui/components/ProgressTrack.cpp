@@ -14,12 +14,12 @@
 #include "ttk/toolkit/Root.h"
 
 namespace {
-    constexpr double SWEEP_SECONDS = 1.15;
-    constexpr double SWEEP_SHARE = 0.32;
+constexpr double SWEEP_SECONDS = 1.15;
+constexpr double SWEEP_SHARE = 0.32;
 
-    double in_out_quad(const double at) {
-        return at < 0.5 ? 2.0 * at * at : 1.0 - (std::pow((-2.0 * at) + 2.0, 2.0) / 2.0);
-    }
+double in_out_quad(const double at) {
+    return at < 0.5 ? 2.0 * at * at : 1.0 - (std::pow((-2.0 * at) + 2.0, 2.0) / 2.0);
+}
 }
 
 void ProgressTrack::set_value(const int value) {

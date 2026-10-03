@@ -10,10 +10,10 @@
 #define KERNELMGR_ARCHIVE_H
 
 
-#include <string>
-#include <vector>
 #include "Kernel.h"
 #include "Progress.h"
+#include <string>
+#include <vector>
 
 class KernelArchive {
     Kernel::Version _kernelVersion;

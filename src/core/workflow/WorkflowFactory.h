@@ -10,9 +10,9 @@
 #define KERNELMGR_WORKFLOWFACTORY_H
 
 
-#include <string>
 #include "Workflow.h"
 #include "core/Toolchain.h"
+#include <string>
 
 struct Options {
     enum Stage {
@@ -57,8 +57,8 @@ struct Options {
 };
 
 namespace WorkflowFactory {
-    Workflow *create(const Options &options);
-    Options autoupdate();
+Workflow *create(const Options &options);
+Options autoupdate();
 }
 
 

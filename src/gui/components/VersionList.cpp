@@ -15,7 +15,7 @@
 #include "ttk/toolkit/Root.h"
 
 VersionList::VersionList(const bool compact, std::function<void(int)> picked)
-        : _compact(compact), _picked(std::move(picked)) {
+    : _compact(compact), _picked(std::move(picked)) {
     _takesPointer = true;
 }
 
@@ -70,17 +70,21 @@ void VersionList::paint(const ttk::Painter &painter) {
             const double named = painter.width(name, row.version);
             double x = line.x + 12.0;
 
-            painter.circle(BLPoint{x + 4.0, line.y + (line.h / 2.0)}, 4.0,
-                           row.running ? palette.success : row.installed > 0 ? palette.accent : palette.border);
+            painter.circle(BLPoint{x + 4.0, line.y + (line.h / 2.0)},
+                           4.0,
+                           row.running         ? palette.success
+                           : row.installed > 0 ? palette.accent
+                                               : palette.border);
             x += 8.0 + 10.0;
 
-            painter.label(name, BLRect{x, line.y, named + 2.0, line.h}, ttk::Align::Start, row.version,
-                          palette.text);
+            painter.label(name, BLRect{x, line.y, named + 2.0, line.h}, ttk::Align::Start, row.version, palette.text);
             x += named + 10.0;
 
             painter.label(painter.font(400, ttk::Theme::fontSmall),
                           BLRect{x, line.y, std::max(0.0, line.x + line.w - 14.0 - x), line.h},
-                          ttk::Align::Start, row.summary, palette.faint);
+                          ttk::Align::Start,
+                          row.summary,
+                          palette.faint);
 
             continue;
         }
@@ -104,8 +108,8 @@ void VersionList::paint(const ttk::Painter &painter) {
             painter.circle(BLPoint{left + named + 7.0 + 4.0, top + (tall / 2.0)}, 4.0, palette.success);
         }
 
-        painter.label(small, BLRect{left, top + tall + 3.0, room, short_}, ttk::Align::Start, row.summary,
-                      palette.faint);
+        painter.label(
+                small, BLRect{left, top + tall + 3.0, room, short_}, ttk::Align::Start, row.summary, palette.faint);
     }
 
     painter.pop();

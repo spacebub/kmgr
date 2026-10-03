@@ -37,7 +37,7 @@ public:
 
 private:
     // In switch order, spelled the way the settings file writes them.
-    static constexpr const char *TOOLCHAINS[] = { "gcc", "llvm", "custom" };
+    static constexpr const char *TOOLCHAINS[] = {"gcc", "llvm", "custom"};
 
     [[nodiscard]] static std::string toolchain_label(const std::string &name);
     [[nodiscard]] static int toolchain_index(const std::string &name);

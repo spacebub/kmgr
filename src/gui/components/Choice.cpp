@@ -15,9 +15,9 @@
 #include "ttk/toolkit/Root.h"
 
 namespace {
-    constexpr double SIDES = 3.0;
-    constexpr double GAP = 2.0;
-    constexpr double LEAST = 56.0;
+constexpr double SIDES = 3.0;
+constexpr double GAP = 2.0;
+constexpr double LEAST = 56.0;
 }
 
 Choice::Choice(std::function<void(int)> selected) : _selected(std::move(selected)) {
@@ -149,8 +149,11 @@ void Choice::paint(const ttk::Painter &painter) {
         const bool picked = std::cmp_equal(index, _current);
         const BLRgba32 ink = picked ? palette.text : palette.muted;
 
-        painter.label(painter.font(picked ? 600 : 400, ttk::Theme::fontSmall), word.box, ttk::Align::Centre,
-                      word.text, blocked(static_cast<int>(index)) ? ttk::Theme::alpha(ink, 0.45) : ink);
+        painter.label(painter.font(picked ? 600 : 400, ttk::Theme::fontSmall),
+                      word.box,
+                      ttk::Align::Centre,
+                      word.text,
+                      blocked(static_cast<int>(index)) ? ttk::Theme::alpha(ink, 0.45) : ink);
     }
 }
 

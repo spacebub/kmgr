@@ -26,6 +26,7 @@ static void put(const std::vector<std::string> &values) {
     }
 }
 
+// clang-format off
 inline std::vector<std::string> flags() {
     return {
         "-p", "--path",
@@ -55,6 +56,7 @@ inline std::vector<std::string> flags() {
         "--completion"
     };
 }
+// clang-format on
 
 inline std::vector<std::string> kernels() {
     std::set<std::string> names;
@@ -74,7 +76,7 @@ inline std::vector<std::string> kernels() {
     } catch (const std::exception &) {
     }
 
-    return { names.begin(), names.end() };
+    return {names.begin(), names.end()};
 }
 
 inline std::vector<std::string> installed() {
@@ -87,7 +89,7 @@ inline std::vector<std::string> installed() {
     } catch (const std::exception &) {
     }
 
-    return { names.begin(), names.end() };
+    return {names.begin(), names.end()};
 }
 
 inline std::vector<std::string> suffixes() {
@@ -102,7 +104,7 @@ inline std::vector<std::string> suffixes() {
     } catch (const std::exception &) {
     }
 
-    return { found.begin(), found.end() };
+    return {found.begin(), found.end()};
 }
 
 inline int candidates(const std::string &what) {
@@ -115,9 +117,9 @@ inline int candidates(const std::string &what) {
     } else if (what == "suffixes") {
         put(suffixes());
     } else if (what == "clean") {
-        put({ "all", "archive", "logs" });
+        put({"all", "archive", "logs"});
     } else if (what == "shells") {
-        put({ "bash", "zsh", "fish" });
+        put({"bash", "zsh", "fish"});
     } else {
         std::cerr << "Nothing to complete for \"" << what << "\"\n";
 

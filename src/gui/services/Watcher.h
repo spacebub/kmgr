@@ -40,7 +40,7 @@ private:
     std::function<void()> _settled;
 
     int _inotify = -1;
-    int _wake[2] = { -1, -1 };
+    int _wake[2] = {-1, -1};
     std::vector<int> _watches;
     int _alarm = 0;
 

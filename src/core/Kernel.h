@@ -11,10 +11,10 @@
 
 
 #include <compare>
+#include <functional>
 #include <string>
 #include <tuple>
 #include <vector>
-#include <functional>
 
 #include "Toolchain.h"
 
@@ -22,9 +22,9 @@ class Kernel {
 public:
     enum Status {
         NotInstalled = 0,
-        ModulesInstalled = 1<<0,
-        ImageInstalled = 1<<1,
-        InitramsInstalled = 1<<2
+        ModulesInstalled = 1 << 0,
+        ImageInstalled = 1 << 1,
+        InitramsInstalled = 1 << 2
     };
 
     friend Status operator|(const Status a, const Status b) {
@@ -52,9 +52,7 @@ public:
             return std::tie(a.major, a.minor, a.revision) <=> std::tie(b.major, b.minor, b.revision);
         }
 
-        friend bool operator==(const Version &a, const Version &b) {
-            return (a <=> b) == std::strong_ordering::equal;
-        }
+        friend bool operator==(const Version &a, const Version &b) { return (a <=> b) == std::strong_ordering::equal; }
     };
 
 private:
@@ -64,7 +62,7 @@ public:
     explicit Kernel(const std::string &suffixedVersion);
 
     static Kernel get_current();
-    static Kernel get_latest(const std::function<void (const Version &)> &callback = nullptr);
+    static Kernel get_latest(const std::function<void(const Version &)> &callback = nullptr);
     static std::vector<Kernel> list_extracted();
     static std::vector<Kernel> list_installed();
 

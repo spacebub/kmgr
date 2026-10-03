@@ -6,11 +6,11 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
-#include "gui/app/Reach.h"
 #include "gui/components/PathField.h"
+#include "gui/app/Reach.h"
 
 PathField::PathField(Reach *reach, const std::string &label, std::function<void(const std::string &)> edited)
-        : Field(label, edited), _reach(reach), _edited(std::move(edited)) {
+    : Field(label, edited), _reach(reach), _edited(std::move(edited)) {
     mono();
 }
 

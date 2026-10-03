@@ -10,9 +10,9 @@
 #define KERNELMGR_SYSTEMINFO_H
 
 
-#include <string>
 #include <fstream>
 #include <sstream>
+#include <string>
 
 #include "Command.h"
 #include "Toolchain.h"
@@ -37,10 +37,8 @@ struct SystemInfo {
             stream << file.rdbuf();
         }
 
-        return {
-            .compiler = stream.str().find("clang") != std::string::npos ? Toolchain::Llvm : Toolchain::Gcc,
-            .sbctlStatus = sbctl ? Present : Missing
-        };
+        return {.compiler = stream.str().find("clang") != std::string::npos ? Toolchain::Llvm : Toolchain::Gcc,
+                .sbctlStatus = sbctl ? Present : Missing};
     }
 };
 

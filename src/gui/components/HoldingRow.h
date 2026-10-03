@@ -14,8 +14,8 @@
 #include <string>
 
 #include "core/Log.h"
-#include "ttk/toolkit/controls/GlyphButton.h"
 #include "ttk/toolkit/Widget.h"
+#include "ttk/toolkit/controls/GlyphButton.h"
 
 struct Reach;
 

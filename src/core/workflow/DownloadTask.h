@@ -14,8 +14,7 @@
 
 class DownloadTask final : public Task {
 public:
-    DownloadTask(const std::string &url,
-                 const std::string &destination);
+    DownloadTask(const std::string &url, const std::string &destination);
 
     bool run() override;
     int position() override;

@@ -36,13 +36,13 @@ class Progress {
     std::atomic<bool> _cancelRequested = false;
     bool _ended = true;
 
-    std::function<void (const ProgressArgs &args)> _onProgress = nullptr;
-    std::function<void (const ProgressEndArgs &args)> _onEnd = nullptr;
+    std::function<void(const ProgressArgs &args)> _onProgress = nullptr;
+    std::function<void(const ProgressEndArgs &args)> _onEnd = nullptr;
 
 public:
     void set_total(size_t total);
-    void on_progress(const std::function<void (const ProgressArgs &args)> &callback);
-    void on_end(const std::function<void (const ProgressEndArgs &args)> &callback);
+    void on_progress(const std::function<void(const ProgressArgs &args)> &callback);
+    void on_end(const std::function<void(const ProgressEndArgs &args)> &callback);
 
     void increment();
     void set_completed(size_t completed);

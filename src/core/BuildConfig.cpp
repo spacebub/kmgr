@@ -6,27 +6,27 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
-#include <filesystem>
 #include "yyjson.h"
+#include <filesystem>
 
 #include "BuildConfig.h"
 
 namespace {
-    constexpr auto FILENAME = ".kernelmgr-options";
-    constexpr auto KEY_CONFIG = "config";
-    constexpr auto KEY_PATCH = "patch";
-    constexpr auto KEY_COMPILER = "compiler";
-    constexpr auto KEY_FORCE = "force";
+constexpr auto FILENAME = ".kernelmgr-options";
+constexpr auto KEY_CONFIG = "config";
+constexpr auto KEY_PATCH = "patch";
+constexpr auto KEY_COMPILER = "compiler";
+constexpr auto KEY_FORCE = "force";
 
-    std::string path_of(const Kernel::Version &version) {
-        return Kernel::get_source_directory(version) + "/" + FILENAME;
-    }
+std::string path_of(const Kernel::Version &version) {
+    return Kernel::get_source_directory(version) + "/" + FILENAME;
+}
 
-    std::string read_string(yyjson_val *root, const char *key) {
-        yyjson_val *field = yyjson_obj_get(root, key);
+std::string read_string(yyjson_val *root, const char *key) {
+    yyjson_val *field = yyjson_obj_get(root, key);
 
-        return field && yyjson_is_str(field) ? yyjson_get_str(field) : std::string{};
-    }
+    return field && yyjson_is_str(field) ? yyjson_get_str(field) : std::string{};
+}
 }
 
 std::optional<BuildConfig::Choices> BuildConfig::read(const Kernel::Version &version) {

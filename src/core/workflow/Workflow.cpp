@@ -61,7 +61,7 @@ bool Workflow::run() {
 
     bool success = true;
 
-    for (Task *task : _tasks)  {
+    for (Task *task : _tasks) {
         if (_canceled) {
             success = false;
             break;
@@ -136,9 +136,7 @@ bool Workflow::run() {
 }
 
 void Workflow::sort() {
-    std::ranges::sort(_tasks, [](Task *a, Task *b) {
-        return a->position() < b->position();
-    });
+    std::ranges::sort(_tasks, [](Task *a, Task *b) { return a->position() < b->position(); });
 }
 
 void Workflow::queue(Task *task) {

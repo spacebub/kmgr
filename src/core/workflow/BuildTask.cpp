@@ -6,13 +6,13 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
-#include <filesystem>
-#include <utility>
 #include "BuildTask.h"
 #include "core/Make.h"
+#include <filesystem>
+#include <utility>
 
 BuildTask::BuildTask(Kernel::Version version, const Toolchain compiler)
-        : ProcessTask("Build task", 5), _version(std::move(version)), _compiler(compiler) {
+    : ProcessTask("Build task", 5), _version(std::move(version)), _compiler(compiler) {
 }
 
 bool BuildTask::prepare() {
@@ -30,13 +30,11 @@ bool BuildTask::prepare() {
         return false;
     }
 
-    _steps.push_back(Step {
-        .label = "Building with " + std::to_string(Make::jobs()) + " jobs",
-        .command = Make::command({}, _compiler),
-        .directory = source,
-        .elevated = false,
-        .optional = false
-    });
+    _steps.push_back(Step{.label = "Building with " + std::to_string(Make::jobs()) + " jobs",
+                          .command = Make::command({}, _compiler),
+                          .directory = source,
+                          .elevated = false,
+                          .optional = false});
 
     return true;
 }

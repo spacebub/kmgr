@@ -15,11 +15,11 @@
 #include "ttk/toolkit/Root.h"
 
 namespace {
-    constexpr double SIDES = 26.0;
-    constexpr double GAP = 2.0;
-    constexpr double NOTE_GAP = 7.0;
-    constexpr double NOTE_PAD = 12.0;
-    constexpr double NOTE_HEIGHT = 18.0;
+constexpr double SIDES = 26.0;
+constexpr double GAP = 2.0;
+constexpr double NOTE_GAP = 7.0;
+constexpr double NOTE_PAD = 12.0;
+constexpr double NOTE_HEIGHT = 18.0;
 }
 
 SectionTabs::SectionTabs(std::function<void(int)> selected) : _selected(std::move(selected)) {
@@ -72,9 +72,8 @@ void SectionTabs::arrange(ttk::Typeface &type) {
 
         held.label = std::max(type.width(type.at(400, ttk::Theme::fontSmall), held.tab.label),
                               type.width(type.at(600, ttk::Theme::fontSmall), held.tab.label));
-        held.note = held.tab.note.empty()
-            ? 0.0
-            : type.width(type.at(600, ttk::Theme::fontTiny), held.tab.note) + NOTE_PAD;
+        held.note =
+                held.tab.note.empty() ? 0.0 : type.width(type.at(600, ttk::Theme::fontTiny), held.tab.note) + NOTE_PAD;
 
         const double content = held.label + (held.note > 0.0 ? NOTE_GAP + held.note : 0.0);
 
@@ -103,15 +102,22 @@ void SectionTabs::paint(const ttk::Painter &painter) {
         const double x = held.box.x + ((held.box.w - content) / 2.0);
 
         painter.label(painter.font(active ? 600 : 400, ttk::Theme::fontSmall),
-                      BLRect{x, held.box.y, held.label, held.box.h}, ttk::Align::Centre, held.tab.label,
-                      active ? palette.accent : lit ? palette.text : palette.muted);
+                      BLRect{x, held.box.y, held.label, held.box.h},
+                      ttk::Align::Centre,
+                      held.tab.label,
+                      active ? palette.accent
+                      : lit  ? palette.text
+                             : palette.muted);
 
         if (held.note > 0.0) {
-            const BLRect note{x + held.label + NOTE_GAP, held.box.y + ((held.box.h - NOTE_HEIGHT) / 2.0),
-                              held.note, NOTE_HEIGHT};
+            const BLRect note{
+                    x + held.label + NOTE_GAP, held.box.y + ((held.box.h - NOTE_HEIGHT) / 2.0), held.note, NOTE_HEIGHT};
 
             painter.round(note, NOTE_HEIGHT / 2.0, active ? palette.accentSoft : palette.mutedSoft);
-            painter.label(painter.font(600, ttk::Theme::fontTiny), note, ttk::Align::Centre, held.tab.note,
+            painter.label(painter.font(600, ttk::Theme::fontTiny),
+                          note,
+                          ttk::Align::Centre,
+                          held.tab.note,
                           active ? palette.accent : palette.faint);
         }
     }
@@ -119,8 +125,7 @@ void SectionTabs::paint(const ttk::Painter &painter) {
 
 int SectionTabs::at_point(const double x, const double y) const {
     for (size_t index = 0; index < _tabs.size(); ++index) {
-        if (const BLRect &box = _tabs[index].box;
-            x >= box.x && x < box.x + box.w && y >= box.y && y < box.y + box.h) {
+        if (const BLRect &box = _tabs[index].box; x >= box.x && x < box.x + box.w && y >= box.y && y < box.y + box.h) {
             return static_cast<int>(index);
         }
     }

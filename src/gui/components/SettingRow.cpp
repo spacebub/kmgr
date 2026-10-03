@@ -12,7 +12,9 @@
 #include "ttk/draw/Theme.h"
 #include "ttk/draw/Typeface.h"
 
-SettingRow::SettingRow(Reach *reach, const std::string &label, const std::string &description,
+SettingRow::SettingRow(Reach *reach,
+                       const std::string &label,
+                       const std::string &description,
                        std::function<void(const std::string &)> edited) {
     _label = append(std::make_unique<ttk::Label>(label));
     _label->font(600, ttk::Theme::fontBody)->tone(&ttk::Theme::Palette::text);
@@ -25,7 +27,7 @@ SettingRow::SettingRow(Reach *reach, const std::string &label, const std::string
 }
 
 SettingRow *SettingRow::browse(const std::string &title) {
-    _field->browse(title, { "*" }, true);
+    _field->browse(title, {"*"}, true);
 
     return this;
 }

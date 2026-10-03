@@ -21,33 +21,33 @@
 #include "ttk/toolkit/layout/Spacer.h"
 
 namespace {
-    using Palette = ttk::Theme::Palette;
+using Palette = ttk::Theme::Palette;
 
-    constexpr double RAIL_GAP = 18.0;
-    constexpr double FOOTER_HEIGHT = 62.0;
+constexpr double RAIL_GAP = 18.0;
+constexpr double FOOTER_HEIGHT = 62.0;
 
-    const ttk::Theme::Palette &palette() {
-        return ttk::Theme::palette();
-    }
+const ttk::Theme::Palette &palette() {
+    return ttk::Theme::palette();
+}
 
-    std::unique_ptr<ttk::Panel> card(ttk::Box *&inside, const double spacing) {
-        auto made = std::make_unique<ttk::Panel>();
+std::unique_ptr<ttk::Panel> card(ttk::Box *&inside, const double spacing) {
+    auto made = std::make_unique<ttk::Panel>();
 
-        inside = made->append(ttk::Box::column());
-        inside->pad(20.0)->spacing(spacing);
+    inside = made->append(ttk::Box::column());
+    inside->pad(20.0)->spacing(spacing);
 
-        return made;
-    }
+    return made;
+}
 
-    std::unique_ptr<ttk::Box> captioned(const std::string &title, const std::string &about) {
-        std::unique_ptr<ttk::Box> made = ttk::Box::column();
+std::unique_ptr<ttk::Box> captioned(const std::string &title, const std::string &about) {
+    std::unique_ptr<ttk::Box> made = ttk::Box::column();
 
-        made->spacing(3.0);
-        made->append(Parts::text(title, 600, ttk::Theme::fontBody, &Palette::text));
-        made->append(Parts::note(about));
+    made->spacing(3.0);
+    made->append(Parts::text(title, 600, ttk::Theme::fontBody, &Palette::text));
+    made->append(Parts::note(about));
 
-        return made;
-    }
+    return made;
+}
 }
 
 SettingsPage::Rail::Rail(SettingsPage *page) : _page(page) {
@@ -73,8 +73,10 @@ void SettingsPage::Rail::paint(const ttk::Painter &painter) {
 
         Wash::paint(painter, line, ttk::Theme::radiusSmall, active ? 1.0 : 0.0, index == _over ? 1.0 : 0.0);
         painter.label(painter.font(active ? 600 : 400, ttk::Theme::fontBody),
-                      BLRect{line.x + 12.0, line.y, std::max(0.0, line.w - 20.0), line.h}, ttk::Align::Start,
-                      SECTIONS[index], active ? palette().accent : palette().muted);
+                      BLRect{line.x + 12.0, line.y, std::max(0.0, line.w - 20.0), line.h},
+                      ttk::Align::Start,
+                      SECTIONS[index],
+                      active ? palette().accent : palette().muted);
     }
 }
 
@@ -179,28 +181,30 @@ SettingsPage::SettingsPage(Reach *reach) : _reach(reach) {
     general->append(card(inside, 10.0));
     inside->append(Parts::section("WHERE KERNELS ARE KEPT"));
     _base = inside->append(std::make_unique<SettingRow>(
-        reach, "Base directory", "Archives are unpacked here and kernels are built here", touched));
+            reach, "Base directory", "Archives are unpacked here and kernels are built here", touched));
     _base->browse("Select the base directory");
     _archives = inside->append(std::make_unique<SettingRow>(
-        reach, "Archive directory", "Where the tarballs downloaded from kernel.org are stored", touched));
+            reach, "Archive directory", "Where the tarballs downloaded from kernel.org are stored", touched));
     _archives->browse("Select the archive directory")->last();
 
     general->append(card(inside, 10.0));
     inside->append(Parts::section("WHERE KERNELS ARE INSTALLED"));
     _boot = inside->append(std::make_unique<SettingRow>(
-        reach, "Boot directory", "Images, initramfs, System.map and configs are installed here", touched));
+            reach, "Boot directory", "Images, initramfs, System.map and configs are installed here", touched));
     _boot->browse("Select the boot directory");
     _grub = inside->append(std::make_unique<SettingRow>(
-        reach, "Grub directory", "grub.cfg is rewritten here after an install or a removal", touched));
+            reach, "Grub directory", "grub.cfg is rewritten here after an install or a removal", touched));
     _grub->browse("Select the grub directory")->last();
 
     general->append(card(inside, 10.0));
     inside->append(Parts::section("DOWNLOADING"));
-    _cdn = inside->append(std::make_unique<SettingRow>(reach, "Kernel CDN",
-                                                       "Archives are fetched from here, under vMAJOR.x", touched));
-    _format = inside->append(std::make_unique<SettingRow>(
-        reach, "Archive format", "The extension asked for, tar.xz unless kernel.org offers something else",
-        touched));
+    _cdn = inside->append(std::make_unique<SettingRow>(
+            reach, "Kernel CDN", "Archives are fetched from here, under vMAJOR.x", touched));
+    _format = inside->append(
+            std::make_unique<SettingRow>(reach,
+                                         "Archive format",
+                                         "The extension asked for, tar.xz unless kernel.org offers something else",
+                                         touched));
     _format->last();
 
     auto alerts = std::make_unique<SwitchCard>([this] {
@@ -215,7 +219,8 @@ SettingsPage::SettingsPage(Reach *reach) : _reach(reach) {
     alertRow->spacing(16.0)->cross(ttk::Box::Place::Centre);
     alertRow->append(captioned("Desktop notifications",
                                "Get a notification when a run asks for your password and when it finishes. "
-                               "Nothing else is sent."))->stretch = 1.0;
+                               "Nothing else is sent."))
+            ->stretch = 1.0;
     _notifications = alertRow->append(std::make_unique<ttk::Toggle>("", [this](const bool value) {
         _wantedNotifications = value;
         _reach->touch();
@@ -236,15 +241,17 @@ SettingsPage::SettingsPage(Reach *reach) : _reach(reach) {
     _toolchain = toolchain.get();
     _toolchain->set_disabled_hint("Nothing to hand make yet. Fill in the custom toolchain flags below first");
     inside->append(std::make_unique<ToolchainRow>(
-        captioned("Toolchain", "What a build is made with. Each build can be set to another one on its own "
-                               "card. Custom hands make the flags below instead"),
-        std::move(toolchain)));
+            captioned("Toolchain",
+                      "What a build is made with. Each build can be set to another one on its own "
+                      "card. Custom hands make the flags below instead"),
+            std::move(toolchain)));
 
-    _jobs = inside->append(std::make_unique<SettingRow>(
-        reach, "Build jobs",
-        "How many jobs make is given. Left empty, one per core: " + std::to_string(SettingsBridge::detected_jobs())
-            + " on this machine",
-        touched));
+    _jobs = inside->append(std::make_unique<SettingRow>(reach,
+                                                        "Build jobs",
+                                                        "How many jobs make is given. Left empty, one per core: "
+                                                                + std::to_string(SettingsBridge::detected_jobs())
+                                                                + " on this machine",
+                                                        touched));
     _jobs->placeholder(std::to_string(SettingsBridge::detected_jobs()) + " (detected)")->mono(false)->last();
 
     build->append(card(inside, 12.0));
@@ -262,10 +269,13 @@ SettingsPage::SettingsPage(Reach *reach) : _reach(reach) {
     presets->spacing(10.0)->cross(ttk::Box::Place::Centre);
     inside->append(Parts::above(2.0, std::move(presetRow)));
     presets->append(Parts::text("Start from", 400, ttk::Theme::fontSmall, &Palette::muted));
-    presets->append(std::make_unique<ttk::Button>("AOCC", [this] {
-        _flags->set_text(SettingsBridge::aocc_preset());
-        _reach->touch();
-    }))->compact()->tooltip("AMD's clang, with the flags that are the reason to reach for it");
+    presets->append(std::make_unique<ttk::Button>("AOCC",
+                                                  [this] {
+                                                      _flags->set_text(SettingsBridge::aocc_preset());
+                                                      _reach->touch();
+                                                  }))
+            ->compact()
+            ->tooltip("AMD's clang, with the flags that are the reason to reach for it");
     presets->append(std::make_unique<ttk::Spacer>());
 
     inside->append(Parts::note("AOCC brings its own LLVM, so the preset points LLVM= at the bin directory it was "
@@ -279,18 +289,21 @@ SettingsPage::SettingsPage(Reach *reach) : _reach(reach) {
     password->append(card(inside, 12.0));
     inside->append(Parts::section("PASSWORD"));
 
-    _elevation = inside->append(std::make_unique<SettingRow>(
-        reach, "Elevation command", "What the steps that need root are run through, sudo unless it is changed",
-        touched));
+    _elevation = inside->append(
+            std::make_unique<SettingRow>(reach,
+                                         "Elevation command",
+                                         "What the steps that need root are run through, sudo unless it is changed",
+                                         touched));
 
     ttk::Box *remembered = inside->append(ttk::Box::row());
     remembered->spacing(16.0)->cross(ttk::Box::Place::Centre);
-    remembered->append(captioned("Remembered for this session",
-                                 "Steps that write outside your home ask once and reuse the answer. It is held "
-                                 "in memory only, never written anywhere."))->stretch = 1.0;
-    _forget = remembered->append(std::make_unique<ttk::Button>("Forget it", [this] {
-        _reach->settings.forget_password();
-    }));
+    remembered
+            ->append(captioned("Remembered for this session",
+                               "Steps that write outside your home ask once and reuse the answer. It is held "
+                               "in memory only, never written anywhere."))
+            ->stretch = 1.0;
+    _forget = remembered->append(
+            std::make_unique<ttk::Button>("Forget it", [this] { _reach->settings.forget_password(); }));
     _forget->glyph(ttk::Glyphs::Glyph::Trash)->tooltip("The next step that needs a password will ask for it again");
 
     // --- logs ---
@@ -314,16 +327,19 @@ SettingsPage::SettingsPage(Reach *reach) : _reach(reach) {
     aboutHead->append(std::make_unique<ttk::Spacer>());
     _logsNote = about->append(Parts::note(""));
 
-    kept->append(std::make_unique<ttk::Button>("Open", [this] { _reach->logs.open(""); }))
-        ->glyph(ttk::Glyphs::Glyph::Folder);
+    kept->append(std::make_unique<ttk::Button>("Open", [this] {
+            _reach->logs.open("");
+        }))->glyph(ttk::Glyphs::Glyph::Folder);
     _deleteAll = kept->append(std::make_unique<ttk::Button>("Delete all", [this] {
         _reach->ask("Delete every log?",
                     "Every run ever filed under " + Desk::pretty(Logs::directory())
-                        + " is removed, for every kernel and for maintenance runs. Nothing else is touched.",
-                    "Delete them all", true, [this] { _reach->logs.remove(""); });
+                            + " is removed, for every kernel and for maintenance runs. Nothing else is touched.",
+                    "Delete them all",
+                    true,
+                    [this] { _reach->logs.remove(""); });
     }));
     _deleteAll->glyph(ttk::Glyphs::Glyph::Trash)
-        ->tooltip("Delete every log for every kernel, maintenance runs included");
+            ->tooltip("Delete every log for every kernel, maintenance runs included");
 
     _logsRule = inside->append(Parts::above(2.0, std::make_unique<Parts::Rule>()));
     _noLogs = inside->append(Parts::note("Nothing has been filed yet. A run writes its log as it goes, and it "
@@ -339,18 +355,22 @@ SettingsPage::SettingsPage(Reach *reach) : _reach(reach) {
     ttk::Box *footer = _footer->append(ttk::Box::row());
     footer->pad(12.0)->spacing(8.0)->cross(ttk::Box::Place::Centre);
 
-    ttk::Label *unsaved = footer->append(Parts::note(
-        "Unsaved changes. Directories that do not exist yet are created when you save."));
+    ttk::Label *unsaved = footer->append(
+            Parts::note("Unsaved changes. Directories that do not exist yet are created when you save."));
     unsaved->tone(&Palette::warning);
     unsaved->stretch = 1.0;
 
-    footer->append(std::make_unique<ttk::Button>("Revert", [this] {
-        _reach->settings.load();
-        _reach->notify.info("Settings reloaded from disk.");
-    }))->glyph(ttk::Glyphs::Glyph::Refresh)->tooltip("Throw away these changes and read the file again");
+    footer->append(std::make_unique<ttk::Button>("Revert",
+                                                 [this] {
+                                                     _reach->settings.load();
+                                                     _reach->notify.info("Settings reloaded from disk.");
+                                                 }))
+            ->glyph(ttk::Glyphs::Glyph::Refresh)
+            ->tooltip("Throw away these changes and read the file again");
 
     footer->append(std::make_unique<ttk::Button>("Save", [this] { store(); }))
-        ->glyph(ttk::Glyphs::Glyph::Check)->kind(ttk::Button::Kind::Primary);
+            ->glyph(ttk::Glyphs::Glyph::Check)
+            ->kind(ttk::Button::Kind::Primary);
 
     load();
 }
@@ -383,16 +403,14 @@ bool SettingsPage::dirty() const {
     const SettingsBridge &settings = _reach->settings;
 
     return ttk::Text::trim(_base->text()) != settings.baseDirectory
-        || ttk::Text::trim(_archives->text()) != settings.archiveDirectory
-        || ttk::Text::trim(_boot->text()) != settings.bootDirectory
-        || ttk::Text::trim(_grub->text()) != settings.grubDirectory
-        || ttk::Text::trim(_cdn->text()) != settings.kernelCdn
-        || ttk::Text::trim(_format->text()) != settings.archiveFormat
-        || ttk::Text::trim(_elevation->text()) != settings.elevationCommand
-        || wanted_jobs() != settings.jobs
-        || _wantedCompiler != settings.compiler
-        || ttk::Text::trim(_flags->text()) != settings.customFlags
-        || _wantedNotifications != settings.notifications;
+           || ttk::Text::trim(_archives->text()) != settings.archiveDirectory
+           || ttk::Text::trim(_boot->text()) != settings.bootDirectory
+           || ttk::Text::trim(_grub->text()) != settings.grubDirectory
+           || ttk::Text::trim(_cdn->text()) != settings.kernelCdn
+           || ttk::Text::trim(_format->text()) != settings.archiveFormat
+           || ttk::Text::trim(_elevation->text()) != settings.elevationCommand || wanted_jobs() != settings.jobs
+           || _wantedCompiler != settings.compiler || ttk::Text::trim(_flags->text()) != settings.customFlags
+           || _wantedNotifications != settings.notifications;
 }
 
 void SettingsPage::load() {
@@ -494,17 +512,18 @@ void SettingsPage::sync() {
     _notifications->set_checked(_wantedNotifications);
 
     // Follows the field rather than the saved value, since the page shows what Save would write.
-    if (const std::vector<std::string> names = { "GCC", "LLVM", settings.customToolchainName.empty()
-                                                                     ? std::string("Custom")
-                                                                     : settings.customToolchainName };
+    if (const std::vector<std::string> names = {"GCC",
+                                                "LLVM",
+                                                settings.customToolchainName.empty() ? std::string("Custom")
+                                                                                     : settings.customToolchainName};
         names != _toolchainNames) {
         _toolchainNames = names;
         _toolchain->set_options(names);
     }
 
-    _toolchain->set_disabled(ttk::Text::trim(_flags->text()).empty() ? std::vector<int>{ 2 } : std::vector<int>{});
-    _toolchain->set_current(static_cast<int>(
-        std::ranges::find(TOOLCHAINS, _wantedCompiler) - std::begin(TOOLCHAINS)) % 3);
+    _toolchain->set_disabled(ttk::Text::trim(_flags->text()).empty() ? std::vector<int>{2} : std::vector<int>{});
+    _toolchain->set_current(static_cast<int>(std::ranges::find(TOOLCHAINS, _wantedCompiler) - std::begin(TOOLCHAINS))
+                            % 3);
 
     _forget->set_enabled(SettingsBridge::password_remembered());
 

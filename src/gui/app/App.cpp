@@ -13,20 +13,20 @@
 #include "ttk/draw/Theme.h"
 
 namespace Embedded {
-    extern const unsigned char mark48[];
-    extern const std::size_t mark48Size;
+extern const unsigned char mark48[];
+extern const std::size_t mark48Size;
 }
 
 namespace {
-    BLImage decode(const unsigned char *bytes, const std::size_t size) {
-        BLImage image;
+BLImage decode(const unsigned char *bytes, const std::size_t size) {
+    BLImage image;
 
-        if (image.read_from_data(bytes, size) != BL_SUCCESS) {
-            return {};
-        }
-
-        return image;
+    if (image.read_from_data(bytes, size) != BL_SUCCESS) {
+        return {};
     }
+
+    return image;
+}
 }
 
 App::App(ttk::Shell &shell)
@@ -38,21 +38,21 @@ App::App(ttk::Shell &shell)
       _logs(&_notifier),
       _picker(&_notifier),
       _reach{
-          .window = shell,
-          .notify = _notifier,
-          .catalog = _catalog,
-          .system = _system,
-          .settings = _settings,
-          .workflow = _workflow,
-          .logs = _logs,
-          // Wired by wire(), once the window can answer them.
-          .touch = {},
-          .go = {},
-          .show = {},
-          .cycleShade = {},
-          .refresh = {},
-          .ask = {},
-          .pick = {},
+              .window = shell,
+              .notify = _notifier,
+              .catalog = _catalog,
+              .system = _system,
+              .settings = _settings,
+              .workflow = _workflow,
+              .logs = _logs,
+              // Wired by wire(), once the window can answer them.
+              .touch = {},
+              .go = {},
+              .show = {},
+              .cycleShade = {},
+              .refresh = {},
+              .ask = {},
+              .pick = {},
       } {
     wire();
     build();
@@ -67,12 +67,15 @@ void App::wire() {
         _catalog.refresh();
         _system.refresh();
     };
-    _reach.ask = [this](const std::string &title, const std::string &body, const std::string &accept,
-                        const bool danger, std::function<void()> accepted) {
-        ask(title, body, accept, danger, std::move(accepted));
-    };
-    _reach.pick = [this](const std::string &title, const std::vector<std::string> &filters,
-                         const bool directories, std::function<void(const std::string &)> chosen) {
+    _reach.ask = [this](const std::string &title,
+                        const std::string &body,
+                        const std::string &accept,
+                        const bool danger,
+                        std::function<void()> accepted) { ask(title, body, accept, danger, std::move(accepted)); };
+    _reach.pick = [this](const std::string &title,
+                         const std::vector<std::string> &filters,
+                         const bool directories,
+                         std::function<void(const std::string &)> chosen) {
         pick(title, filters, directories, std::move(chosen));
     };
 
@@ -143,8 +146,9 @@ void App::build() {
         }
     };
 
-    _buzzes = root.layer(ttk::Root::NOTICES)
-                  ->append(std::make_unique<Buzzes>([this](const int id) { _notifier.dismiss(id); }));
+    _buzzes = root.layer(ttk::Root::NOTICES)->append(std::make_unique<Buzzes>([this](const int id) {
+        _notifier.dismiss(id);
+    }));
     _tips = root.layer(ttk::Root::TIPS)->append(std::make_unique<ttk::Tips>());
 
     ttk::Shell::set_outline(ttk::Theme::palette().borderStrong);
@@ -226,19 +230,24 @@ void App::cycle_shade() {
     touch();
 }
 
-void App::ask(const std::string &title, const std::string &body, const std::string &accept, const bool danger,
+void App::ask(const std::string &title,
+              const std::string &body,
+              const std::string &accept,
+              const bool danger,
               std::function<void()> accepted) {
-    _dialogs->show(std::make_unique<ttk::ConfirmDialog>(title, body, accept, danger,
-                                                        [this, accepted = std::move(accepted)] {
-        if (accepted) {
-            accepted();
-        }
+    _dialogs->show(
+            std::make_unique<ttk::ConfirmDialog>(title, body, accept, danger, [this, accepted = std::move(accepted)] {
+                if (accepted) {
+                    accepted();
+                }
 
-        touch();
-    }));
+                touch();
+            }));
 }
 
-void App::pick(const std::string &title, const std::vector<std::string> &filters, const bool directories,
+void App::pick(const std::string &title,
+               const std::vector<std::string> &filters,
+               const bool directories,
                std::function<void(const std::string &)> chosen) {
     const std::string remember = directories ? "directory" : "file";
 
@@ -246,14 +255,19 @@ void App::pick(const std::string &title, const std::vector<std::string> &filters
         _picker.remember_directory(remember, SystemStatus::base_directory());
     }
 
-    _picker.open(title, filters, directories, directories, false, remember,
+    _picker.open(title,
+                 filters,
+                 directories,
+                 directories,
+                 false,
+                 remember,
                  [this, chosen = std::move(chosen)](const std::vector<std::string> &paths, bool) {
-        if (!paths.empty() && chosen) {
-            chosen(paths.front());
-        }
+                     if (!paths.empty() && chosen) {
+                         chosen(paths.front());
+                     }
 
-        touch();
-    });
+                     touch();
+                 });
 }
 
 bool App::shortcut(const ttk::Key &pressed) {
@@ -294,5 +308,7 @@ void App::ask_about_notifications() {
     ask("Enable desktop notifications?",
         "Builds take a while. KernelManager can notify you when a run asks for your password and when it "
         "finishes, so you do not have to watch it. You can change this later in Settings.",
-        "Enable", false, [this] { _settings.set_notifications(true); });
+        "Enable",
+        false,
+        [this] { _settings.set_notifications(true); });
 }

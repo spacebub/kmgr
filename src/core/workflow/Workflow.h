@@ -10,10 +10,10 @@
 #define KERNELMGR_WORKFLOW_H
 
 
-#include <atomic>
-#include <vector>
-#include <string>
 #include "Task.h"
+#include <atomic>
+#include <string>
+#include <vector>
 
 class Workflow {
 public:
@@ -35,15 +35,15 @@ private:
     bool _force = false;
     Status _status = Pending;
 
-    std::function<void (const Status &)> _on_status_changed = nullptr;
-    std::function<void (const std::string &)> _on_task_changed = nullptr;
-    std::function<void (const std::string &)> _on_task_complete = nullptr;
-    std::function<void (const std::string &)> _on_exception = nullptr;
-    std::function<void (const std::string &)> _on_data_received = nullptr;
-    std::function<void (const std::string &)> _on_step_changed = nullptr;
-    std::function<void (bool)> _on_step_finished = nullptr;
-    std::function<void (const InputRequest &)> _on_input_required = nullptr;
-    std::function<void (const ProgressArgs &)> _on_progress = nullptr;
+    std::function<void(const Status &)> _on_status_changed = nullptr;
+    std::function<void(const std::string &)> _on_task_changed = nullptr;
+    std::function<void(const std::string &)> _on_task_complete = nullptr;
+    std::function<void(const std::string &)> _on_exception = nullptr;
+    std::function<void(const std::string &)> _on_data_received = nullptr;
+    std::function<void(const std::string &)> _on_step_changed = nullptr;
+    std::function<void(bool)> _on_step_finished = nullptr;
+    std::function<void(const InputRequest &)> _on_input_required = nullptr;
+    std::function<void(const ProgressArgs &)> _on_progress = nullptr;
 
     void cleanup() const;
     void set_status(Status status);
@@ -73,41 +73,27 @@ public:
 
     void set_force(bool force);
 
-    void on_status_changed(const std::function<void (const Status &)> &callback) {
-        _on_status_changed = callback;
-    }
+    void on_status_changed(const std::function<void(const Status &)> &callback) { _on_status_changed = callback; }
 
-    void on_task_changed(const std::function<void (const std::string &)> &callback) {
-        _on_task_changed = callback;
-    }
+    void on_task_changed(const std::function<void(const std::string &)> &callback) { _on_task_changed = callback; }
 
-    void on_task_complete(const std::function<void (const std::string &)> &callback) {
-        _on_task_complete = callback;
-    }
+    void on_task_complete(const std::function<void(const std::string &)> &callback) { _on_task_complete = callback; }
 
-    void on_exception(const std::function<void (const std::string &message)> &callback) {
-        _on_exception = callback;
-    }
+    void on_exception(const std::function<void(const std::string &message)> &callback) { _on_exception = callback; }
 
-    void on_data_received(const std::function<void (const std::string &data)> &callback) {
+    void on_data_received(const std::function<void(const std::string &data)> &callback) {
         _on_data_received = callback;
     }
 
-    void on_step_changed(const std::function<void (const std::string &label)> &callback) {
-        _on_step_changed = callback;
-    }
+    void on_step_changed(const std::function<void(const std::string &label)> &callback) { _on_step_changed = callback; }
 
-    void on_step_finished(const std::function<void (bool success)> &callback) {
-        _on_step_finished = callback;
-    }
+    void on_step_finished(const std::function<void(bool success)> &callback) { _on_step_finished = callback; }
 
-    void on_input_required(const std::function<void (const InputRequest &request)> &callback) {
+    void on_input_required(const std::function<void(const InputRequest &request)> &callback) {
         _on_input_required = callback;
     }
 
-    void on_progress(const std::function<void (const ProgressArgs &args)> &callback) {
-        _on_progress = callback;
-    }
+    void on_progress(const std::function<void(const ProgressArgs &args)> &callback) { _on_progress = callback; }
 };
 
 

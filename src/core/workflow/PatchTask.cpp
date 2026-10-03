@@ -6,50 +6,48 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
-#include <algorithm>
-#include <fnmatch.h>
-#include <ranges>
-#include <filesystem>
-#include <format>
-#include <fstream>
-#include <utility>
 #include "PatchTask.h"
 #include "core/Configuration.h"
+#include <algorithm>
+#include <filesystem>
+#include <fnmatch.h>
+#include <format>
+#include <fstream>
+#include <ranges>
+#include <utility>
 
 namespace {
-    std::vector<std::string> resolve(const std::filesystem::path &directory, const std::string &pattern) {
-        std::vector<std::string> matches;
-        const std::filesystem::path parent = directory / std::filesystem::path(pattern).parent_path();
-        const std::string name = std::filesystem::path(pattern).filename();
+std::vector<std::string> resolve(const std::filesystem::path &directory, const std::string &pattern) {
+    std::vector<std::string> matches;
+    const std::filesystem::path parent = directory / std::filesystem::path(pattern).parent_path();
+    const std::string name = std::filesystem::path(pattern).filename();
 
-        if (name.find('*') == std::string::npos && name.find('?') == std::string::npos) {
-            if (std::filesystem::exists(parent / name)) {
-                matches.push_back(parent / name);
-            }
-
-            return matches;
+    if (name.find('*') == std::string::npos && name.find('?') == std::string::npos) {
+        if (std::filesystem::exists(parent / name)) {
+            matches.push_back(parent / name);
         }
-
-        if (!std::filesystem::exists(parent)) {
-            return matches;
-        }
-
-        for (const auto &entry : std::filesystem::directory_iterator(parent)) {
-            if (entry.is_regular_file()
-                && fnmatch(name.c_str(), entry.path().filename().string().c_str(), 0) == 0) {
-                matches.push_back(entry.path());
-            }
-        }
-
-        std::ranges::sort(matches);
 
         return matches;
     }
+
+    if (!std::filesystem::exists(parent)) {
+        return matches;
+    }
+
+    for (const auto &entry : std::filesystem::directory_iterator(parent)) {
+        if (entry.is_regular_file() && fnmatch(name.c_str(), entry.path().filename().string().c_str(), 0) == 0) {
+            matches.push_back(entry.path());
+        }
+    }
+
+    std::ranges::sort(matches);
+
+    return matches;
+}
 }
 
 PatchTask::PatchTask(Kernel::Version version, std::string patch, const Direction direction)
-        : ProcessTask("Patch task", 3), _version(std::move(version)), _patch(std::move(patch)),
-          _direction(direction) {
+    : ProcessTask("Patch task", 3), _version(std::move(version)), _patch(std::move(patch)), _direction(direction) {
 }
 
 std::string PatchTask::find_definition() const {
@@ -119,9 +117,7 @@ bool PatchTask::plan(const std::string &source) {
     if (Kernel::is_patched(_version)) {
         const std::string with = Kernel::patched_with(_version);
 
-        report(with.empty()
-            ? "Already patched, skipping."
-            : "Already patched with " + with + ", skipping.");
+        report(with.empty() ? "Already patched, skipping." : "Already patched with " + with + ", skipping.");
 
         return true;
     }
@@ -135,13 +131,11 @@ bool PatchTask::plan(const std::string &source) {
     }
 
     if (definition.ends_with(".sh")) {
-        _steps.push_back(Step {
-            .label = "Running patch script " + definition,
-            .command = "sh " + definition,
-            .directory = source,
-            .elevated = false,
-            .optional = false
-        });
+        _steps.push_back(Step{.label = "Running patch script " + definition,
+                              .command = "sh " + definition,
+                              .directory = source,
+                              .elevated = false,
+                              .optional = false});
 
         _definition = definition;
 
@@ -163,13 +157,11 @@ bool PatchTask::plan(const std::string &source) {
     }
 
     for (const std::string &patch : patches) {
-        _steps.push_back(Step {
-            .label = "Applying " + std::filesystem::path(patch).filename().string(),
-            .command = "patch -p1 -N --batch -i '" + patch + "'",
-            .directory = source,
-            .elevated = false,
-            .optional = false
-        });
+        _steps.push_back(Step{.label = "Applying " + std::filesystem::path(patch).filename().string(),
+                              .command = "patch -p1 -N --batch -i '" + patch + "'",
+                              .directory = source,
+                              .elevated = false,
+                              .optional = false});
     }
 
     _definition = definition;
@@ -209,13 +201,11 @@ bool PatchTask::plan_reverse(const std::string &source) {
     }
 
     for (const std::string &patch : std::ranges::reverse_view(patches)) {
-        _steps.push_back(Step {
-            .label = "Taking back " + std::filesystem::path(patch).filename().string(),
-            .command = "patch -p1 -R -N --batch -i '" + patch + "'",
-            .directory = source,
-            .elevated = false,
-            .optional = false
-        });
+        _steps.push_back(Step{.label = "Taking back " + std::filesystem::path(patch).filename().string(),
+                              .command = "patch -p1 -R -N --batch -i '" + patch + "'",
+                              .directory = source,
+                              .elevated = false,
+                              .optional = false});
     }
 
     _definition = definition;
@@ -246,13 +236,12 @@ bool PatchTask::run() {
         return true;
     }
 
-    const bool marked = _direction == Reverse
-        ? Kernel::clear_patched(_version)
-        : Kernel::mark_patched(_version, _definition);
+    const bool marked =
+            _direction == Reverse ? Kernel::clear_patched(_version) : Kernel::mark_patched(_version, _definition);
 
     if (!marked) {
-        report("Could not " + std::string(_direction == Reverse ? "clear" : "write")
-            + " the patch mark in " + Kernel::get_source_directory(_version) + ".");
+        report("Could not " + std::string(_direction == Reverse ? "clear" : "write") + " the patch mark in "
+               + Kernel::get_source_directory(_version) + ".");
     }
 
     return true;

@@ -6,14 +6,14 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
+#include "KernelArchive.h"
+#include "Configuration.h"
+#include "archive.h"
+#include "archive_entry.h"
 #include <algorithm>
 #include <filesystem>
 #include <format>
-#include "KernelArchive.h"
-#include "Configuration.h"
 #include <stdexcept>
-#include "archive.h"
-#include "archive_entry.h"
 
 static int copy_data(archive *read, archive *write);
 
@@ -78,7 +78,7 @@ int KernelArchive::get_file_count() {
     }
 
     for (;;) {
-        const int status = archive_read_next_header(archive, &entry);\
+        const int status = archive_read_next_header(archive, &entry);
 
         if (status == ARCHIVE_EOF) {
             break;
@@ -114,10 +114,7 @@ void KernelArchive::extract(Progress *progress) const {
     struct archive *ext = archive_write_disk_new();
     archive_entry *entry;
 
-    constexpr int flags = ARCHIVE_EXTRACT_TIME
-                          | ARCHIVE_EXTRACT_PERM
-                          | ARCHIVE_EXTRACT_ACL
-                          | ARCHIVE_EXTRACT_FFLAGS;
+    constexpr int flags = ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_ACL | ARCHIVE_EXTRACT_FFLAGS;
 
     archive_read_support_filter_all(archive);
     archive_read_support_format_all(archive);
@@ -131,7 +128,7 @@ void KernelArchive::extract(Progress *progress) const {
     const size_t stripLength = _kernelVersion.get_string(Kernel::Version::NO_OPTIONS).length() + 7;
 
     for (;;) {
-        const int status = archive_read_next_header(archive, &entry);\
+        const int status = archive_read_next_header(archive, &entry);
 
         if (status == ARCHIVE_EOF) {
             break;
@@ -184,7 +181,8 @@ std::vector<KernelArchive> KernelArchive::list_archives() {
     std::error_code error;
 
     for (std::filesystem::directory_iterator it(Configuration::get()->archiveDirectory, error), end;
-            !error && it != end; it.increment(error)) {
+         !error && it != end;
+         it.increment(error)) {
         std::string filename = it->path().filename();
 
         if (!filename.starts_with("linux-") || !filename.ends_with(extension)) {
@@ -198,9 +196,8 @@ std::vector<KernelArchive> KernelArchive::list_archives() {
         }
     }
 
-    std::ranges::sort(archives, [](const KernelArchive &a, const KernelArchive &b) {
-        return a.get_version() > b.get_version();
-    });
+    std::ranges::sort(archives,
+                      [](const KernelArchive &a, const KernelArchive &b) { return a.get_version() > b.get_version(); });
 
     return archives;
 }
@@ -225,8 +222,7 @@ std::string KernelArchive::get_path(const Kernel::Version &version) {
                        config->archiveFormat);
 }
 
-static int copy_data(archive *read, archive *write)
-{
+static int copy_data(archive *read, archive *write) {
     int status;
     const void *buff;
     size_t size;

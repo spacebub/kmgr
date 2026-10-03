@@ -15,6 +15,7 @@
 
 #include "gui/components/ProgressTrack.h"
 #include "ttk/draw/Anim.h"
+#include "ttk/toolkit/Widget.h"
 #include "ttk/toolkit/controls/Button.h"
 #include "ttk/toolkit/controls/Field.h"
 #include "ttk/toolkit/controls/GlyphButton.h"
@@ -24,7 +25,6 @@
 #include "ttk/toolkit/layout/Box.h"
 #include "ttk/toolkit/layout/Panel.h"
 #include "ttk/toolkit/layout/Scroll.h"
-#include "ttk/toolkit/Widget.h"
 
 struct Reach;
 

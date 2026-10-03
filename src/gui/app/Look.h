@@ -15,18 +15,18 @@
 #include "ttk/notices/Notifier.h"
 
 namespace Look {
-    // A page stops at this width and centres, so a wide window does not put a
-    // foot of nothing between a label and its control.
-    constexpr double pageWidth = 1080.0;
+// A page stops at this width and centres, so a wide window does not put a
+// foot of nothing between a label and its control.
+constexpr double pageWidth = 1080.0;
 
-    constexpr double barHeight = 56.0;
+constexpr double barHeight = 56.0;
 
-    // Call before anything is built.
-    void install();
+// Call before anything is built.
+void install();
 
-    std::string mode_name();
+std::string mode_name();
 
-    void cycle(ttk::Notifier *notifier);
+void cycle(ttk::Notifier *notifier);
 }
 
 

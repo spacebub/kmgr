@@ -11,8 +11,8 @@
 #include "Elevation.h"
 
 namespace {
-    std::mutex s_mutex;
-    std::optional<std::string> s_secret;
+std::mutex s_mutex;
+std::optional<std::string> s_secret;
 }
 
 void Elevation::remember(const std::string &secret) {

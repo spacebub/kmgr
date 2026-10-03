@@ -6,8 +6,8 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
-#include <stdexcept>
 #include "Command.h"
+#include <stdexcept>
 
 
 Command::Command(const std::string &command) {
@@ -34,7 +34,7 @@ bool Command::exists(const std::string &program) {
     return Command("command -v " + program + " > /dev/null 2>&1").execute() == 0;
 }
 
-int Command::execute(const std::function<void (const std::string &)> &callback) const {
+int Command::execute(const std::function<void(const std::string &)> &callback) const {
     if (!callback) {
         throw std::invalid_argument("Invalid callback!");
     }

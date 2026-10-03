@@ -28,9 +28,7 @@ public:
         _body->font(400, ttk::Theme::fontSmall)->tone(&ttk::Theme::Palette::faint)->wrap();
     }
 
-    void set_body(const std::string &body) const {
-        _body->set_text(body);
-    }
+    void set_body(const std::string &body) const { _body->set_text(body); }
 
 private:
     ttk::Label *_title = nullptr;

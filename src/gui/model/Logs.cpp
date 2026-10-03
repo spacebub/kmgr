@@ -49,9 +49,8 @@ bool Logs::remove(const std::string &version) {
     const std::uintmax_t before = Log::weigh(version);
 
     if (before == 0) {
-        _notifier->info(version.empty()
-            ? std::string("There are no logs to delete.")
-            : "There are no logs for " + version + ".");
+        _notifier->info(version.empty() ? std::string("There are no logs to delete.")
+                                        : "There are no logs for " + version + ".");
 
         return false;
     }
@@ -66,8 +65,8 @@ bool Logs::remove(const std::string &version) {
         return false;
     }
 
-    _notifier->success("Deleted " + Format::size(removed) + " of logs"
-        + (version.empty() ? "" : " for " + version) + ".");
+    _notifier->success("Deleted " + Format::size(removed) + " of logs" + (version.empty() ? "" : " for " + version)
+                       + ".");
 
     return true;
 }

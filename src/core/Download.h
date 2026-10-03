@@ -22,8 +22,7 @@ public:
     ~Download();
 
     [[nodiscard]] std::string get_page() const;
-    void perform(const std::string &destination,
-                 Progress *counter) const;
+    void perform(const std::string &destination, Progress *counter) const;
 };
 
 

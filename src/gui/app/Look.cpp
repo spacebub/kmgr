@@ -6,12 +6,12 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
-#include "core/Configuration.h"
 #include "gui/app/Look.h"
+#include "core/Configuration.h"
 #include "ttk/draw/Theme.h"
 
 namespace {
-    constexpr ttk::Theme::Palette DARK{
+constexpr ttk::Theme::Palette DARK{
         .background = BLRgba32{0xff0e1116},
         .surface = BLRgba32{0xff151a22},
         .raised = BLRgba32{0xff1b2029},
@@ -46,9 +46,9 @@ namespace {
 
         .headingWeight = 700,
         .dark = true,
-    };
+};
 
-    constexpr ttk::Theme::Palette LIGHT{
+constexpr ttk::Theme::Palette LIGHT{
         .background = BLRgba32{0xfff4f6fa},
         .surface = BLRgba32{0xffffffff},
         .raised = BLRgba32{0xffffffff},
@@ -83,49 +83,49 @@ namespace {
 
         .headingWeight = 600,
         .dark = false,
-    };
+};
 
-    ttk::Theme::Mode mode_of(const std::string &name) {
-        if (name == "light") {
-            return ttk::Theme::Mode::Light;
-        }
-
-        return name == "dark" ? ttk::Theme::Mode::Dark : ttk::Theme::Mode::System;
+ttk::Theme::Mode mode_of(const std::string &name) {
+    if (name == "light") {
+        return ttk::Theme::Mode::Light;
     }
 
-    std::string name_of(const ttk::Theme::Mode mode) {
-        if (mode == ttk::Theme::Mode::Light) {
-            return "light";
-        }
+    return name == "dark" ? ttk::Theme::Mode::Dark : ttk::Theme::Mode::System;
+}
 
-        return mode == ttk::Theme::Mode::Dark ? "dark" : "system";
+std::string name_of(const ttk::Theme::Mode mode) {
+    if (mode == ttk::Theme::Mode::Light) {
+        return "light";
     }
+
+    return mode == ttk::Theme::Mode::Dark ? "dark" : "system";
+}
 }
 
 namespace Look {
 
-    void install() {
-        ttk::Theme::configure({.dark = DARK, .light = LIGHT, .mode = mode_of(Configuration::get()->theme)});
+void install() {
+    ttk::Theme::configure({.dark = DARK, .light = LIGHT, .mode = mode_of(Configuration::get()->theme)});
+}
+
+std::string mode_name() {
+    return name_of(ttk::Theme::mode());
+}
+
+// A shade that cannot be saved only warns. It is not worth stopping the application over.
+void cycle(ttk::Notifier *notifier) {
+    const ttk::Theme::Mode next = ttk::Theme::cycle_mode();
+
+    Settings settings = *Configuration::get();
+    settings.theme = name_of(next);
+
+    Configuration::set(settings);
+
+    try {
+        Configuration::save();
+    } catch (const std::exception &ex) {
+        notifier->warning(ex.what(), "Could not save the theme");
     }
-
-    std::string mode_name() {
-        return name_of(ttk::Theme::mode());
-    }
-
-    // A shade that cannot be saved only warns. It is not worth stopping the application over.
-    void cycle(ttk::Notifier *notifier) {
-        const ttk::Theme::Mode next = ttk::Theme::cycle_mode();
-
-        Settings settings = *Configuration::get();
-        settings.theme = name_of(next);
-
-        Configuration::set(settings);
-
-        try {
-            Configuration::save();
-        } catch (const std::exception &ex) {
-            notifier->warning(ex.what(), "Could not save the theme");
-        }
-    }
+}
 
 }

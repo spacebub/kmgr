@@ -6,11 +6,11 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
-#include <filesystem>
-#include <utility>
 #include "SignTask.h"
 #include "core/Command.h"
 #include "core/Configuration.h"
+#include <filesystem>
+#include <utility>
 
 SignTask::SignTask(Kernel::Version version) : ProcessTask("Sign task", 7), _version(std::move(version)) {
 }
@@ -30,13 +30,11 @@ bool SignTask::prepare() {
         return false;
     }
 
-    _steps.push_back(Step {
-        .label = "Signing " + image,
-        .command = "sbctl sign -s '" + image + "'",
-        .directory = Configuration::get()->baseDirectory,
-        .elevated = true,
-        .optional = false
-    });
+    _steps.push_back(Step{.label = "Signing " + image,
+                          .command = "sbctl sign -s '" + image + "'",
+                          .directory = Configuration::get()->baseDirectory,
+                          .elevated = true,
+                          .optional = false});
 
     return true;
 }

@@ -19,15 +19,15 @@
 #include "ttk/toolkit/layout/Spacer.h"
 
 namespace {
-    using Palette = ttk::Theme::Palette;
+using Palette = ttk::Theme::Palette;
 
-    constexpr double GAP = 14.0;
-    constexpr double LIST_WIDTH = 322.0;
-    constexpr double LIST_HEIGHT = 220.0;
+constexpr double GAP = 14.0;
+constexpr double LIST_WIDTH = 322.0;
+constexpr double LIST_HEIGHT = 220.0;
 
-    const ttk::Theme::Palette &palette() {
-        return ttk::Theme::palette();
-    }
+const ttk::Theme::Palette &palette() {
+    return ttk::Theme::palette();
+}
 }
 
 KernelsPage::Adder::Adder(KernelsPage *page) : _page(page) {
@@ -35,9 +35,13 @@ KernelsPage::Adder::Adder(KernelsPage *page) : _page(page) {
     _input->mono();
     _input->accepted = [this] { _page->fetch(); };
 
-    _get = append(Parts::glyph_button(ttk::Glyphs::Glyph::Download, 30.0,
-                                      "Download this version from kernel.org", &Palette::accent,
-                                      &Palette::accent, &Palette::accentSoft, [this] { _page->fetch(); }));
+    _get = append(Parts::glyph_button(ttk::Glyphs::Glyph::Download,
+                                      30.0,
+                                      "Download this version from kernel.org",
+                                      &Palette::accent,
+                                      &Palette::accent,
+                                      &Palette::accentSoft,
+                                      [this] { _page->fetch(); }));
     _get->set_visible(false);
 }
 
@@ -93,12 +97,16 @@ KernelsPage::KernelsPage(Reach *reach) : _reach(reach) {
     _head->append(Parts::text("Versions on this machine", 600, ttk::Theme::fontMedium, &Palette::text));
     _head->append(std::make_unique<ttk::Spacer>());
     _count = _head->append(Parts::text("", 400, ttk::Theme::fontSmall, &Palette::faint));
-    _head->append(Parts::glyph_button(ttk::Glyphs::Glyph::Refresh, ttk::Theme::controlSmall,
-                                      "Read the base directory again", &Palette::muted, &Palette::text,
-                                      &Palette::hover, [this] {
-        _reach->refresh();
-        _reach->notify.info("Reloaded from " + SystemStatus::base_directory() + ".");
-    }));
+    _head->append(Parts::glyph_button(ttk::Glyphs::Glyph::Refresh,
+                                      ttk::Theme::controlSmall,
+                                      "Read the base directory again",
+                                      &Palette::muted,
+                                      &Palette::text,
+                                      &Palette::hover,
+                                      [this] {
+                                          _reach->refresh();
+                                          _reach->notify.info("Reloaded from " + SystemStatus::base_directory() + ".");
+                                      }));
 
     // --- the list ---
 
@@ -118,8 +126,8 @@ KernelsPage::KernelsPage(Reach *reach) : _reach(reach) {
     }));
     _list->stretch = 1.0;
 
-    _nothingOnDisk = listing->append(std::make_unique<EmptyState>(
-        "Nothing on disk yet", "Type a version above to fetch it from kernel.org."));
+    _nothingOnDisk = listing->append(
+            std::make_unique<EmptyState>("Nothing on disk yet", "Type a version above to fetch it from kernel.org."));
 
     // --- the version ---
 
@@ -129,7 +137,7 @@ KernelsPage::KernelsPage(Reach *reach) : _reach(reach) {
     detail->pad(18.0)->spacing(12.0);
 
     _nothingSelected = detail->append(std::make_unique<EmptyState>(
-        "Nothing selected", "Pick a version on the left, or download one to start with."));
+            "Nothing selected", "Pick a version on the left, or download one to start with."));
     _gap = detail->append(std::make_unique<ttk::Spacer>());
 
     _title = detail->append(ttk::Box::row());
@@ -175,47 +183,55 @@ KernelsPage::KernelsPage(Reach *reach) : _reach(reach) {
         _reach->touch();
     });
 
-    _extract = _extracting->append(Parts::glyph_button(ttk::Glyphs::Glyph::Extract, 34.0,
+    _extract = _extracting->append(Parts::glyph_button(ttk::Glyphs::Glyph::Extract,
+                                                       34.0,
                                                        "Unpack the archive under the suffix on the left",
-                                                       &Palette::accent, &Palette::accent, &Palette::accentSoft,
+                                                       &Palette::accent,
+                                                       &Palette::accent,
+                                                       &Palette::accentSoft,
                                                        [this] { extract(); }));
     _extract->outlined();
 
     _deleteArchive = _extracting->append(Parts::glyph_button(
-        ttk::Glyphs::Glyph::Trash, 34.0, "Delete the tarball. Anything extracted from it stays", &Palette::faint,
-        &Palette::danger, &Palette::dangerSoft, [this] {
-            const Catalog::Entry *held = entry();
+            ttk::Glyphs::Glyph::Trash,
+            34.0,
+            "Delete the tarball. Anything extracted from it stays",
+            &Palette::faint,
+            &Palette::danger,
+            &Palette::dangerSoft,
+            [this] {
+                const Catalog::Entry *held = entry();
 
-            if (held == nullptr) {
-                return;
-            }
+                if (held == nullptr) {
+                    return;
+                }
 
-            _reach->ask("Delete the " + held->name + " archive?",
-                        "The tarball is removed from disk. Anything already extracted from it stays.",
-                        "Delete it", true, [this] {
-                            _reach->catalog.remove_archive(_current);
-                            _reach->notify.success("Archive deleted.");
-                        });
-        }));
+                _reach->ask("Delete the " + held->name + " archive?",
+                            "The tarball is removed from disk. Anything already extracted from it stays.",
+                            "Delete it",
+                            true,
+                            [this] {
+                                _reach->catalog.remove_archive(_current);
+                                _reach->notify.success("Archive deleted.");
+                            });
+            }));
     _deleteArchive->outlined();
 
     _fetching = archive->append(ttk::Box::row());
     _fetching->spacing(10.0)->cross(ttk::Box::Place::Centre);
     _fetchFrom = _fetching->append(Parts::text("", 400, ttk::Theme::fontSmall, &Palette::faint));
     _fetchFrom->stretch = 1.0;
-    _download = _fetching->append(Parts::glyph_button(ttk::Glyphs::Glyph::Download, 34.0, "", &Palette::accent,
-                                                      &Palette::accent, &Palette::accentSoft, [this] {
-        if (const Catalog::Entry *held = entry(); held != nullptr && entry_idle()) {
-            _reach->workflow.download(held->name);
-        }
-    }));
+    _download = _fetching->append(Parts::glyph_button(
+            ttk::Glyphs::Glyph::Download, 34.0, "", &Palette::accent, &Palette::accent, &Palette::accentSoft, [this] {
+                if (const Catalog::Entry *held = entry(); held != nullptr && entry_idle()) {
+                    _reach->workflow.download(held->name);
+                }
+            }));
     _download->outlined();
 
-    auto tabs = std::make_unique<SectionTabs>([this](const int index) {
-        set_section(static_cast<Section>(index));
-    });
+    auto tabs = std::make_unique<SectionTabs>([this](const int index) { set_section(static_cast<Section>(index)); });
     _tabs = tabs.get();
-    _tabs->set_tabs({ { "Builds", "" }, { "Installed", "" }, { "Logs", "" } });
+    _tabs->set_tabs({{"Builds", ""}, {"Installed", ""}, {"Logs", ""}});
     detail->append(Parts::above(2.0, std::move(tabs)));
 
     _body = detail->append(std::make_unique<ttk::Scroll>());
@@ -246,9 +262,10 @@ KernelsPage::KernelsPage(Reach *reach) : _reach(reach) {
     _logsSection = sections->append(ttk::Box::column());
     _logsSection->spacing(12.0);
 
-    auto noLogs = std::make_unique<EmptyState>(
-        "Nothing written yet", "Every step of every run files what it printed, and what it filed for this "
-                               "version is kept here.");
+    auto noLogs =
+            std::make_unique<EmptyState>("Nothing written yet",
+                                         "Every step of every run files what it printed, and what it filed for this "
+                                         "version is kept here.");
     _noLogs = noLogs.get();
     _logsSection->append(Parts::above(2.0, std::move(noLogs)));
 
@@ -269,9 +286,11 @@ KernelsPage::KernelsPage(Reach *reach) : _reach(reach) {
 
     ttk::Box *actions = filed->append(ttk::Box::row());
     actions->spacing(8.0)->cross(ttk::Box::Place::Centre);
-    actions->append(std::make_unique<ttk::Button>("Open", [this] {
-        _reach->logs.open(entry() != nullptr ? entry()->name : std::string{});
-    }))->glyph(ttk::Glyphs::Glyph::Folder)->compact()->tooltip("Open the logs in your file manager");
+    actions->append(std::make_unique<ttk::Button>(
+                            "Open", [this] { _reach->logs.open(entry() != nullptr ? entry()->name : std::string{}); }))
+            ->glyph(ttk::Glyphs::Glyph::Folder)
+            ->compact()
+            ->tooltip("Open the logs in your file manager");
 
     _deleteLogs = actions->append(std::make_unique<ttk::Button>("Delete", [this] {
         const Catalog::Entry *held = entry();
@@ -284,8 +303,10 @@ KernelsPage::KernelsPage(Reach *reach) : _reach(reach) {
 
         _reach->ask("Delete the logs for " + version + "?",
                     "Every run filed under " + version + ", for all of its suffixes, is removed from "
-                        + Desk::pretty(Logs::directory()) + ". Nothing else is touched.",
-                    "Delete them", true, [this, version] { _reach->logs.remove(version); });
+                            + Desk::pretty(Logs::directory()) + ". Nothing else is touched.",
+                    "Delete them",
+                    true,
+                    [this, version] { _reach->logs.remove(version); });
     }));
     _deleteLogs->glyph(ttk::Glyphs::Glyph::Trash)->kind(ttk::Button::Kind::Danger)->compact();
     actions->append(std::make_unique<ttk::Spacer>());
@@ -306,15 +327,13 @@ void KernelsPage::arrange(ttk::Typeface &type) {
 
     if (wide) {
         _left->place(BLRect{_box.x, top, LIST_WIDTH, tall}, type);
-        _right->place(BLRect{_box.x + LIST_WIDTH + GAP, top, std::max(0.0, _box.w - LIST_WIDTH - GAP), tall},
-                      type);
+        _right->place(BLRect{_box.x + LIST_WIDTH + GAP, top, std::max(0.0, _box.w - LIST_WIDTH - GAP), tall}, type);
 
         return;
     }
 
     _left->place(BLRect{_box.x, top, _box.w, LIST_HEIGHT}, type);
-    _right->place(BLRect{_box.x, top + LIST_HEIGHT + GAP, _box.w, std::max(0.0, tall - LIST_HEIGHT - GAP)},
-                  type);
+    _right->place(BLRect{_box.x, top + LIST_HEIGHT + GAP, _box.w, std::max(0.0, tall - LIST_HEIGHT - GAP)}, type);
 }
 
 bool KernelsPage::idle_for(const std::string &version) const {
@@ -418,8 +437,8 @@ void KernelsPage::run(const std::string &name, const std::string &version, const
     const std::string named = version + (suffix.empty() ? "" : "-" + suffix);
     const Catalog::Entry *held = entry();
     const bool built = held != nullptr && std::ranges::any_of(held->builds, [&named](const Catalog::Build &build) {
-        return build.name == named && build.built;
-    });
+                           return build.name == named && build.built;
+                       });
 
     if (name == "upToBuild") {
         workflow.up_to_build(version, suffix);
@@ -430,8 +449,10 @@ void KernelsPage::run(const std::string &name, const std::string &version, const
                                         "below to build it over."
                                       : "It is patched, configured, built and installed in one go, without "
                                         "stopping between the steps.")
-                        + " The steps that write outside your home ask for your password.",
-                    "Run everything", false, [this, version, suffix] { _reach->workflow.everything(version, suffix); });
+                            + " The steps that write outside your home ask for your password.",
+                    "Run everything",
+                    false,
+                    [this, version, suffix] { _reach->workflow.everything(version, suffix); });
     } else if (name == "patch") {
         workflow.patch(version, suffix);
     } else if (name == "revert") {
@@ -444,12 +465,15 @@ void KernelsPage::run(const std::string &name, const std::string &version, const
         _reach->ask("Install " + named + "?",
                     "Modules, image and initramfs are installed and grub is refreshed. These steps need your "
                     "password.",
-                    "Install", false, [this, version, suffix] { _reach->workflow.install(version, suffix); });
+                    "Install",
+                    false,
+                    [this, version, suffix] { _reach->workflow.install(version, suffix); });
     } else if (name == "sources") {
         _reach->ask("Delete the sources of " + named + "?",
                     "Only the build directory goes. Anything already installed from it stays where it is, and "
                     "the archive is left alone.",
-                    "Delete sources", true,
+                    "Delete sources",
+                    true,
                     [this, version, suffix] { _reach->workflow.remove_sources(version, suffix); });
     }
 }
@@ -464,9 +488,8 @@ void KernelsPage::extract() {
     const std::string version = held->name;
     const std::string suffix = _suffix;
     const std::string name = version + (suffix.empty() ? "" : "-" + suffix);
-    const bool exists = std::ranges::any_of(held->builds, [&name](const Catalog::Build &build) {
-        return build.name == name;
-    });
+    const bool exists =
+            std::ranges::any_of(held->builds, [&name](const Catalog::Build &build) { return build.name == name; });
 
     // What it makes is a build, so it is where the eye goes next.
     set_section(Section::Builds);
@@ -480,7 +503,9 @@ void KernelsPage::extract() {
     _reach->ask("Replace linux-" + name + "?",
                 "That directory already exists. Extracting replaces it, and anything configured or built in "
                 "it is lost.",
-                "Replace it", true, [this, version, suffix] { _reach->workflow.extract(version, suffix); });
+                "Replace it",
+                true,
+                [this, version, suffix] { _reach->workflow.extract(version, suffix); });
 }
 
 void KernelsPage::sync() {
@@ -509,8 +534,8 @@ void KernelsPage::sync() {
 
     // A change in any of these moves its neighbours, so the page is laid out again.
     if (const std::string shape = std::to_string(catalog.count()) + '\n' + shown + '\n' + _logSize + '\n' + _suffix
-            + '\n' + std::to_string(catalog.revision()) + '\n' + std::to_string(_reach->logs.revision())
-            + (_reach->workflow.running() ? "r" : "");
+                                  + '\n' + std::to_string(catalog.revision()) + '\n'
+                                  + std::to_string(_reach->logs.revision()) + (_reach->workflow.running() ? "r" : "");
         shape != _shape) {
         _shape = shape;
 
@@ -519,8 +544,7 @@ void KernelsPage::sync() {
         }
     }
 
-    _count->set_text(std::to_string(catalog.count()) + (catalog.count() == 1 ? " version" : " versions")
-                     + " on disk");
+    _count->set_text(std::to_string(catalog.count()) + (catalog.count() == 1 ? " version" : " versions") + " on disk");
     _adder->sync();
     _list->set_current(_current);
     _nothingOnDisk->set_visible(catalog.count() == 0);
@@ -532,12 +556,10 @@ void KernelsPage::sync_list() {
     std::vector<VersionList::Row> rows;
 
     for (const Catalog::Entry &entry : _reach->catalog.entries()) {
-        rows.push_back(VersionList::Row{
-            .version = entry.name,
-            .summary = entry.summary(),
-            .running = entry.running,
-            .installed = static_cast<int>(entry.installed.size())
-        });
+        rows.push_back(VersionList::Row{.version = entry.name,
+                                        .summary = entry.summary(),
+                                        .running = entry.running,
+                                        .installed = static_cast<int>(entry.installed.size())});
     }
 
     _list->set_rows(std::move(rows));
@@ -629,14 +651,14 @@ void KernelsPage::sync_builds(const Catalog::Entry &shown) {
             const std::string suffix = build.suffix;
 
             _buildCards.push_back(_builds->append(std::make_unique<BuildCard>(
-                _reach, build, [this, name, version, suffix](const std::string &action) {
-                    if (action == "options") {
-                        _opened = _opened == name ? std::string{} : name;
-                        _reach->touch();
-                    } else {
-                        run(action, version, suffix);
-                    }
-                })));
+                    _reach, build, [this, name, version, suffix](const std::string &action) {
+                        if (action == "options") {
+                            _opened = _opened == name ? std::string{} : name;
+                            _reach->touch();
+                        } else {
+                            run(action, version, suffix);
+                        }
+                    })));
         }
 
         if (root() != nullptr) {
@@ -669,28 +691,29 @@ void KernelsPage::sync_installed(const Catalog::Entry &shown) {
         for (const Catalog::Build &kernel : shown.installed) {
             const Catalog::Build copy = kernel;
 
-            _installedCards.push_back(_installed->append(std::make_unique<InstalledCard>(
-                kernel, [this, copy](const std::string &action) {
-                    const Catalog::Entry *held = entry();
+            _installedCards.push_back(
+                    _installed->append(std::make_unique<InstalledCard>(kernel, [this, copy](const std::string &action) {
+                        const Catalog::Entry *held = entry();
 
-                    if (action == "download") {
-                        if (held != nullptr) {
-                            _reach->workflow.download(held->name);
-                        }
-                    } else if (action == "sign") {
-                        _reach->workflow.sign(copy.version, copy.suffix);
-                    } else {
-                        _reach->ask("Remove " + copy.name + "?",
+                        if (action == "download") {
+                            if (held != nullptr) {
+                                _reach->workflow.download(held->name);
+                            }
+                        } else if (action == "sign") {
+                            _reach->workflow.sign(copy.version, copy.suffix);
+                        } else {
+                            _reach->ask(
+                                    "Remove " + copy.name + "?",
                                     std::string("Its modules, boot files and mkinitcpio preset are deleted.")
-                                        + (copy.extracted ? " The build directory it came from stays, so it "
-                                                            "can be installed again without building it over."
-                                                          : "")
-                                        + (copy.running ? " This is the kernel you are running right now." : ""),
-                                    "Remove it", true, [this, copy] {
-                                        _reach->workflow.remove_installed(copy.version, copy.suffix);
-                                    });
-                    }
-                })));
+                                            + (copy.extracted ? " The build directory it came from stays, so it "
+                                                                "can be installed again without building it over."
+                                                              : "")
+                                            + (copy.running ? " This is the kernel you are running right now." : ""),
+                                    "Remove it",
+                                    true,
+                                    [this, copy] { _reach->workflow.remove_installed(copy.version, copy.suffix); });
+                        }
+                    })));
         }
 
         if (root() != nullptr) {
@@ -701,8 +724,8 @@ void KernelsPage::sync_installed(const Catalog::Entry &shown) {
     for (size_t index = 0; index < shown.installed.size(); ++index) {
         const Catalog::Build &kernel = shown.installed[index];
 
-        _installedCards[index]->sync(kernel, idle_for(kernel.version), _reach->system.secure_boot(),
-                                     shown.archived, shown.name);
+        _installedCards[index]->sync(
+                kernel, idle_for(kernel.version), _reach->system.secure_boot(), shown.archived, shown.name);
     }
 }
 

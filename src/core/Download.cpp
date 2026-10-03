@@ -6,29 +6,26 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
+#include "Download.h"
+#include <cstring>
 #include <curl/curl.h>
 #include <filesystem>
-#include <cstring>
-#include "Download.h"
 
 namespace {
-    struct Memory {
-        char *memory;
-        size_t size;
-    };
+struct Memory {
+    char *memory;
+    size_t size;
+};
 
-    struct ProgressTX {
-        CURL *curl;
-        Progress *counter;
-    };
+struct ProgressTX {
+    CURL *curl;
+    Progress *counter;
+};
 }
 
 static size_t write_callback(const void *ptr, size_t size, size_t nmemb, void *userdata);
-static size_t progress_callback(void *clientp,
-                                curl_off_t dltotal,
-                                curl_off_t dlnow,
-                                curl_off_t ultotal,
-                                curl_off_t ulnow);
+static size_t
+progress_callback(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
 
 Download::Download(const std::string &url) {
     _url = url;
@@ -58,7 +55,7 @@ std::string Download::get_page() const {
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, static_cast<void *>(&chunk));
 
-    if(const CURLcode result = curl_easy_perform(curl); result != CURLE_OK) {
+    if (const CURLcode result = curl_easy_perform(curl); result != CURLE_OK) {
         throw std::runtime_error(curl_easy_strerror(result));
     }
 
@@ -70,8 +67,7 @@ std::string Download::get_page() const {
     return page;
 }
 
-void Download::perform(const std::string &destination,
-                       Progress *counter) const {
+void Download::perform(const std::string &destination, Progress *counter) const {
     CURL *curl = curl_easy_init();
 
     if (!curl) {
@@ -87,9 +83,9 @@ void Download::perform(const std::string &destination,
     curl_easy_setopt(curl, CURLOPT_URL, _url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
 
-    ProgressTX tx {
-        .curl = curl,
-        .counter = counter,
+    ProgressTX tx{
+            .curl = curl,
+            .counter = counter,
     };
 
     curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
@@ -106,16 +102,13 @@ void Download::perform(const std::string &destination,
     }
 }
 
-static size_t write_callback(const void *ptr,
-                             const size_t size,
-                             const size_t nmemb,
-                             void *userdata) {
+static size_t write_callback(const void *ptr, const size_t size, const size_t nmemb, void *userdata) {
     const size_t realsize = size * nmemb;
     const auto mem = static_cast<Memory *>(userdata);
 
     const auto newmem = static_cast<char *>(realloc(mem->memory, mem->size + realsize * 2));
 
-    if(!ptr) {
+    if (!ptr) {
         throw std::runtime_error("Ran out of memory while downloading page!");
     }
 
@@ -127,11 +120,8 @@ static size_t write_callback(const void *ptr,
     return realsize;
 }
 
-static size_t progress_callback(void *clientp,
-                                const curl_off_t dltotal,
-                                const curl_off_t dlnow,
-                                curl_off_t,
-                                curl_off_t) {
+static size_t
+progress_callback(void *clientp, const curl_off_t dltotal, const curl_off_t dlnow, curl_off_t, curl_off_t) {
     const auto progress = static_cast<ProgressTX *>(clientp);
 
     if (!progress->counter) {

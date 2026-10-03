@@ -6,8 +6,8 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
-#include "gui/app/Reach.h"
 #include "gui/components/HoldingRow.h"
+#include "gui/app/Reach.h"
 #include "gui/components/Parts.h"
 #include "gui/components/Wash.h"
 #include "gui/model/Format.h"
@@ -16,25 +16,37 @@
 #include "ttk/draw/Typeface.h"
 
 namespace {
-    using Palette = ttk::Theme::Palette;
+using Palette = ttk::Theme::Palette;
 }
 
 HoldingRow::HoldingRow(Reach *reach, Log::Holding holding, std::function<void()> toggled)
-        : _reach(reach), _holding(std::move(holding)), _toggled(std::move(toggled)) {
+    : _reach(reach), _holding(std::move(holding)), _toggled(std::move(toggled)) {
     _takesPointer = true;
     cursor = ttk::Cursor::Pointer;
 
-    _folder = append(Parts::glyph_button(ttk::Glyphs::Glyph::Folder, 28.0, "Open these in your file manager",
-                                         &Palette::faint, &Palette::accent, &Palette::accentSoft,
+    _folder = append(Parts::glyph_button(ttk::Glyphs::Glyph::Folder,
+                                         28.0,
+                                         "Open these in your file manager",
+                                         &Palette::faint,
+                                         &Palette::accent,
+                                         &Palette::accentSoft,
                                          [this] { _reach->logs.open(_holding.name); }));
 
-    _bin = append(Parts::glyph_button(ttk::Glyphs::Glyph::Trash, 28.0, "Delete everything filed under this name",
-                                      &Palette::faint, &Palette::danger, &Palette::dangerSoft, [this] {
-        _reach->ask("Delete the logs for " + _holding.name + "?",
-                    Format::size(_holding.size) + " over " + Format::runs(_holding.runs)
-                        + " is removed. Nothing filed under any other name is touched.",
-                    "Delete them", true, [this] { _reach->logs.remove_build(_holding.name); });
-    }));
+    _bin = append(
+            Parts::glyph_button(ttk::Glyphs::Glyph::Trash,
+                                28.0,
+                                "Delete everything filed under this name",
+                                &Palette::faint,
+                                &Palette::danger,
+                                &Palette::dangerSoft,
+                                [this] {
+                                    _reach->ask("Delete the logs for " + _holding.name + "?",
+                                                Format::size(_holding.size) + " over " + Format::runs(_holding.runs)
+                                                        + " is removed. Nothing filed under any other name is touched.",
+                                                "Delete them",
+                                                true,
+                                                [this] { _reach->logs.remove_build(_holding.name); });
+                                }));
 }
 
 void HoldingRow::set_open(const bool open) {
@@ -65,8 +77,11 @@ void HoldingRow::paint(const ttk::Painter &painter) {
     const double side = ttk::Glyphs::span(weight);
     double x = _box.x + 10.0;
 
-    ttk::Glyphs::draw(painter.context(), _open ? ttk::Glyphs::Glyph::Up : ttk::Glyphs::Glyph::Down,
-                      BLPoint{x, _box.y + ((_box.h - side) / 2.0)}, weight, _open ? palette.accent : palette.faint);
+    ttk::Glyphs::draw(painter.context(),
+                      _open ? ttk::Glyphs::Glyph::Up : ttk::Glyphs::Glyph::Down,
+                      BLPoint{x, _box.y + ((_box.h - side) / 2.0)},
+                      weight,
+                      _open ? palette.accent : palette.faint);
     x += side + 8.0;
 
     const BLFont &name = painter.font(ttk::Typeface::pick(600, true), ttk::Theme::fontSmall);
@@ -81,10 +96,13 @@ void HoldingRow::paint(const ttk::Painter &painter) {
     const double sized = painter.width(mono, size);
     const double right = _folder->box().x - 8.0;
 
-    painter.label(mono, BLRect{right - sized - 2.0, _box.y, sized + 2.0, _box.h}, ttk::Align::Start, size,
-                  palette.muted);
-    painter.label(small, BLRect{x, _box.y, std::max(0.0, right - sized - 8.0 - x), _box.h}, ttk::Align::Start,
-                  Format::runs(_holding.runs), palette.faint);
+    painter.label(
+            mono, BLRect{right - sized - 2.0, _box.y, sized + 2.0, _box.h}, ttk::Align::Start, size, palette.muted);
+    painter.label(small,
+                  BLRect{x, _box.y, std::max(0.0, right - sized - 8.0 - x), _box.h},
+                  ttk::Align::Start,
+                  Format::runs(_holding.runs),
+                  palette.faint);
 
     Widget::paint(painter);
 }

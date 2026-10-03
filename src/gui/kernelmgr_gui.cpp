@@ -16,8 +16,8 @@
 #include "ttk/system/Paths.h"
 
 namespace Embedded {
-    extern const unsigned char mark128[];
-    extern const std::size_t mark128Size;
+extern const unsigned char mark128[];
+extern const std::size_t mark128Size;
 }
 
 int main(int argc, char *argv[]) {
