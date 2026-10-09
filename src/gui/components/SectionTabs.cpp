@@ -143,6 +143,34 @@ void SectionTabs::release(const ttk::Pointer &at) {
     }
 }
 
+bool SectionTabs::key(const ttk::Key &pressed) {
+    const int last = static_cast<int>(_tabs.size()) - 1;
+    const int to = [&] {
+        switch (pressed.code) {
+            case ttk::Code::Left:
+                return std::max(_current - 1, 0);
+            case ttk::Code::Right:
+                return std::min(_current + 1, last);
+            case ttk::Code::Home:
+                return 0;
+            case ttk::Code::End:
+                return last;
+            default:
+                return -1;
+        }
+    }();
+
+    if (to < 0) {
+        return pressed.code == ttk::Code::Return || pressed.code == ttk::Code::Space;
+    }
+
+    if (to != _current && to <= last && _selected) {
+        _selected(to);
+    }
+
+    return true;
+}
+
 void SectionTabs::hover(const ttk::Pointer &at) {
     if (const int over = at_point(at.x, at.y); over != _over) {
         _over = over;

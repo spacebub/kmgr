@@ -64,6 +64,8 @@ TitleBar::TitleBar(Reach *reach, BLImage mark) : _reach(reach), _mark(std::move(
 }
 
 void TitleBar::sync(const Page page, const bool homeBadge, const std::string &trailing) {
+    _page = page;
+
     for (Tab &tab : _tabs) {
         const bool active = tab.key == page;
 
@@ -214,6 +216,23 @@ void TitleBar::release(const ttk::Pointer &at) {
     if (const int index = tab_at(at.x, at.y); index >= 0) {
         _reach->go(_tabs[static_cast<size_t>(index)].key);
     }
+}
+
+bool TitleBar::key(const ttk::Key &pressed) {
+    if (pressed.code != ttk::Code::Left && pressed.code != ttk::Code::Right) {
+        return pressed.code == ttk::Code::Return || pressed.code == ttk::Code::Space;
+    }
+
+    const auto found = std::ranges::find(_tabs, _page, &Tab::key);
+    const int at = found == _tabs.end() ? -1 : static_cast<int>(found - _tabs.begin());
+    const int last = static_cast<int>(_tabs.size()) - 1;
+    const int to = pressed.code == ttk::Code::Left ? std::max(at - 1, 0) : std::min(at + 1, last);
+
+    if (to != at && to >= 0) {
+        _reach->go(_tabs[static_cast<size_t>(to)].key);
+    }
+
+    return true;
 }
 
 void TitleBar::hover(const ttk::Pointer &at) {

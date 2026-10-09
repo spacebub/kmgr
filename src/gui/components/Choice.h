@@ -37,6 +37,7 @@ public:
 
     bool press(const ttk::Pointer &at) override;
     void release(const ttk::Pointer &at) override;
+    bool key(const ttk::Key &pressed) override;
     void hover(const ttk::Pointer &at) override;
     void leave() override;
     [[nodiscard]] ttk::Cursor cursor_at(double x, double y) const override;

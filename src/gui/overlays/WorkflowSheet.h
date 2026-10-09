@@ -45,6 +45,10 @@ public:
     void paint(const ttk::Painter &painter) override;
     [[nodiscard]] BLRect drawn() const override;
     Widget *at(double x, double y) override;
+
+    // The scrim takes presses only to sink them.
+    [[nodiscard]] bool takes_focus() const override { return false; }
+
     bool press(const ttk::Pointer & /*at*/) override { return true; }
     bool advance(double now) override;
 

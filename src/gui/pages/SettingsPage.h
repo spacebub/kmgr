@@ -49,6 +49,7 @@ private:
         void leave() override;
         bool press(const ttk::Pointer &at) override;
         void release(const ttk::Pointer &at) override;
+        bool key(const ttk::Key &pressed) override;
 
     private:
         static constexpr double ROW = 34.0;

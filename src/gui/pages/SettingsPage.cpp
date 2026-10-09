@@ -108,6 +108,21 @@ void SettingsPage::Rail::release(const ttk::Pointer &at) {
     }
 }
 
+bool SettingsPage::Rail::key(const ttk::Key &pressed) {
+    if (pressed.code != ttk::Code::Up && pressed.code != ttk::Code::Down) {
+        return pressed.code == ttk::Code::Return || pressed.code == ttk::Code::Space;
+    }
+
+    const int row = std::clamp(_page->_section + (pressed.code == ttk::Code::Up ? -1 : 1), 0, 3);
+
+    if (row != _page->_section) {
+        _page->_section = row;
+        _page->_reach->touch();
+    }
+
+    return true;
+}
+
 SettingsPage::SwitchCard::SwitchCard(std::function<void()> flipped) : _flipped(std::move(flipped)) {
     _takesPointer = true;
     cursor = ttk::Cursor::Pointer;

@@ -34,6 +34,7 @@ public:
 
     bool press(const ttk::Pointer &at) override;
     void release(const ttk::Pointer &at) override;
+    bool key(const ttk::Key &pressed) override;
     void hover(const ttk::Pointer &at) override;
     void leave() override;
     bool advance(double now) override;
@@ -57,6 +58,7 @@ private:
     Reach *_reach;
     BLImage _mark;
     std::vector<Tab> _tabs;
+    Page _page{};
     std::string _trailing;
 
     ttk::GlyphButton *_shade = nullptr;

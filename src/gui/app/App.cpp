@@ -287,12 +287,6 @@ bool App::shortcut(const ttk::Key &pressed) {
         return false;
     }
 
-    if (pressed.code == ttk::Code::Tab) {
-        _shell.ui().focus_next(pressed.shift);
-
-        return true;
-    }
-
     return false;
 }
 

@@ -179,6 +179,28 @@ void Choice::release(const ttk::Pointer &at) {
     }
 }
 
+bool Choice::key(const ttk::Key &pressed) {
+    const int step = pressed.code == ttk::Code::Left ? -1 : pressed.code == ttk::Code::Right ? 1 : 0;
+
+    if (step == 0) {
+        return pressed.code == ttk::Code::Return || pressed.code == ttk::Code::Space;
+    }
+
+    const int count = static_cast<int>(_words.size());
+
+    for (int to = _current + step; to >= 0 && to < count; to += step) {
+        if (!blocked(to)) {
+            if (_selected) {
+                _selected(to);
+            }
+
+            break;
+        }
+    }
+
+    return true;
+}
+
 // Set on the control, since its one hint is the one that shows.
 void Choice::hover(const ttk::Pointer &at) {
     _under = at_point(at.x);
