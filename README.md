@@ -1,6 +1,6 @@
 # kernelmgr
 
-Downloads, patches, configures, builds and installs kernels from kernel.org.
+Downloads, patches, configures, builds and on Arch Linux installs kernels from kernel.org.
 Comes as a GUI (`KernelManager`) and a CLI (`kmgr`).
 
 ## Build
