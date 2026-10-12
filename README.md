@@ -19,6 +19,7 @@ Binaries land in `build/bin`. Options:
 - `-DGUI=OFF` skips the GUI
 - `-DFETCHCONTENT_SOURCE_DIR_TINYTK=/path/to/tinytk` uses a local tinytk
 - `TTK_DOWNLOAD_CACHE` moves the fetch cache (default `.download-cache`)
+- `-DKERNELMGR_RELEASE=ON` leaves the git revision out of the version shown
 
 ## GUI
 

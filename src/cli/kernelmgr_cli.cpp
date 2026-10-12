@@ -21,6 +21,7 @@
 #include "core/Configuration.h"
 #include "core/Elevation.h"
 #include "core/Log.h"
+#include "core/Program.h"
 #include "core/workflow/WorkflowFactory.h"
 
 
@@ -53,7 +54,7 @@ int run(const int argc, char *argv[]) {
     }
 
     if (arguments.flags & Parser::VERSION) {
-        std::cout << "kernelmgr " << KERNELMGR_VERSION << "\n";
+        std::cout << "kernelmgr " << Program::version() << "\n";
 
         return 0;
     }

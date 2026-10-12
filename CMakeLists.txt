@@ -12,6 +12,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 option(GUI "Build graphical interface" ON)
 
 option(SANITIZE "Build with the address and undefined sanitizers" OFF)
+option(KERNELMGR_RELEASE "Build as a release: no git revision beside the version" OFF)
 
 add_compile_definitions(KERNELMGR_VERSION="${PROJECT_VERSION}")
 
@@ -70,5 +71,7 @@ FetchContent_Declare(tinytk
         SYSTEM)
 
 FetchContent_MakeAvailable(tinytk)
+
+include(cmake/GitRevision.cmake)
 
 add_subdirectory(src)

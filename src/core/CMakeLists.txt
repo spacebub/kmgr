@@ -19,6 +19,8 @@ add_library(kernelmgr_core STATIC
         Make.h
         Process.cpp
         Process.h
+        Program.cpp
+        Program.h
         Sha256.cpp
         Sha256.h
         Shell.h
@@ -61,3 +63,5 @@ target_link_libraries(kernelmgr_core
         -larchive
         -lcurl
         -lutil)
+
+kernelmgr_git_revision(kernelmgr_core)

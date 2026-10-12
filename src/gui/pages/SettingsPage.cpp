@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <utility>
 
+#include "core/Program.h"
 #include "gui/app/Desk.h"
 #include "gui/app/Reach.h"
 #include "gui/components/Parts.h"
@@ -241,6 +242,11 @@ SettingsPage::SettingsPage(Reach *reach) : _reach(reach) {
         _reach->touch();
     }));
     general->append(std::move(alerts));
+
+    general->append(card(inside, 4.0));
+    inside->append(Parts::section("ABOUT"));
+    inside->append(Parts::text("KernelManager " + Program::version(), 600, ttk::Theme::fontBody, &Palette::text));
+    inside->append(Parts::note("Downloads, patches, configures, builds and installs kernels from kernel.org."));
 
     // --- build ---
 
