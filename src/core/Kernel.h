@@ -62,11 +62,15 @@ public:
     explicit Kernel(const std::string &suffixedVersion);
 
     static Kernel get_current();
+
+    // Throws when kernel.org cannot be reached or does not name a release.
     static Kernel get_latest(const std::function<void(const Version &)> &callback = nullptr);
     static std::vector<Kernel> list_extracted();
     static std::vector<Kernel> list_installed();
 
     [[nodiscard]] Version get_version() const;
+
+    // major.minor, an optional .revision and an optional -suffix. Anything else throws.
     static Version get_version(const std::string &suffixedVersion);
 
     // Returns a zero version rather than throwing: callers ask about directories already on disk.

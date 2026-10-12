@@ -107,7 +107,7 @@ Workflow *WorkflowFactory::create(const Options &options) {
         KernelArchive archive(version);
 
         if (!std::filesystem::exists(archive.get_location())) {
-            workflow->queue(new DownloadTask(archive.get_url(), archive.get_location()));
+            workflow->queue(new DownloadTask(archive));
         }
     }
 

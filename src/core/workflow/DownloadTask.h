@@ -11,18 +11,22 @@
 
 
 #include "Task.h"
+#include "core/KernelArchive.h"
 
+// Fetched under a working name and only given its own once its digest matches the list
+// kernel.org publishes beside it, so a half-written or altered file is never mistaken for
+// the archive.
 class DownloadTask final : public Task {
+    KernelArchive _archive;
+
+    bool verify(const std::string &file);
+
 public:
-    DownloadTask(const std::string &url, const std::string &destination);
+    explicit DownloadTask(KernelArchive archive);
 
     bool run() override;
     int position() override;
     void cancel() override;
-
-private:
-    std::string _url;
-    std::string _destination;
 };
 
 

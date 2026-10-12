@@ -3,6 +3,8 @@
 Downloads, patches, configures, builds and on Arch Linux installs kernels from kernel.org.
 Comes as a GUI (`KernelManager`) and a CLI (`kmgr`).
 
+A downloaded archive is kept only once its SHA-256 matches the `sha256sums.asc` kernel.org publishes beside it.
+
 ## Build
 
 Needs a C++23 compiler, CMake 3.25+, libcurl, libarchive and libdbus-1. First configure needs github.com access.

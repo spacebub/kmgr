@@ -6,9 +6,11 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
-#include "Command.h"
 #include <stdexcept>
+#include <sys/wait.h>
 
+#include "Command.h"
+#include "Shell.h"
 
 Command::Command(const std::string &command) {
     _command = command;
@@ -18,10 +20,13 @@ int Command::execute() const {
     return system(_command.c_str());
 }
 
-std::string Command::capture() const {
+std::string Command::capture(int *status) const {
     std::string output;
+    const int raw = execute([&output](const std::string &data) { output += data; });
 
-    execute([&output](const std::string &data) { output += data; });
+    if (status) {
+        *status = raw == -1 ? -1 : WIFEXITED(raw) ? WEXITSTATUS(raw) : 128 + WTERMSIG(raw);
+    }
 
     while (!output.empty() && (output.back() == '\n' || output.back() == '\r')) {
         output.pop_back();
@@ -31,7 +36,7 @@ std::string Command::capture() const {
 }
 
 bool Command::exists(const std::string &program) {
-    return Command("command -v " + program + " > /dev/null 2>&1").execute() == 0;
+    return Command("command -v " + Shell::quote(program) + " > /dev/null 2>&1").execute() == 0;
 }
 
 int Command::execute(const std::function<void(const std::string &)> &callback) const {

@@ -18,6 +18,9 @@ add_library(kernelmgr_core STATIC
         Make.h
         Process.cpp
         Process.h
+        Sha256.cpp
+        Sha256.h
+        Shell.h
         SystemInfo.h
         Progress.cpp
         Progress.h

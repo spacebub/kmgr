@@ -14,12 +14,12 @@
 
 #include "Progress.h"
 
+// Both throw on any failure, an HTTP error status included, with the URL in the message.
 class Download {
     std::string _url;
 
 public:
-    explicit Download(const std::string &url);
-    ~Download();
+    explicit Download(std::string url);
 
     [[nodiscard]] std::string get_page() const;
     void perform(const std::string &destination, Progress *counter) const;

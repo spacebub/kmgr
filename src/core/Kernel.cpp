@@ -8,10 +8,12 @@
  */
 #include "yyjson.h"
 #include <algorithm>
+#include <charconv>
 #include <filesystem>
 #include <format>
 #include <fstream>
 #include <set>
+#include <stdexcept>
 #include <sys/utsname.h>
 
 #include "Configuration.h"
@@ -33,15 +35,23 @@ Kernel Kernel::get_current() {
 
 Kernel Kernel::get_latest(const std::function<void(const Version &)> &callback) {
     const std::string releasesJson = Download(RELEASES_ENDPOINT).get_page();
+    std::string version;
 
-    yyjson_doc *doc = yyjson_read(releasesJson.c_str(), releasesJson.size(), YYJSON_READ_NOFLAG);
-    yyjson_val *root = yyjson_doc_get_root(doc);
+    if (yyjson_doc *doc = yyjson_read(releasesJson.c_str(), releasesJson.size(), YYJSON_READ_NOFLAG)) {
+        yyjson_val *stable = yyjson_obj_get(yyjson_doc_get_root(doc), "latest_stable");
 
-    yyjson_val *val = yyjson_obj_get(root, "latest_stable");
+        if (const char *named = yyjson_get_str(yyjson_obj_get(stable, "version"))) {
+            version = named;
+        }
 
-    Kernel kernel(yyjson_get_str(yyjson_obj_get(val, "version")));
+        yyjson_doc_free(doc);
+    }
 
-    yyjson_doc_free(doc);
+    if (version.empty()) {
+        throw std::runtime_error(std::string(RELEASES_ENDPOINT) + " did not name a latest stable release.");
+    }
+
+    Kernel kernel(version);
 
     if (callback) {
         callback(kernel.get_version());
@@ -136,36 +146,52 @@ Kernel::Version Kernel::get_version() const {
 }
 
 Kernel::Version Kernel::get_version(const std::string &suffixedVersion) {
-    const ulong separatorIndex = suffixedVersion.find('-');
+    const auto reject = [&suffixedVersion] { throw std::invalid_argument("Not a kernel version: " + suffixedVersion); };
+
+    const size_t separator = suffixedVersion.find('-');
+    const std::string_view numbers(suffixedVersion.data(),
+                                   separator == std::string::npos ? suffixedVersion.size() : separator);
     Version version{};
 
-    if (separatorIndex != std::string::npos) {
-        version.suffix = suffixedVersion.substr(separatorIndex + 1);
+    if (separator != std::string::npos) {
+        version.suffix = suffixedVersion.substr(separator + 1);
     }
 
-    ushort versionNumbers[3]{};
-    size_t last = 0, counter = 0;
-    for (size_t current = 0; current < suffixedVersion.length(); ++current) {
-        if (counter == 2) {
+    ushort *fields[] = {&version.major, &version.minor, &version.revision};
+    size_t count = 0;
+    size_t start = 0;
+
+    for (;;) {
+        if (count == std::size(fields)) {
+            reject();
+        }
+
+        const size_t dot = numbers.find('.', start);
+        const std::string_view field = numbers.substr(start, dot == std::string_view::npos ? dot : dot - start);
+        unsigned value = 0;
+
+        if (field.empty() || field.size() > 5) {
+            reject();
+        }
+
+        const auto [end, error] = std::from_chars(field.data(), field.data() + field.size(), value);
+
+        if (error != std::errc{} || end != field.data() + field.size() || value > 65535) {
+            reject();
+        }
+
+        *fields[count++] = static_cast<ushort>(value);
+
+        if (dot == std::string_view::npos) {
             break;
         }
 
-        if (suffixedVersion[current] == '.') {
-            std::string sss = suffixedVersion.substr(last + (last != 0), current - last - (last != 0));
-            versionNumbers[counter] = std::stoi(sss);
-            last = current;
-            counter++;
-        }
+        start = dot + 1;
     }
 
-    versionNumbers[counter] = std::stoi(
-            separatorIndex == std::string::npos
-                    ? suffixedVersion.substr(last + 1)
-                    : suffixedVersion.substr(last + 1, suffixedVersion.length() - version.suffix.length() - last - 2));
-
-    version.major = versionNumbers[0];
-    version.minor = versionNumbers[1];
-    version.revision = versionNumbers[2];
+    if (count < 2) {
+        reject();
+    }
 
     return version;
 }
@@ -201,24 +227,32 @@ Kernel::Status Kernel::get_status() const {
     return status;
 }
 
-static std::string package_of(const std::string &version) {
-    for (const std::filesystem::path &directory :
-         {std::filesystem::path("/usr/lib/modules"), std::filesystem::path("/lib/modules")}) {
-        const std::filesystem::path marker = directory / version / "pkgbase";
-
-        if (!std::filesystem::exists(marker)) {
-            continue;
-        }
-
-        std::ifstream file(marker);
-        std::string name;
-
-        if (std::getline(file, name); !name.empty()) {
-            return name;
+namespace {
+std::string modules_directory(const std::string &version) {
+    for (const std::string &directory : {std::string("/usr/lib/modules"), std::string("/lib/modules")}) {
+        if (std::filesystem::is_directory(directory + "/" + version)) {
+            return directory + "/" + version;
         }
     }
 
     return {};
+}
+
+// Arch leaves the package name inside the modules directory.
+std::string package_of(const std::string &version) {
+    const std::string directory = modules_directory(version);
+
+    if (directory.empty()) {
+        return {};
+    }
+
+    std::ifstream file(directory + "/pkgbase");
+    std::string name;
+
+    std::getline(file, name);
+
+    return name;
+}
 }
 
 std::string Kernel::get_image() const {

@@ -13,9 +13,56 @@
 #include <algorithm>
 #include <filesystem>
 #include <format>
+#include <memory>
 #include <stdexcept>
 
-static int copy_data(archive *read, archive *write);
+namespace {
+using Handle = std::unique_ptr<archive, int (*)(archive *)>;
+
+// Every entry has to sit under the top directory the archive is named after, and nowhere
+// else, before its path is used for anything.
+std::string relocate(const std::string &entry, const std::string &top, const std::string &destination) {
+    if (entry == top || entry == top + "/") {
+        return destination;
+    }
+
+    if (!entry.starts_with(top + "/")) {
+        throw std::runtime_error("Unexpected entry " + entry + " in the archive");
+    }
+
+    const std::filesystem::path relative(entry.substr(top.size() + 1));
+
+    for (const std::filesystem::path &part : relative) {
+        if (part == "..") {
+            throw std::runtime_error("Entry " + entry + " in the archive reaches outside its directory");
+        }
+    }
+
+    return destination + "/" + relative.string();
+}
+
+int copy_data(archive *read, archive *write) {
+    const void *buffer;
+    size_t size;
+    int64_t offset;
+
+    for (;;) {
+        const int status = archive_read_data_block(read, &buffer, &size, &offset);
+
+        if (status == ARCHIVE_EOF) {
+            return ARCHIVE_OK;
+        }
+
+        if (status != ARCHIVE_OK) {
+            return status;
+        }
+
+        if (const int written = archive_write_data_block(write, buffer, size, offset); written != ARCHIVE_OK) {
+            return written;
+        }
+    }
+}
+}
 
 KernelArchive::KernelArchive(const Kernel::Version &kernelVersion) {
     _kernelVersion = kernelVersion;
@@ -35,7 +82,7 @@ KernelArchive::KernelArchive(const std::string &name, const std::string &path) {
     _url = get_url(_kernelVersion);
 }
 
-std::string KernelArchive::get_url() {
+std::string KernelArchive::get_url() const {
     return _url;
 }
 
@@ -57,44 +104,36 @@ std::string KernelArchive::get_name(const bool extension) const {
     return name;
 }
 
-int KernelArchive::get_file_count() {
-    if (_fileCount > 0) {
-        return _fileCount;
-    }
+std::string KernelArchive::get_checksum_url() const {
+    return std::format("{}/v{}.x/sha256sums.asc", Configuration::get()->kernelCdn, _kernelVersion.major);
+}
 
-    if (!std::filesystem::exists(_path)) {
-        throw std::runtime_error("You must download the archive first!");
-    }
+// Lines read "<64 hex digits>  <name>" between the clearsign headers and the signature.
+std::string KernelArchive::find_checksum(const std::string &listing, const std::string &name) {
+    constexpr size_t DIGEST = 64;
+    size_t start = 0;
 
-    archive *archive = archive_read_new();
-    archive_entry *entry;
-    _fileCount = 0;
+    while (start < listing.size()) {
+        const size_t end = listing.find('\n', start);
+        const std::string_view line(listing.data() + start, (end == std::string::npos ? listing.size() : end) - start);
 
-    archive_read_support_filter_all(archive);
-    archive_read_support_format_all(archive);
+        start = end == std::string::npos ? listing.size() : end + 1;
 
-    if (archive_read_open_filename(archive, _path.c_str(), 10240)) {
-        throw std::runtime_error(archive_error_string(archive));
-    }
-
-    for (;;) {
-        const int status = archive_read_next_header(archive, &entry);
-
-        if (status == ARCHIVE_EOF) {
-            break;
-        }
-        if (status != ARCHIVE_OK) {
-            throw std::runtime_error(archive_error_string(archive));
+        if (line.size() != DIGEST + 2 + name.size() || line.substr(DIGEST, 2) != "  "
+            || line.substr(DIGEST + 2) != name) {
+            continue;
         }
 
-        archive_read_data_skip(archive);
-        _fileCount++;
+        const std::string_view digest = line.substr(0, DIGEST);
+
+        if (std::ranges::all_of(digest, [](const char character) {
+                return (character >= '0' && character <= '9') || (character >= 'a' && character <= 'f');
+            })) {
+            return std::string(digest);
+        }
     }
 
-    archive_read_close(archive);
-    archive_read_free(archive);
-
-    return _fileCount;
+    return {};
 }
 
 void KernelArchive::with_suffix(const std::string &suffix) {
@@ -106,55 +145,71 @@ void KernelArchive::extract(Progress *progress) const {
         throw std::runtime_error("You must download the archive first!");
     }
 
-    const std::string destination = Kernel::get_source_directory(_kernelVersion);
+    const std::string top = get_name(false);
 
-    std::filesystem::create_directories(destination);
+    std::filesystem::create_directories(Kernel::get_source_directory(_kernelVersion));
 
-    archive *archive = archive_read_new();
-    struct archive *ext = archive_write_disk_new();
+    // Resolved first, so the checks below only ever see what the archive itself asks for.
+    const std::string destination = std::filesystem::canonical(Kernel::get_source_directory(_kernelVersion));
+
+    const Handle reader(archive_read_new(), archive_read_free);
+    const Handle writer(archive_write_disk_new(), archive_write_free);
     archive_entry *entry;
 
-    constexpr int flags = ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_ACL | ARCHIVE_EXTRACT_FFLAGS;
+    // Owners, permissions beyond the mode and flags are not the archive's to set, and neither
+    // is anything outside the directory it is unpacked into.
+    constexpr int flags = ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_SECURE_NODOTDOT | ARCHIVE_EXTRACT_SECURE_SYMLINKS;
 
-    archive_read_support_filter_all(archive);
-    archive_read_support_format_all(archive);
-    archive_write_disk_set_options(ext, flags);
-    archive_write_disk_set_standard_lookup(ext);
+    archive_read_support_filter_all(reader.get());
+    archive_read_support_format_all(reader.get());
+    archive_write_disk_set_options(writer.get(), flags);
+    archive_write_disk_set_standard_lookup(writer.get());
 
-    if (archive_read_open_filename(archive, _path.c_str(), 10240)) {
-        throw std::runtime_error(archive_error_string(archive));
+    if (archive_read_open_filename(reader.get(), _path.c_str(), 10240)) {
+        throw std::runtime_error(archive_error_string(reader.get()));
     }
 
-    const size_t stripLength = _kernelVersion.get_string(Kernel::Version::NO_OPTIONS).length() + 7;
-
     for (;;) {
-        const int status = archive_read_next_header(archive, &entry);
+        const int status = archive_read_next_header(reader.get(), &entry);
 
         if (status == ARCHIVE_EOF) {
             break;
         }
         if (status != ARCHIVE_OK) {
-            throw std::runtime_error(archive_error_string(archive));
+            throw std::runtime_error(archive_error_string(reader.get()));
         }
 
-        std::string entryPath = archive_entry_pathname(entry);
-        std::string path = destination + "/" + entryPath.substr(stripLength);
+        const std::string path = relocate(archive_entry_pathname(entry), top, destination);
+
+        if (path == destination) {
+            archive_read_data_skip(reader.get());
+
+            continue;
+        }
 
         archive_entry_set_pathname(entry, path.c_str());
 
-        if (archive_write_header(ext, entry) != ARCHIVE_OK) {
-            throw std::runtime_error(archive_error_string(ext));
+        if (const char *hardlink = archive_entry_hardlink(entry)) {
+            archive_entry_set_hardlink(entry, relocate(hardlink, top, destination).c_str());
         }
 
-        copy_data(archive, ext);
+        if (archive_write_header(writer.get(), entry) != ARCHIVE_OK) {
+            throw std::runtime_error(archive_error_string(writer.get()));
+        }
 
-        if (archive_write_finish_entry(ext) != ARCHIVE_OK) {
-            throw std::runtime_error(archive_error_string(ext));
+        if (copy_data(reader.get(), writer.get()) != ARCHIVE_OK) {
+            throw std::runtime_error(std::string("Could not unpack ") + archive_entry_pathname(entry) + ": "
+                                     + (archive_error_string(reader.get()) ? archive_error_string(reader.get())
+                                                                           : archive_error_string(writer.get())));
+        }
+
+        if (archive_write_finish_entry(writer.get()) != ARCHIVE_OK) {
+            throw std::runtime_error(archive_error_string(writer.get()));
         }
 
         if (progress) {
             // Counting entries first would mean decompressing twice.
-            progress->set_completed(archive_filter_bytes(archive, -1));
+            progress->set_completed(archive_filter_bytes(reader.get(), -1));
 
             if (progress->is_cancel_requested()) {
                 break;
@@ -162,11 +217,8 @@ void KernelArchive::extract(Progress *progress) const {
         }
     }
 
-    archive_read_close(archive);
-    archive_read_free(archive);
-
-    archive_write_close(ext);
-    archive_write_free(ext);
+    archive_read_close(reader.get());
+    archive_write_close(writer.get());
 }
 
 void KernelArchive::remove() const {
@@ -220,29 +272,4 @@ std::string KernelArchive::get_path(const Kernel::Version &version) {
                        config->archiveDirectory,
                        version.get_string(Kernel::Version::NO_OPTIONS),
                        config->archiveFormat);
-}
-
-static int copy_data(archive *read, archive *write) {
-    int status;
-    const void *buff;
-    size_t size;
-#if ARCHIVE_VERSION_NUMBER >= 3000000
-    int64_t offset;
-#else
-    off_t offset;
-#endif
-
-    for (;;) {
-        status = archive_read_data_block(read, &buff, &size, &offset);
-        if (status == ARCHIVE_EOF) {
-            return ARCHIVE_OK;
-        }
-        if (status != ARCHIVE_OK) {
-            return status;
-        }
-
-        if (archive_write_data_block(write, buff, size, offset) != ARCHIVE_OK) {
-            return status;
-        }
-    }
 }

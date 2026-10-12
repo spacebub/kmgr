@@ -6,130 +6,135 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
-#include "Download.h"
+#include <cstdio>
 #include <cstring>
 #include <curl/curl.h>
-#include <filesystem>
+#include <memory>
+#include <mutex>
+#include <stdexcept>
+
+#include "Download.h"
 
 namespace {
-struct Memory {
-    char *memory;
-    size_t size;
-};
+constexpr long CONNECT_TIMEOUT = 20;
+constexpr long STALL_SECONDS = 60;
+constexpr long STALL_BYTES = 1024;
+constexpr long PAGE_TIMEOUT = 60;
+constexpr size_t PAGE_LIMIT = 8 << 20;
 
-struct ProgressTX {
-    CURL *curl;
-    Progress *counter;
-};
+std::once_flag s_started;
+
+using Handle = std::unique_ptr<CURL, void (*)(CURL *)>;
+
+Handle prepare(const std::string &url) {
+    std::call_once(s_started, [] { curl_global_init(CURL_GLOBAL_DEFAULT); });
+
+    Handle curl(curl_easy_init(), curl_easy_cleanup);
+
+    if (!curl) {
+        throw std::runtime_error("Could not set up a transfer for " + url);
+    }
+
+    curl_easy_setopt(curl.get(), CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl.get(), CURLOPT_FAILONERROR, 1L);
+    curl_easy_setopt(curl.get(), CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl.get(), CURLOPT_MAXREDIRS, 5L);
+    curl_easy_setopt(curl.get(), CURLOPT_PROTOCOLS_STR, "http,https");
+    curl_easy_setopt(curl.get(), CURLOPT_REDIR_PROTOCOLS_STR, "https");
+    curl_easy_setopt(curl.get(), CURLOPT_CONNECTTIMEOUT, CONNECT_TIMEOUT);
+    curl_easy_setopt(curl.get(), CURLOPT_NOSIGNAL, 1L);
+    curl_easy_setopt(curl.get(), CURLOPT_USERAGENT, "kernelmgr/" KERNELMGR_VERSION);
+
+    return curl;
 }
 
-static size_t write_callback(const void *ptr, size_t size, size_t nmemb, void *userdata);
-static size_t
-progress_callback(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
+std::string describe(CURL *curl, const CURLcode result) {
+    if (result == CURLE_HTTP_RETURNED_ERROR) {
+        long status = 0;
 
-Download::Download(const std::string &url) {
-    _url = url;
-    curl_global_init(CURL_GLOBAL_DEFAULT);
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
+
+        return "HTTP " + std::to_string(status);
+    }
+
+    return curl_easy_strerror(result);
 }
 
-Download::~Download() {
-    curl_global_cleanup();
+size_t collect(const char *data, const size_t size, const size_t count, void *target) {
+    auto *page = static_cast<std::string *>(target);
+    const size_t bytes = size * count;
+
+    if (page->size() + bytes > PAGE_LIMIT) {
+        return 0;
+    }
+
+    page->append(data, bytes);
+
+    return bytes;
+}
+
+size_t store(const char *data, const size_t size, const size_t count, void *target) {
+    return fwrite(data, size, count, static_cast<FILE *>(target));
+}
+
+int report(void *target, const curl_off_t total, const curl_off_t now, curl_off_t, curl_off_t) {
+    auto *counter = static_cast<Progress *>(target);
+
+    if (!counter) {
+        return 0;
+    }
+
+    counter->set_total(total);
+    counter->set_completed(now);
+
+    return counter->is_cancel_requested() ? 1 : 0;
+}
+}
+
+Download::Download(std::string url) : _url(std::move(url)) {
 }
 
 std::string Download::get_page() const {
-    CURL *curl = curl_easy_init();
+    const Handle curl = prepare(_url);
+    std::string page;
 
-    if (!curl) {
-        throw std::runtime_error("Could not initialize CURL instance!");
+    curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, collect);
+    curl_easy_setopt(curl.get(), CURLOPT_WRITEDATA, &page);
+    curl_easy_setopt(curl.get(), CURLOPT_TIMEOUT, PAGE_TIMEOUT);
+
+    if (const CURLcode result = curl_easy_perform(curl.get()); result != CURLE_OK) {
+        throw std::runtime_error(_url + ": " + describe(curl.get(), result));
     }
-
-    Memory chunk{};
-    chunk.memory = static_cast<char *>(malloc(1));
-    chunk.size = 0;
-
-    if (!chunk.memory) {
-        throw std::runtime_error("Could not allocate chunk memory!");
-    }
-
-    curl_easy_setopt(curl, CURLOPT_URL, _url.c_str());
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, static_cast<void *>(&chunk));
-
-    if (const CURLcode result = curl_easy_perform(curl); result != CURLE_OK) {
-        throw std::runtime_error(curl_easy_strerror(result));
-    }
-
-    std::string page(chunk.memory);
-
-    curl_easy_cleanup(curl);
-    free(chunk.memory);
 
     return page;
 }
 
 void Download::perform(const std::string &destination, Progress *counter) const {
-    CURL *curl = curl_easy_init();
-
-    if (!curl) {
-        throw std::runtime_error("Could not initialize CURL instance!");
-    }
-
-    FILE *file = fopen(destination.c_str(), "w");
+    const Handle curl = prepare(_url);
+    FILE *file = fopen(destination.c_str(), "wb");
 
     if (!file) {
-        throw std::runtime_error("Could not open file for writing!");
+        throw std::runtime_error("Could not open " + destination + " for writing: " + strerror(errno));
     }
 
-    curl_easy_setopt(curl, CURLOPT_URL, _url.c_str());
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
+    curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, store);
+    curl_easy_setopt(curl.get(), CURLOPT_WRITEDATA, file);
+    curl_easy_setopt(curl.get(), CURLOPT_NOPROGRESS, 0L);
+    curl_easy_setopt(curl.get(), CURLOPT_XFERINFODATA, counter);
+    curl_easy_setopt(curl.get(), CURLOPT_XFERINFOFUNCTION, report);
+    curl_easy_setopt(curl.get(), CURLOPT_LOW_SPEED_LIMIT, STALL_BYTES);
+    curl_easy_setopt(curl.get(), CURLOPT_LOW_SPEED_TIME, STALL_SECONDS);
 
-    ProgressTX tx{
-            .curl = curl,
-            .counter = counter,
-    };
-
-    curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
-    curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &tx);
-    curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, progress_callback);
-
-    const CURLcode result = curl_easy_perform(curl);
-
-    curl_easy_cleanup(curl);
-    fclose(file);
+    const CURLcode result = curl_easy_perform(curl.get());
+    const bool written = fflush(file) == 0 && !ferror(file);
+    const int writeError = errno;
+    const bool closed = fclose(file) == 0;
 
     if (result != CURLE_OK) {
-        throw std::runtime_error(curl_easy_strerror(result));
-    }
-}
-
-static size_t write_callback(const void *ptr, const size_t size, const size_t nmemb, void *userdata) {
-    const size_t realsize = size * nmemb;
-    const auto mem = static_cast<Memory *>(userdata);
-
-    const auto newmem = static_cast<char *>(realloc(mem->memory, mem->size + realsize * 2));
-
-    if (!ptr) {
-        throw std::runtime_error("Ran out of memory while downloading page!");
+        throw std::runtime_error(_url + ": " + describe(curl.get(), result));
     }
 
-    mem->memory = newmem;
-    memcpy(&mem->memory[mem->size], ptr, realsize);
-    mem->size += realsize;
-    mem->memory[mem->size] = '\0';
-
-    return realsize;
-}
-
-static size_t
-progress_callback(void *clientp, const curl_off_t dltotal, const curl_off_t dlnow, curl_off_t, curl_off_t) {
-    const auto progress = static_cast<ProgressTX *>(clientp);
-
-    if (!progress->counter) {
-        return 0;
+    if (!written || !closed) {
+        throw std::runtime_error("Could not write " + destination + ": " + strerror(written ? errno : writeError));
     }
-
-    progress->counter->set_total(dltotal);
-    progress->counter->set_completed(dlnow);
-
-    return progress->counter->is_cancel_requested() ? 1 : 0;
 }

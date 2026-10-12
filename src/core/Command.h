@@ -21,7 +21,10 @@ public:
 
     [[nodiscard]] int execute() const;
     int execute(const std::function<void(const std::string &)> &callback) const;
-    [[nodiscard]] std::string capture() const;
+
+    // The output without its trailing newlines. The exit status comes back decoded, 128 and
+    // up for a signal and -1 when the command could not be run at all.
+    [[nodiscard]] std::string capture(int *status = nullptr) const;
 
     static bool exists(const std::string &program);
 };
