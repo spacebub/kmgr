@@ -26,7 +26,7 @@
 enum class Page : std::uint8_t {
     Home,
     Kernels,
-    Settings
+    Settings,
 };
 
 // A view holding this needs nothing back from the window, so neither has to

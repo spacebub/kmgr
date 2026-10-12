@@ -35,6 +35,7 @@ inline bool interactive() {
 }
 
 inline bool colored() {
+    // NOLINTNEXTLINE(concurrency-mt-unsafe): nothing in the process writes the environment.
     static const bool on = interactive() && getenv("NO_COLOR") == nullptr && Configuration::get()->colors;
 
     return on;
@@ -66,6 +67,7 @@ inline std::string elide(const std::string &text, const size_t room) {
 }
 
 inline std::string pretty(const std::string &path) {
+    // NOLINTNEXTLINE(concurrency-mt-unsafe): nothing in the process writes the environment.
     const char *home = getenv("HOME");
 
     if (home == nullptr || *home == '\0') {

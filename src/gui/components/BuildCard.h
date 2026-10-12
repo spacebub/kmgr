@@ -12,6 +12,7 @@
 
 #include <functional>
 #include <string>
+#include <string_view>
 
 #include "gui/components/Choice.h"
 #include "gui/components/Fold.h"
@@ -39,8 +40,8 @@ private:
     // In switch order, spelled the way the settings file writes them.
     static constexpr const char *TOOLCHAINS[] = {"gcc", "llvm", "custom"};
 
-    [[nodiscard]] static std::string toolchain_label(const std::string &name);
-    [[nodiscard]] static int toolchain_index(const std::string &name);
+    [[nodiscard]] static std::string_view toolchain_label(const std::string &name);
+    [[nodiscard]] static int toolchain_index(std::string_view name);
 
     [[nodiscard]] bool tuned() const;
     [[nodiscard]] bool switching() const;

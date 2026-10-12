@@ -137,7 +137,7 @@ inline int run() {
     column = widest(installed.begin(), installed.end());
 
     for (const Kernel &kernel : installed) {
-        const Kernel::Status status = kernel.get_status();
+        const unsigned status = kernel.get_status();
         const bool endorsed = kernel.is_signed();
 
         const std::string name = kernel.get_version().get_string();

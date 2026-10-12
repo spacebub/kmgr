@@ -9,11 +9,11 @@
 #include "Workflow.h"
 
 #include <algorithm>
+#include <utility>
 
 #include "core/Log.h"
 
-Workflow::Workflow(const std::string &name) {
-    _name = name;
+Workflow::Workflow(std::string name) : _name(std::move(name)) {
 }
 
 Workflow::~Workflow() {
@@ -171,7 +171,7 @@ void Workflow::provide_input(const std::string &input) const {
 bool Workflow::is_interactive() const {
     const Task *task = _current;
 
-    return task && task->is_interactive();
+    return task != nullptr && task->is_interactive();
 }
 
 void Workflow::set_force(const bool force) {

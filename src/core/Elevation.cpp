@@ -37,7 +37,7 @@ void pin() {
     s_dumpable = prctl(PR_GET_DUMPABLE, 0, 0, 0, 0);
     prctl(PR_SET_DUMPABLE, 0, 0, 0, 0);
 
-    atexit([] { Elevation::forget(); });
+    static_cast<void>(atexit([] { Elevation::forget(); }));
 }
 
 void unpin() {
@@ -62,17 +62,18 @@ void Elevation::remember(const std::string &secret) {
         return;
     }
 
-    std::lock_guard lock(s_mutex);
+    const std::scoped_lock lock(s_mutex);
 
     pin();
     clear();
 
+    // NOLINTNEXTLINE(bugprone-not-null-terminated-result): the length is kept beside it, the buffer is no string.
     memcpy(s_secret, secret.data(), secret.size());
     s_length = secret.size();
 }
 
 bool Elevation::feed(const std::function<void(std::string_view)> &sink) {
-    std::lock_guard lock(s_mutex);
+    const std::scoped_lock lock(s_mutex);
 
     if (s_length == 0) {
         return false;
@@ -84,14 +85,14 @@ bool Elevation::feed(const std::function<void(std::string_view)> &sink) {
 }
 
 void Elevation::forget() {
-    std::lock_guard lock(s_mutex);
+    const std::scoped_lock lock(s_mutex);
 
     clear();
     unpin();
 }
 
 bool Elevation::remembered() {
-    std::lock_guard lock(s_mutex);
+    const std::scoped_lock lock(s_mutex);
 
     return s_length > 0;
 }

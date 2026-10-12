@@ -40,9 +40,11 @@ std::string get_home_directory() {
         return s_homeDirectory;
     }
 
-    const char *home;
+    // NOLINTNEXTLINE(concurrency-mt-unsafe): nothing in the process writes the environment.
+    const char *home = getenv("HOME");
 
-    if (!((home = getenv("HOME")))) {
+    if (home == nullptr) {
+        // NOLINTNEXTLINE(concurrency-mt-unsafe): read once and kept.
         home = getpwuid(getuid())->pw_dir;
     }
 
@@ -56,9 +58,10 @@ std::string get_config_path() {
     }
 
     std::filesystem::path config;
+    // NOLINTNEXTLINE(concurrency-mt-unsafe): nothing in the process writes the environment.
     const char *xdgConfig = getenv("XDG_CONFIG_HOME");
 
-    config.append(xdgConfig ? xdgConfig : get_home_directory() + "/.config");
+    config.append(xdgConfig != nullptr ? xdgConfig : get_home_directory() + "/.config");
     config.append("kernelmanager");
     config.append(CONF_FILENAME);
 
@@ -72,9 +75,10 @@ std::string get_data_directory() {
     }
 
     std::filesystem::path data;
+    // NOLINTNEXTLINE(concurrency-mt-unsafe): nothing in the process writes the environment.
     const char *xdgData = getenv("XDG_DATA_HOME");
 
-    data.append(xdgData ? xdgData : get_home_directory() + "/.local/share");
+    data.append(xdgData != nullptr ? xdgData : get_home_directory() + "/.local/share");
     data.append("kernelmanager");
 
     s_dataDirectory = data;
@@ -99,41 +103,42 @@ void set_defaults() {
     s_config->theme = "system";
 }
 
-void read_value(yyjson_val *root, const char *key, std::string &target) {
-    if (yyjson_val *field = yyjson_obj_get(root, key); field && yyjson_is_str(field)) {
+void read_value(const yyjson_val *root, const char *key, std::string &target) {
+    if (const yyjson_val *field = yyjson_obj_get(root, key); field != nullptr && yyjson_is_str(field)) {
         target = yyjson_get_str(field);
     }
 }
 
-void read_value(yyjson_val *root, const char *key, int &target) {
-    if (yyjson_val *field = yyjson_obj_get(root, key); field && yyjson_is_int(field)) {
+void read_value(const yyjson_val *root, const char *key, int &target) {
+    if (const yyjson_val *field = yyjson_obj_get(root, key); field != nullptr && yyjson_is_int(field)) {
         target = yyjson_get_int(field);
     }
 }
 
-void read_value(yyjson_val *root, const char *key, bool &target) {
-    if (yyjson_val *field = yyjson_obj_get(root, key); field && yyjson_is_bool(field)) {
+void read_value(const yyjson_val *root, const char *key, bool &target) {
+    if (const yyjson_val *field = yyjson_obj_get(root, key); field != nullptr && yyjson_is_bool(field)) {
         target = yyjson_get_bool(field);
     }
 }
 
-void read_compiler(yyjson_val *root, Toolchain &target) {
-    if (yyjson_val *field = yyjson_obj_get(root, CONF_COMPILER); field && yyjson_is_str(field)) {
+void read_compiler(const yyjson_val *root, Toolchain &target) {
+    if (const yyjson_val *field = yyjson_obj_get(root, CONF_COMPILER); field != nullptr && yyjson_is_str(field)) {
         if (const Toolchain named = toolchain_from(yyjson_get_str(field)); named != Toolchain::Unknown) {
             target = named;
         }
     }
 }
 
-void read_value(yyjson_val *root, const char *key, std::optional<bool> &target) {
-    if (yyjson_val *field = yyjson_obj_get(root, key); field && yyjson_is_bool(field)) {
+void read_value(const yyjson_val *root, const char *key, std::optional<bool> &target) {
+    if (const yyjson_val *field = yyjson_obj_get(root, key); field != nullptr && yyjson_is_bool(field)) {
         target = yyjson_get_bool(field);
     }
 }
 }
 
 namespace Configuration {
-static void load() {
+namespace {
+void load() {
     constexpr yyjson_read_flag flags = YYJSON_READ_ALLOW_COMMENTS | YYJSON_READ_ALLOW_TRAILING_COMMAS;
     yyjson_read_err err;
     yyjson_doc *doc = yyjson_read_file(get_config_path().c_str(), flags, nullptr, &err);
@@ -153,7 +158,7 @@ static void load() {
     s_config = std::make_unique<Settings>();
     set_defaults();
 
-    yyjson_val *root = yyjson_doc_get_root(doc);
+    const yyjson_val *root = yyjson_doc_get_root(doc);
 
     read_value(root, CONF_BOOT_DIR, s_config->bootDirectory);
     read_value(root, CONF_GRUB_DIR, s_config->grubDirectory);
@@ -172,6 +177,7 @@ static void load() {
 
     yyjson_doc_free(doc);
 }
+}
 
 // The only writer, so the only place that creates the configured directories.
 void save() {
@@ -186,7 +192,7 @@ void save() {
     yyjson_mut_doc_set_root(doc, root);
 
     // Kept alive here: the writer holds the pointer until the file is written.
-    const std::string compiler = toolchain_name(s_config->compiler);
+    const std::string compiler(toolchain_name(s_config->compiler));
 
     yyjson_mut_obj_add_str(doc, root, CONF_BOOT_DIR, s_config->bootDirectory.c_str());
     yyjson_mut_obj_add_str(doc, root, CONF_GRUB_DIR, s_config->grubDirectory.c_str());

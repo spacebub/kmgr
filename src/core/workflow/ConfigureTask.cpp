@@ -47,20 +47,24 @@ bool ConfigureTask::prepare() {
     if (config.empty() && !present) {
         report("No configuration found, generating a default one.");
 
-        _steps.push_back(Step{.label = "Generating default configuration",
-                              .command = Make::command("defconfig", _compiler, false),
-                              .directory = source,
-                              .elevated = false,
-                              .optional = false,
-                              .undo = {}});
+        _steps.push_back(Step{
+                .label = "Generating default configuration",
+                .command = Make::command("defconfig", _compiler, false),
+                .directory = source,
+                .elevated = false,
+                .optional = false,
+                .undo = {},
+        });
     } else if (!config.empty()) {
-        _steps.push_back(Step{.label = "Using configuration " + config,
-                              .command = config.ends_with(".gz") ? "zcat " + Shell::quote(config) + " > .config"
-                                                                 : "cp -v " + Shell::quote(config) + " .config",
-                              .directory = source,
-                              .elevated = false,
-                              .optional = false,
-                              .undo = present ? std::string{} : "rm -f .config"});
+        _steps.push_back(Step{
+                .label = "Using configuration " + config,
+                .command = config.ends_with(".gz") ? "zcat " + Shell::quote(config) + " > .config"
+                                                   : "cp -v " + Shell::quote(config) + " .config",
+                .directory = source,
+                .elevated = false,
+                .optional = false,
+                .undo = present ? std::string{} : "rm -f .config",
+        });
     } else {
         report("Reusing the configuration already present in the build directory.");
     }
@@ -76,19 +80,23 @@ bool ConfigureTask::prepare() {
     // Distribution keys are not available outside of their own build.
     tweaks += " --set-str SYSTEM_TRUSTED_KEYS '' --set-str SYSTEM_REVOCATION_KEYS ''";
 
-    _steps.push_back(Step{.label = "Applying local version and key settings",
-                          .command = tweaks,
-                          .directory = source,
-                          .elevated = false,
-                          .optional = false,
-                          .undo = {}});
+    _steps.push_back(Step{
+            .label = "Applying local version and key settings",
+            .command = tweaks,
+            .directory = source,
+            .elevated = false,
+            .optional = false,
+            .undo = {},
+    });
 
-    _steps.push_back(Step{.label = "Resolving new configuration symbols",
-                          .command = Make::command("oldconfig", _compiler, false),
-                          .directory = source,
-                          .elevated = false,
-                          .optional = false,
-                          .undo = {}});
+    _steps.push_back(Step{
+            .label = "Resolving new configuration symbols",
+            .command = Make::command("oldconfig", _compiler, false),
+            .directory = source,
+            .elevated = false,
+            .optional = false,
+            .undo = {},
+    });
 
     return true;
 }

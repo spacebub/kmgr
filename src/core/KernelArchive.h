@@ -26,7 +26,7 @@ class KernelArchive {
 public:
     explicit KernelArchive(const Kernel::Version &kernelVersion);
     explicit KernelArchive(const std::string &kernelVersion);
-    KernelArchive(const std::string &name, const std::string &path);
+    KernelArchive(const Kernel::Version &version, std::string path);
 
     [[nodiscard]] std::string get_url() const;
     [[nodiscard]] Kernel::Version get_version() const;

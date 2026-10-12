@@ -37,6 +37,7 @@ class App {
 public:
     // The window is already open: everything here posts to its loop.
     explicit App(ttk::Shell &shell);
+    ~App() = default;
 
     App(const App &) = delete;
     App &operator=(const App &) = delete;

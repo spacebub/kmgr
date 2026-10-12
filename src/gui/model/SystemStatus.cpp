@@ -10,6 +10,17 @@
 #include "core/Configuration.h"
 #include "core/SystemInfo.h"
 
+namespace {
+// A feed that cannot be reached is no release, not an error.
+std::string latest_version() {
+    try {
+        return Kernel::get_latest().get_version().get_string(Kernel::Version::INCLUDE_ZERO_REVISION);
+    } catch (const std::exception &) {
+        return {};
+    }
+}
+}
+
 SystemStatus::SystemStatus(ttk::Clock *clock) : _clock(clock) {
     refresh();
     check_latest();
@@ -55,12 +66,7 @@ void SystemStatus::check_latest() {
     }
 
     _fetch = std::thread([this] {
-        std::string version;
-
-        try {
-            version = Kernel::get_latest().get_version().get_string(Kernel::Version::INCLUDE_ZERO_REVISION);
-        } catch (const std::exception &) {
-        }
+        const std::string version = latest_version();
 
         _clock->post([this, version] {
             _checking = false;

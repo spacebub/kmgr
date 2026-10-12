@@ -33,7 +33,7 @@ public:
     explicit WorkflowSheet(Reach *reach);
 
     void sync();
-    void write(const std::string &text);
+    void print(const std::string &text);
 
     [[nodiscard]] bool minimized() const { return _minimized; }
     void set_minimized(bool value);
@@ -57,8 +57,8 @@ private:
     public:
         Console();
 
-        void write(const std::string &text);
-        void clear();
+        void print(const std::string &text);
+        void reset();
 
         void arrange(ttk::Typeface &type) override;
         void paint(const ttk::Painter &painter) override;
@@ -103,12 +103,14 @@ private:
 
         void paint(const ttk::Painter &painter) override;
         bool advance(double now) override;
-        void restyle() override { tone.restyle(); }
 
         ttk::Theme::Tone tone{&ttk::Theme::Palette::accent};
 
         // Only while the strip is up and the run is going.
         bool live = false;
+
+    protected:
+        void restyle() override { tone.restyle(); }
 
     private:
         double _started = 0.0;

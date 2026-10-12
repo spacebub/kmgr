@@ -25,15 +25,17 @@
 #include "core/workflow/WorkflowFactory.h"
 
 
-static volatile std::sig_atomic_t s_abort;
+namespace {
+volatile std::sig_atomic_t s_abort;
 
-static void signal_handler(int) {
+void signal_handler(int /*signal*/) {
     s_abort = 1;
 }
 
-static int run(int argc, char *argv[]);
-static int get_options(const Arguments &arguments, Options *options);
-static int execute(const Arguments &arguments, const Options &options);
+int run(int argc, char *argv[]);
+int get_options(const Arguments &arguments, Options *options);
+int execute(const Arguments &arguments, const Options &options);
+}
 
 // A settings file that exists but cannot be read throws from any path below.
 int main(const int argc, char *argv[]) {
@@ -46,6 +48,7 @@ int main(const int argc, char *argv[]) {
     }
 }
 
+namespace {
 int run(const int argc, char *argv[]) {
     Arguments arguments;
 
@@ -53,7 +56,7 @@ int run(const int argc, char *argv[]) {
         return 1;
     }
 
-    if (arguments.flags & Parser::VERSION) {
+    if (arguments.has(Parser::VERSION)) {
         std::cout << "kernelmgr " << Program::version() << "\n";
 
         return 0;
@@ -74,7 +77,7 @@ int run(const int argc, char *argv[]) {
     }
 
     // Listing only reads, so it runs before a base directory is settled on.
-    if (arguments.flags & Parser::LIST) {
+    if (arguments.has(Parser::LIST)) {
         if (!arguments.path.empty()) {
             Settings settings = *Configuration::get();
             settings.baseDirectory = arguments.path;
@@ -119,7 +122,7 @@ int get_options(const Arguments &arguments, Options *options) {
             return 1;
         }
 
-        if (arguments.flags & Parser::AUTOUPDATE) {
+        if (arguments.has(Parser::AUTOUPDATE)) {
             *options = WorkflowFactory::autoupdate();
             console().line("Updating to " + options->kernel + (options->suffix.empty() ? "" : "-" + options->suffix)
                            + (options->oldKernel.empty()
@@ -213,8 +216,8 @@ int execute(const Arguments &arguments, const Options &options) {
         Elevation::wipe(answer);
     });
 
-    std::signal(SIGINT, signal_handler);
-    std::signal(SIGTERM, signal_handler);
+    static_cast<void>(std::signal(SIGINT, signal_handler));
+    static_cast<void>(std::signal(SIGTERM, signal_handler));
 
     std::atomic<bool> running = true;
     std::thread poller([&workflow, &running] {
@@ -244,4 +247,5 @@ int execute(const Arguments &arguments, const Options &options) {
     }
 
     return success ? 0 : 1;
+}
 }

@@ -22,10 +22,10 @@ std::string path_of(const Kernel::Version &version) {
     return Kernel::get_source_directory(version) + "/" + FILENAME;
 }
 
-std::string read_string(yyjson_val *root, const char *key) {
-    yyjson_val *field = yyjson_obj_get(root, key);
+std::string read_string(const yyjson_val *root, const char *key) {
+    const yyjson_val *field = yyjson_obj_get(root, key);
 
-    return field && yyjson_is_str(field) ? yyjson_get_str(field) : std::string{};
+    return field != nullptr && yyjson_is_str(field) ? yyjson_get_str(field) : std::string{};
 }
 }
 
@@ -33,18 +33,18 @@ std::optional<BuildConfig::Choices> BuildConfig::read(const Kernel::Version &ver
     yyjson_doc *doc = yyjson_read_file(path_of(version).c_str(), YYJSON_READ_NOFLAG, nullptr, nullptr);
 
     // Missing and unreadable come to the same thing: nothing has been said.
-    if (!doc) {
+    if (doc == nullptr) {
         return std::nullopt;
     }
 
-    yyjson_val *root = yyjson_doc_get_root(doc);
+    const yyjson_val *root = yyjson_doc_get_root(doc);
     Choices choices;
 
     choices.config = read_string(root, KEY_CONFIG);
     choices.patch = read_string(root, KEY_PATCH);
     choices.compiler = toolchain_from(read_string(root, KEY_COMPILER));
 
-    if (yyjson_val *force = yyjson_obj_get(root, KEY_FORCE); force && yyjson_is_bool(force)) {
+    if (const yyjson_val *force = yyjson_obj_get(root, KEY_FORCE); force != nullptr && yyjson_is_bool(force)) {
         choices.force = yyjson_get_bool(force);
     }
 
@@ -62,7 +62,7 @@ bool BuildConfig::write(const Kernel::Version &version, const Choices &choices) 
     yyjson_mut_val *root = yyjson_mut_obj(doc);
 
     // Kept alive here: the writer holds the pointer until the file is written.
-    const std::string compiler = toolchain_name(choices.compiler);
+    const std::string compiler(toolchain_name(choices.compiler));
 
     yyjson_mut_doc_set_root(doc, root);
 

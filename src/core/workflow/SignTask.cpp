@@ -31,12 +31,14 @@ bool SignTask::prepare() {
         return false;
     }
 
-    _steps.push_back(Step{.label = "Signing " + image,
-                          .command = "sbctl sign -s " + Shell::quote(image),
-                          .directory = Configuration::get()->baseDirectory,
-                          .elevated = true,
-                          .optional = false,
-                          .undo = {}});
+    _steps.push_back(Step{
+            .label = "Signing " + image,
+            .command = "sbctl sign -s " + Shell::quote(image),
+            .directory = Configuration::get()->baseDirectory,
+            .elevated = true,
+            .optional = false,
+            .undo = {},
+    });
 
     return true;
 }

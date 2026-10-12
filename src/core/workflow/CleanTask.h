@@ -15,16 +15,16 @@
 
 class CleanTask final : public ProcessTask {
 public:
-    enum Mode {
+    enum Mode : unsigned {
         Installed = 1 << 0,
         Source = 1 << 1,
         Archive = 1 << 2,
-        All = Installed | Source
+        All = Installed | Source,
     };
 
 private:
     Kernel::Version _version;
-    int _mode;
+    unsigned _mode;
 
 protected:
     bool prepare() override;
@@ -32,8 +32,7 @@ protected:
 public:
     [[nodiscard]] bool is_critical() const override { return true; }
 
-public:
-    CleanTask(Kernel::Version version, int mode);
+    CleanTask(Kernel::Version version, unsigned mode);
 };
 
 

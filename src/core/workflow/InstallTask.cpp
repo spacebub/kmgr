@@ -12,6 +12,7 @@
 #include "core/Dkms.h"
 #include "core/Make.h"
 #include "core/Shell.h"
+#include <algorithm>
 #include <filesystem>
 #include <utility>
 
@@ -30,13 +31,8 @@ bool sane_relative_path(const std::string &path) {
         return false;
     }
 
-    for (const std::filesystem::path &part : std::filesystem::path(path)) {
-        if (part == "..") {
-            return false;
-        }
-    }
-
-    return true;
+    return std::ranges::none_of(std::filesystem::path(path),
+                                [](const std::filesystem::path &part) { return part == ".."; });
 }
 
 bool present(const std::string &path) {
@@ -90,13 +86,15 @@ bool InstallTask::prepare() {
     const std::string legacyModules = "/lib/modules/" + version;
     const bool freshModules = !present(modules) && !present(legacyModules);
 
-    _steps.push_back(Step{.label = "Installing modules",
-                          .command = Make::command("modules_install", _compiler),
-                          .directory = source,
-                          .elevated = true,
-                          .optional = false,
-                          .undo = freshModules ? "rm -rf " + Shell::quote(modules) + " " + Shell::quote(legacyModules)
-                                               : std::string{}});
+    _steps.push_back(Step{
+            .label = "Installing modules",
+            .command = Make::command("modules_install", _compiler),
+            .directory = source,
+            .elevated = true,
+            .optional = false,
+            .undo = freshModules ? "rm -rf " + Shell::quote(modules) + " " + Shell::quote(legacyModules)
+                                 : std::string{},
+    });
 
     const std::pair<std::string, std::string> copies[] = {
             {source + "/" + image, boot + "/vmlinuz-" + version},
@@ -115,12 +113,14 @@ bool InstallTask::prepare() {
         }
     }
 
-    _steps.push_back(Step{.label = "Installing image to " + boot + "/vmlinuz-" + version,
-                          .command = install,
-                          .directory = source,
-                          .elevated = true,
-                          .optional = false,
-                          .undo = removal.empty() ? std::string{} : "rm -f" + removal});
+    _steps.push_back(Step{
+            .label = "Installing image to " + boot + "/vmlinuz-" + version,
+            .command = install,
+            .directory = source,
+            .elevated = true,
+            .optional = false,
+            .undo = removal.empty() ? std::string{} : "rm -f" + removal,
+    });
 
     // Before the initramfs, since what dkms builds may have to go into it.
     if (Dkms::available()) {
@@ -138,12 +138,14 @@ bool InstallTask::prepare() {
                                           + ", so none are required for " + version + "."
                                 : carrying + " has dkms modules, so " + version + " must get them too.");
 
-        _steps.push_back(Step{.label = "Installing dkms modules",
-                              .command = "dkms autoinstall -k " + Shell::quote(version),
-                              .directory = source,
-                              .elevated = true,
-                              .optional = carrying.empty(),
-                              .undo = freshModules ? Dkms::removal(version) : std::string{}});
+        _steps.push_back(Step{
+                .label = "Installing dkms modules",
+                .command = "dkms autoinstall -k " + Shell::quote(version),
+                .directory = source,
+                .elevated = true,
+                .optional = carrying.empty(),
+                .undo = freshModules ? Dkms::removal(version) : std::string{},
+        });
     }
 
     if (Command::exists("mkinitcpio")) {
@@ -158,35 +160,39 @@ bool InstallTask::prepare() {
             }
         }
 
-        _steps.push_back(Step{.label = "Creating mkinitcpio preset " + preset,
-                              .command = "printf '%s\\n' " + Shell::quote("ALL_config=\"/etc/mkinitcpio.conf\"") + " "
-                                         + Shell::quote("ALL_kver=\"" + boot + "/vmlinuz-" + version + "\"") + " "
-                                         + Shell::quote("PRESETS=(\"default\" \"fallback\")") + " "
-                                         + Shell::quote("default_image=\"" + initramfs + "\"") + " "
-                                         + Shell::quote("fallback_image=\"" + fallback + "\"") + " "
-                                         + Shell::quote("fallback_options=\"-S autodetect\"") + " > "
-                                         + Shell::quote(preset),
-                              .directory = source,
-                              .elevated = true,
-                              .optional = false,
-                              .undo = present(preset) ? std::string{} : "rm -f " + Shell::quote(preset)});
+        _steps.push_back(Step{
+                .label = "Creating mkinitcpio preset " + preset,
+                .command = R"(printf '%s\n' )" + Shell::quote(R"(ALL_config="/etc/mkinitcpio.conf")") + " "
+                           + Shell::quote("ALL_kver=\"" + boot + "/vmlinuz-" + version + "\"") + " "
+                           + Shell::quote(R"(PRESETS=("default" "fallback"))") + " "
+                           + Shell::quote("default_image=\"" + initramfs + "\"") + " "
+                           + Shell::quote("fallback_image=\"" + fallback + "\"") + " "
+                           + Shell::quote(R"(fallback_options="-S autodetect")") + " > " + Shell::quote(preset),
+                .directory = source,
+                .elevated = true,
+                .optional = false,
+                .undo = present(preset) ? std::string{} : "rm -f " + Shell::quote(preset),
+        });
 
-        _steps.push_back(Step{.label = "Generating initramfs",
-                              .command = "mkinitcpio -p " + Shell::quote(version),
-                              .directory = source,
-                              .elevated = true,
-                              .optional = false,
-                              .undo = images.empty() ? std::string{} : "rm -f" + images});
+        _steps.push_back(Step{
+                .label = "Generating initramfs",
+                .command = "mkinitcpio -p " + Shell::quote(version),
+                .directory = source,
+                .elevated = true,
+                .optional = false,
+                .undo = images.empty() ? std::string{} : "rm -f" + images,
+        });
     } else if (Command::exists("dracut")) {
         const std::string initramfs = boot + "/initramfs-" + version + ".img";
 
-        _steps.push_back(
-                Step{.label = "Generating initramfs",
-                     .command = "dracut --force --kver " + Shell::quote(version) + " " + Shell::quote(initramfs),
-                     .directory = source,
-                     .elevated = true,
-                     .optional = false,
-                     .undo = present(initramfs) ? std::string{} : "rm -f " + Shell::quote(initramfs)});
+        _steps.push_back(Step{
+                .label = "Generating initramfs",
+                .command = "dracut --force --kver " + Shell::quote(version) + " " + Shell::quote(initramfs),
+                .directory = source,
+                .elevated = true,
+                .optional = false,
+                .undo = present(initramfs) ? std::string{} : "rm -f " + Shell::quote(initramfs),
+        });
     } else {
         report("Neither mkinitcpio nor dracut is installed, skipping initramfs generation.");
     }
@@ -196,12 +202,14 @@ bool InstallTask::prepare() {
         const std::string config = settings->grubDirectory + "/grub.cfg";
 
         if (present(config)) {
-            _steps.push_back(Step{.label = "Refreshing grub",
-                                  .command = "grub-mkconfig -o " + Shell::quote(config),
-                                  .directory = source,
-                                  .elevated = true,
-                                  .optional = false,
-                                  .undo = {}});
+            _steps.push_back(Step{
+                    .label = "Refreshing grub",
+                    .command = "grub-mkconfig -o " + Shell::quote(config),
+                    .directory = source,
+                    .elevated = true,
+                    .optional = false,
+                    .undo = {},
+            });
         } else {
             report("No " + config + ", so grub is not refreshed.");
         }

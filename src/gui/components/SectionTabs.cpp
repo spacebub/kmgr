@@ -67,8 +67,7 @@ void SectionTabs::set_current(const int index) {
 void SectionTabs::arrange(ttk::Typeface &type) {
     double at = _box.x;
 
-    for (size_t index = 0; index < _tabs.size(); ++index) {
-        Held &held = _tabs[index];
+    for (Held &held : _tabs) {
 
         held.label = std::max(type.width(type.at(400, ttk::Theme::fontSmall), held.tab.label),
                               type.width(type.at(600, ttk::Theme::fontSmall), held.tab.label));

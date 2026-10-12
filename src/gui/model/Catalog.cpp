@@ -8,6 +8,7 @@
  */
 #include <algorithm>
 #include <filesystem>
+#include <utility>
 
 #include "core/Configuration.h"
 #include "core/KernelArchive.h"
@@ -18,7 +19,7 @@ namespace {
 
 Catalog::Build describe(const Kernel &kernel, const std::string &running) {
     const Kernel::Version version = kernel.get_version();
-    const Kernel::Status status = kernel.get_status();
+    const unsigned status = kernel.get_status();
     const std::string source = kernel.get_source_directory();
     const bool extracted = std::filesystem::is_directory(source);
 
@@ -184,7 +185,7 @@ void Catalog::watch() {
 }
 
 const Catalog::Entry *Catalog::at(const int row) const {
-    if (row < 0 || row >= static_cast<int>(_entries.size())) {
+    if (row < 0 || std::cmp_greater_equal(row, _entries.size())) {
         return nullptr;
     }
 
@@ -202,7 +203,7 @@ int Catalog::index_of_version(const std::string &version) const {
 }
 
 bool Catalog::remove_archive(const int row) {
-    if (row < 0 || row >= static_cast<int>(_entries.size()) || !_entries[static_cast<size_t>(row)].archived) {
+    if (row < 0 || std::cmp_greater_equal(row, _entries.size()) || !_entries[static_cast<size_t>(row)].archived) {
         return false;
     }
 

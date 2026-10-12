@@ -10,6 +10,7 @@
 #define KERNELMGR_SYSTEMINFO_H
 
 
+#include <cstdint>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -17,9 +18,9 @@
 #include "Command.h"
 #include "Toolchain.h"
 
-enum SbctlStatus {
+enum SbctlStatus : std::uint8_t {
     Missing = 0,
-    Present = 1
+    Present = 1,
 };
 
 struct SystemInfo {
@@ -37,8 +38,10 @@ struct SystemInfo {
             stream << file.rdbuf();
         }
 
-        return {.compiler = stream.str().find("clang") != std::string::npos ? Toolchain::Llvm : Toolchain::Gcc,
-                .sbctlStatus = sbctl ? Present : Missing};
+        return {
+                .compiler = stream.str().contains("clang") ? Toolchain::Llvm : Toolchain::Gcc,
+                .sbctlStatus = sbctl ? Present : Missing,
+        };
     }
 };
 

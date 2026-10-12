@@ -21,6 +21,8 @@ Binaries land in `build/bin`. Options:
 - `TTK_DOWNLOAD_CACHE` moves the fetch cache (default `.download-cache`)
 - `-DKERNELMGR_RELEASE=ON` leaves the git revision out of the version shown
 
+`tools/lint.sh` runs clang-tidy over the sources with the checks in `.clang-tidy`.
+
 ## GUI
 
 | Home | Kernels |

@@ -47,7 +47,7 @@ private:
     enum class Section : std::uint8_t {
         Builds,
         Installed,
-        Logs
+        Logs,
     };
 
     class Adder : public ttk::Widget {
@@ -81,8 +81,8 @@ private:
 
     void sync_list();
     void sync_entry();
-    void sync_builds(const Catalog::Entry &entry);
-    void sync_installed(const Catalog::Entry &entry);
+    void sync_builds(const Catalog::Entry &shown);
+    void sync_installed(const Catalog::Entry &shown);
     void sync_logs();
 
     Reach *_reach;

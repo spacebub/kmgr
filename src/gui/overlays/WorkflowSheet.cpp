@@ -19,7 +19,7 @@
 #include "ttk/toolkit/Root.h"
 
 namespace {
-using Palette = ttk::Theme::Palette;
+using ttk::Theme::Palette;
 
 constexpr double STRIP_WIDTH = 340.0;
 constexpr double STRIP_MARGIN = 18.0;
@@ -55,7 +55,7 @@ WorkflowSheet::Console::Console() {
     _view->face(ttk::Typeface::mono, ttk::Theme::fontSmall)->ink([](size_t) { return palette().muted; });
 }
 
-void WorkflowSheet::Console::write(const std::string &text) {
+void WorkflowSheet::Console::print(const std::string &text) {
     _view->append(text);
 
     const size_t dropped = _view->rows() > LIMIT ? _view->rows() - LIMIT : 0;
@@ -67,7 +67,7 @@ void WorkflowSheet::Console::write(const std::string &text) {
     }
 }
 
-void WorkflowSheet::Console::clear() {
+void WorkflowSheet::Console::reset() {
     _view->set_rows({});
     _scroll->scroll_to(0.0);
 }
@@ -373,8 +373,8 @@ void WorkflowSheet::send() {
     _answer->set_text("");
 }
 
-void WorkflowSheet::write(const std::string &text) {
-    _console->write(text);
+void WorkflowSheet::print(const std::string &text) {
+    _console->print(text);
 }
 
 void WorkflowSheet::arrange(ttk::Typeface &type) {
@@ -486,7 +486,7 @@ void WorkflowSheet::sync() {
     }
 
     if (workflow.running() && !_wasRunning) {
-        _console->clear();
+        _console->reset();
         set_minimized(false);
     }
 

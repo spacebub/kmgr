@@ -7,6 +7,8 @@
  *	spacebub <spacebubs@proton.me>
  */
 #include <algorithm>
+#include <format>
+#include <string_view>
 
 #include "gui/app/Desk.h"
 #include "gui/app/Reach.h"
@@ -19,14 +21,14 @@
 #include "ttk/toolkit/layout/Wrap.h"
 
 namespace {
-using Palette = ttk::Theme::Palette;
+using ttk::Theme::Palette;
 
 const ttk::Theme::Palette &palette() {
     return ttk::Theme::palette();
 }
 }
 
-std::string BuildCard::toolchain_label(const std::string &name) {
+std::string_view BuildCard::toolchain_label(const std::string &name) {
     if (name == "llvm") {
         return "LLVM";
     }
@@ -34,7 +36,7 @@ std::string BuildCard::toolchain_label(const std::string &name) {
     return name == "custom" ? "Custom" : "GCC";
 }
 
-int BuildCard::toolchain_index(const std::string &name) {
+int BuildCard::toolchain_index(const std::string_view name) {
     for (int index = 0; index < 3; ++index) {
         if (name == TOOLCHAINS[index]) {
             return index;
@@ -218,6 +220,7 @@ BuildCard::BuildCard(Reach *reach, const Catalog::Build &build, std::function<vo
     resolve();
     annotate();
 
+    // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer): set last, once the controls it gates exist.
     _ready = true;
 }
 
@@ -242,13 +245,14 @@ void BuildCard::remember() const {
         return;
     }
 
-    WorkflowRunner::set_choices(
-            _build.version,
-            _build.suffix,
-            BuildConfig::Choices{.config = _config->text(),
-                                 .patch = _patch->text(),
-                                 .compiler = toolchain_from(TOOLCHAINS[std::clamp(_compiler->current(), 0, 2)]),
-                                 .force = _errors->checked});
+    WorkflowRunner::set_choices(_build.version,
+                                _build.suffix,
+                                BuildConfig::Choices{
+                                        .config = _config->text(),
+                                        .patch = _patch->text(),
+                                        .compiler = toolchain_from(TOOLCHAINS[std::clamp(_compiler->current(), 0, 2)]),
+                                        .force = _errors->checked,
+                                });
 
     _reach->touch();
 }
@@ -318,14 +322,15 @@ void BuildCard::sync(const Catalog::Build &build, const bool idle, const bool si
     tint(_built, Parts::lit(build.built, &Palette::success, &Palette::successSoft));
 
     _made->set_visible(switching());
-    _made->set_text("made with " + toolchain_label(build.toolchain));
+    _made->set_text(std::format("made with {}", toolchain_label(build.toolchain)));
 
     // The saved flags rather than the form's, since those are what a run from here hands make.
     _compiler->set_disabled(ttk::Text::trim(_reach->settings.customFlags).empty() ? std::vector<int>{2}
                                                                                   : std::vector<int>{});
-    _compiler->set_hint(build.toolchain.empty() ? "What make is run with. Custom is the flags in the settings"
-                                                : "This tree was made with " + toolchain_label(build.toolchain)
-                                                          + ". Building it with another one builds it over");
+    _compiler->set_hint(build.toolchain.empty()
+                                ? "What make is run with. Custom is the flags in the settings"
+                                : std::format("This tree was made with {}. Building it with another one builds it over",
+                                              toolchain_label(build.toolchain)));
 
     _fold->set_open(expanded);
 

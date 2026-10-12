@@ -16,6 +16,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <string_view>
 #include <thread>
 
 #include "core/BuildConfig.h"
@@ -89,7 +90,7 @@ public:
     std::function<void(bool)> completed;
 
 private:
-    static std::string describe(int stages);
+    static std::string_view describe(unsigned stages);
 
     static bool built(const std::string &version, const std::string &suffix);
     void start(const Options &options, const std::string &nothingToDo = {});
@@ -101,7 +102,7 @@ private:
     void release();
     void touch() const;
 
-    [[nodiscard]] static Options options(const std::string &version, const std::string &suffix, int stages);
+    [[nodiscard]] static Options options(const std::string &version, const std::string &suffix, unsigned stages);
 
     ttk::Clock *_clock;
     ttk::Notifier *_notifier;

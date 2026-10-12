@@ -6,6 +6,8 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
+#include <ranges>
+
 #include "ProcessTask.h"
 #include "core/Elevation.h"
 
@@ -68,7 +70,7 @@ int ProcessTask::position() {
 void ProcessTask::cancel() {
     _canceled = true;
 
-    std::lock_guard lock(_processMutex);
+    const std::scoped_lock lock(_processMutex);
 
     if (_process) {
         _process->cancel();
@@ -83,7 +85,7 @@ void ProcessTask::provide_input(const std::string &input) {
     std::shared_ptr<Process> process;
 
     {
-        std::lock_guard lock(_processMutex);
+        const std::scoped_lock lock(_processMutex);
         process = _process;
     }
 
@@ -113,7 +115,7 @@ int ProcessTask::launch(const std::string &command,
     // The password is only ever offered to the elevation command, and only once. A second
     // ask means the last answer was wrong, whoever gave it, so it is dropped and the
     // question goes through. What the command itself asks is never answered for it.
-    auto answered = std::make_shared<std::atomic<bool>>(false);
+    const auto answered = std::make_shared<std::atomic<bool>>(false);
 
     // The process owns this callback, so a shared pointer here would be a cycle that never frees.
     process->on_prompt([this, raw = process.get(), answered](const Process::Prompt &prompt) {
@@ -137,7 +139,7 @@ int ProcessTask::launch(const std::string &command,
     });
 
     {
-        std::lock_guard lock(_processMutex);
+        const std::scoped_lock lock(_processMutex);
 
         if (_canceled && !evenIfCanceled) {
             return Process::CANCELED;
@@ -149,7 +151,7 @@ int ProcessTask::launch(const std::string &command,
     const int status = process->run();
 
     {
-        std::lock_guard lock(_processMutex);
+        const std::scoped_lock lock(_processMutex);
         _process = nullptr;
     }
 
@@ -207,9 +209,7 @@ void ProcessTask::roll_back(const std::vector<const Step *> &attempted) {
 
     bool clean = true;
 
-    for (auto it = undoable.rbegin(); it != undoable.rend(); ++it) {
-        const Step *step = *it;
-
+    for (const Step *step : std::views::reverse(undoable)) {
         report("Undoing: " + step->label);
 
         try {

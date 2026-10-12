@@ -7,6 +7,7 @@
  *	spacebub <spacebubs@proton.me>
  */
 #include <algorithm>
+#include <string_view>
 #include <utility>
 
 #include "gui/app/Look.h"
@@ -17,7 +18,7 @@
 #include "ttk/toolkit/Root.h"
 
 namespace {
-using Palette = ttk::Theme::Palette;
+using ttk::Theme::Palette;
 
 constexpr double TAB_HEIGHT = 34.0;
 constexpr double TAB_SIDES = 28.0;
@@ -34,7 +35,7 @@ ttk::Glyphs::Glyph shade_glyph() {
     }
 }
 
-std::string shade_hint() {
+std::string_view shade_hint() {
     const ttk::Theme::Mode &mode = ttk::Theme::mode();
 
     if (mode == ttk::Theme::Mode::System) {

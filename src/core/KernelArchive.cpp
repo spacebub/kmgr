@@ -42,9 +42,9 @@ std::string relocate(const std::string &entry, const std::string &top, const std
 }
 
 int copy_data(archive *read, archive *write) {
-    const void *buffer;
-    size_t size;
-    int64_t offset;
+    const void *buffer = nullptr;
+    size_t size = 0;
+    int64_t offset = 0;
 
     for (;;) {
         const int status = archive_read_data_block(read, &buffer, &size, &offset);
@@ -57,29 +57,22 @@ int copy_data(archive *read, archive *write) {
             return status;
         }
 
-        if (const int written = archive_write_data_block(write, buffer, size, offset); written != ARCHIVE_OK) {
-            return written;
+        if (const la_ssize_t written = archive_write_data_block(write, buffer, size, offset); written != ARCHIVE_OK) {
+            return static_cast<int>(written);
         }
     }
 }
 }
 
-KernelArchive::KernelArchive(const Kernel::Version &kernelVersion) {
-    _kernelVersion = kernelVersion;
-    _path = get_path(kernelVersion);
-    _url = get_url(kernelVersion);
+KernelArchive::KernelArchive(const Kernel::Version &kernelVersion)
+    : _kernelVersion(kernelVersion), _path(get_path(kernelVersion)), _url(get_url(kernelVersion)) {
 }
 
-KernelArchive::KernelArchive(const std::string &kernelVersion) {
-    _kernelVersion = Kernel::get_version(kernelVersion);
-    _path = get_path(_kernelVersion);
-    _url = get_url(_kernelVersion);
+KernelArchive::KernelArchive(const std::string &kernelVersion) : KernelArchive(Kernel::get_version(kernelVersion)) {
 }
 
-KernelArchive::KernelArchive(const std::string &name, const std::string &path) {
-    _kernelVersion = Kernel::get_version(name.substr(6));
-    _path = path;
-    _url = get_url(_kernelVersion);
+KernelArchive::KernelArchive(const Kernel::Version &version, std::string path)
+    : _kernelVersion(version), _path(std::move(path)), _url(get_url(version)) {
 }
 
 std::string KernelArchive::get_url() const {
@@ -154,7 +147,7 @@ void KernelArchive::extract(Progress *progress) const {
 
     const Handle reader(archive_read_new(), archive_read_free);
     const Handle writer(archive_write_disk_new(), archive_write_free);
-    archive_entry *entry;
+    archive_entry *entry = nullptr;
 
     // Owners, permissions beyond the mode and flags are not the archive's to set, and neither
     // is anything outside the directory it is unpacked into.
@@ -165,7 +158,7 @@ void KernelArchive::extract(Progress *progress) const {
     archive_write_disk_set_options(writer.get(), flags);
     archive_write_disk_set_standard_lookup(writer.get());
 
-    if (archive_read_open_filename(reader.get(), _path.c_str(), 10240)) {
+    if (archive_read_open_filename(reader.get(), _path.c_str(), 10240) != ARCHIVE_OK) {
         throw std::runtime_error(archive_error_string(reader.get()));
     }
 
@@ -199,15 +192,16 @@ void KernelArchive::extract(Progress *progress) const {
 
         if (copy_data(reader.get(), writer.get()) != ARCHIVE_OK) {
             throw std::runtime_error(std::string("Could not unpack ") + archive_entry_pathname(entry) + ": "
-                                     + (archive_error_string(reader.get()) ? archive_error_string(reader.get())
-                                                                           : archive_error_string(writer.get())));
+                                     + (archive_error_string(reader.get()) != nullptr
+                                                ? archive_error_string(reader.get())
+                                                : archive_error_string(writer.get())));
         }
 
         if (archive_write_finish_entry(writer.get()) != ARCHIVE_OK) {
             throw std::runtime_error(archive_error_string(writer.get()));
         }
 
-        if (progress) {
+        if (progress != nullptr) {
             // Counting entries first would mean decompressing twice.
             progress->set_completed(archive_filter_bytes(reader.get(), -1));
 
@@ -235,16 +229,16 @@ std::vector<KernelArchive> KernelArchive::list_archives() {
     for (std::filesystem::directory_iterator it(Configuration::get()->archiveDirectory, error), end;
          !error && it != end;
          it.increment(error)) {
-        std::string filename = it->path().filename();
+        const std::string filename = it->path().filename();
 
         if (!filename.starts_with("linux-") || !filename.ends_with(extension)) {
             continue;
         }
 
-        try {
-            archives.emplace_back(filename.substr(0, filename.length() - extension.length()), it->path());
-        } catch (const std::exception &) {
-            // Not a version, not an archive.
+        const std::string stem = filename.substr(6, filename.length() - extension.length() - 6);
+
+        if (const std::optional<Kernel::Version> version = Kernel::parse(stem)) {
+            archives.emplace_back(*version, it->path().string());
         }
     }
 

@@ -21,12 +21,14 @@ bool PullTask::prepare() {
             continue;
         }
 
-        _steps.push_back(Step{.label = "Updating " + entry.path().filename().string(),
-                              .command = "git pull --ff-only",
-                              .directory = entry.path(),
-                              .elevated = false,
-                              .optional = true,
-                              .undo = {}});
+        _steps.push_back(Step{
+                .label = "Updating " + entry.path().filename().string(),
+                .command = "git pull --ff-only",
+                .directory = entry.path(),
+                .elevated = false,
+                .optional = true,
+                .undo = {},
+        });
     }
 
     if (_steps.empty()) {

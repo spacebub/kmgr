@@ -92,7 +92,7 @@ void App::wire() {
     };
 
     _workflow.changed = [this] { touch(); };
-    _workflow.output = [this](const std::string &text) { _sheet->write(text); };
+    _workflow.output = [this](const std::string &text) { _sheet->print(text); };
 
     // Whether a password is held is only known by asking, and a wrong one is
     // dropped mid-run, so both an answer and a finished run redraw.

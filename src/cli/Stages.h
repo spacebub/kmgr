@@ -24,7 +24,7 @@ namespace Stages {
 inline std::vector<std::string> cleans(const Arguments &arguments) {
     std::vector<std::string> wanted;
 
-    if (!(arguments.flags & Parser::CLEAN)) {
+    if (!arguments.has(Parser::CLEAN)) {
         return wanted;
     }
 
@@ -79,21 +79,21 @@ inline bool has_config(const Arguments &arguments) {
     }
 }
 
-inline int stages_from(const Arguments &arguments) {
-    int stages = Options::NONE;
+inline unsigned stages_from(const Arguments &arguments) {
+    unsigned stages = Options::NONE;
 
-    const bool cleaning = (arguments.flags & (Parser::CLEAN | Parser::DELETE)) != 0;
+    const bool cleaning = arguments.has(Parser::CLEAN | Parser::DELETE);
 
-    if (arguments.flags & Parser::PULL) {
+    if (arguments.has(Parser::PULL)) {
         stages |= Options::PULL;
     }
 
-    if (arguments.flags & Parser::REVERT) {
+    if (arguments.has(Parser::REVERT)) {
         return stages | Options::REVERT;
     }
 
     if (cleaning) {
-        if (arguments.flags & Parser::CLEAN) {
+        if (arguments.has(Parser::CLEAN)) {
             if (cleans(arguments, "all")) {
                 stages |= Options::CLEAN_INSTALLED | Options::CLEAN_SOURCE;
             }
@@ -105,16 +105,16 @@ inline int stages_from(const Arguments &arguments) {
             // Logs are not a task, so asking for them alone queues nothing.
         }
 
-        if (arguments.flags & Parser::DELETE) {
+        if (arguments.has(Parser::DELETE)) {
             stages |= Options::CLEAN_SOURCE;
         }
 
         return stages;
     }
 
-    if (arguments.flags & Parser::DOWNLOAD) {
+    if (arguments.has(Parser::DOWNLOAD)) {
         stages |= Options::PREPARE;
-    } else if (arguments.flags & Parser::RESUME) {
+    } else if (arguments.has(Parser::RESUME)) {
         stages |= Options::BUILD;
 
         // Resuming builds what is already in the directory, unless there is nothing to build with.
@@ -125,30 +125,29 @@ inline int stages_from(const Arguments &arguments) {
         stages |= Options::PREPARE | Options::MAKE;
     }
 
-    if (arguments.flags & Parser::INSTALL || !arguments.oldkernel.empty()) {
-        if (stages & (Options::BUILD | Options::MAKE)) {
-            stages |= Options::INSTALL;
-        }
+    if ((arguments.has(Parser::INSTALL) || !arguments.oldkernel.empty())
+        && (stages & (Options::BUILD | Options::MAKE)) != 0) {
+        stages |= Options::INSTALL;
     }
 
-    if (arguments.flags & Parser::SIGN) {
+    if (arguments.has(Parser::SIGN)) {
         stages |= Options::SIGN;
     }
 
-    if (arguments.flags & Parser::NOPATCH) {
+    if (arguments.has(Parser::NOPATCH)) {
         stages &= ~Options::PATCH;
     }
 
-    const bool named = (arguments.flags & (Parser::CLANG | Parser::GCC | Parser::CUSTOM)) != 0;
+    const bool named = arguments.has(Parser::CLANG | Parser::GCC | Parser::CUSTOM);
     const Toolchain configured = Configuration::get()->compiler;
 
-    if ((arguments.flags & Parser::CUSTOM) || (!named && configured == Toolchain::Custom)) {
+    if (arguments.has(Parser::CUSTOM) || (!named && configured == Toolchain::Custom)) {
         stages |= Options::CUSTOM;
-    } else if ((arguments.flags & Parser::CLANG) || (!named && configured == Toolchain::Llvm)) {
+    } else if (arguments.has(Parser::CLANG) || (!named && configured == Toolchain::Llvm)) {
         stages |= Options::CLANG;
     }
 
-    if (arguments.flags & Parser::FORCE) {
+    if (arguments.has(Parser::FORCE)) {
         stages |= Options::FORCE;
     }
 

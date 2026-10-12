@@ -13,7 +13,7 @@
 #include "ttk/toolkit/layout/Wrap.h"
 
 namespace {
-using Palette = ttk::Theme::Palette;
+using ttk::Theme::Palette;
 }
 
 InstalledCard::InstalledCard(const Catalog::Build &kernel, std::function<void(const std::string &)> action)

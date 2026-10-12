@@ -38,7 +38,7 @@ public:
     bool remove_build(const std::string &build);
     bool remove_step(const std::string &build, const std::string &operation);
 
-    bool open(const std::string &build) const;
+    void open(const std::string &build) const;
 
     void touch();
 

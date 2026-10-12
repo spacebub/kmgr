@@ -12,6 +12,7 @@
 #include <memory>
 #include <mutex>
 #include <stdexcept>
+#include <system_error>
 
 #include "Download.h"
 
@@ -77,10 +78,14 @@ size_t store(const char *data, const size_t size, const size_t count, void *targ
     return fwrite(data, size, count, static_cast<FILE *>(target));
 }
 
-int report(void *target, const curl_off_t total, const curl_off_t now, curl_off_t, curl_off_t) {
+int report(void *target,
+           const curl_off_t total,
+           const curl_off_t now,
+           curl_off_t /*uploadTotal*/,
+           curl_off_t /*uploaded*/) {
     auto *counter = static_cast<Progress *>(target);
 
-    if (!counter) {
+    if (counter == nullptr) {
         return 0;
     }
 
@@ -113,8 +118,9 @@ void Download::perform(const std::string &destination, Progress *counter) const 
     const Handle curl = prepare(_url);
     FILE *file = fopen(destination.c_str(), "wb");
 
-    if (!file) {
-        throw std::runtime_error("Could not open " + destination + " for writing: " + strerror(errno));
+    if (file == nullptr) {
+        throw std::runtime_error("Could not open " + destination
+                                 + " for writing: " + std::generic_category().message(errno));
     }
 
     curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, store);
@@ -126,7 +132,7 @@ void Download::perform(const std::string &destination, Progress *counter) const 
     curl_easy_setopt(curl.get(), CURLOPT_LOW_SPEED_TIME, STALL_SECONDS);
 
     const CURLcode result = curl_easy_perform(curl.get());
-    const bool written = fflush(file) == 0 && !ferror(file);
+    const bool written = fflush(file) == 0 && ferror(file) == 0;
     const int writeError = errno;
     const bool closed = fclose(file) == 0;
 
@@ -135,6 +141,7 @@ void Download::perform(const std::string &destination, Progress *counter) const 
     }
 
     if (!written || !closed) {
-        throw std::runtime_error("Could not write " + destination + ": " + strerror(written ? errno : writeError));
+        throw std::runtime_error("Could not write " + destination + ": "
+                                 + std::generic_category().message(written ? errno : writeError));
     }
 }

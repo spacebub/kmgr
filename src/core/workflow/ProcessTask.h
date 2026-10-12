@@ -15,6 +15,7 @@
 
 #include "Task.h"
 #include "core/Process.h"
+#include <cstdint>
 
 class ProcessTask : public Task {
 public:
@@ -40,11 +41,11 @@ protected:
     virtual bool prepare() { return true; }
 
 private:
-    enum class Outcome {
+    enum class Outcome : std::uint8_t {
         Done,
         Skipped,
         Failed,
-        Canceled
+        Canceled,
     };
 
     int launch(const std::string &command, const std::string &directory, bool elevated, bool evenIfCanceled);

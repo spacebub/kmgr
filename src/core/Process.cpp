@@ -9,12 +9,14 @@
 #include <chrono>
 #include <csignal>
 #include <cstring>
+#include <format>
 #include <map>
 #include <poll.h>
 #include <pty.h>
 #include <stdexcept>
 #include <sys/uio.h>
 #include <sys/wait.h>
+#include <system_error>
 #include <termios.h>
 #include <unistd.h>
 #include <vector>
@@ -77,7 +79,7 @@ int Process::run() {
     // The child looks a name up from the front, so an override has to replace, not follow.
     std::map<std::string, std::string> variables;
 
-    for (char **entry = environ; *entry; ++entry) {
+    for (char *const *entry = environ; *entry != nullptr; ++entry) {
         const std::string_view pair(*entry);
         const size_t equals = pair.find('=');
 
@@ -93,7 +95,7 @@ int Process::run() {
     flattened.reserve(variables.size());
 
     for (const auto &[name, value] : variables) {
-        flattened.push_back(name + "=" + value);
+        flattened.push_back(std::format("{}={}", name, value));
     }
 
     std::vector<char *> envp;
@@ -116,7 +118,7 @@ int Process::run() {
     const pid_t pid = forkpty(&master, nullptr, nullptr, &size);
 
     if (pid < 0) {
-        throw std::runtime_error("Could not start " + _command + ": " + strerror(errno));
+        throw std::runtime_error("Could not start " + _command + ": " + std::generic_category().message(errno));
     }
 
     if (pid == 0) {
@@ -129,7 +131,7 @@ int Process::run() {
     }
 
     {
-        std::lock_guard lock(_mutex);
+        const std::scoped_lock lock(_mutex);
 
         _line.clear();
         _escape.clear();
@@ -206,11 +208,13 @@ int Process::run() {
 // Handed over in one call and never joined with the newline, so a secret is not copied here.
 void Process::write(const std::string_view input) {
     char newline = '\n';
-    const iovec parts[] = {{.iov_base = const_cast<char *>(input.data()), .iov_len = input.size()},
-                           {.iov_base = &newline, .iov_len = 1}};
+    const iovec parts[] = {
+            {.iov_base = const_cast<char *>(input.data()), .iov_len = input.size()},
+            {.iov_base = &newline, .iov_len = 1},
+    };
 
     {
-        std::lock_guard lock(_writeMutex);
+        const std::scoped_lock lock(_writeMutex);
         const int master = _master;
 
         if (master < 0 || writev(master, parts, 2) < 0) {
@@ -218,7 +222,7 @@ void Process::write(const std::string_view input) {
         }
     }
 
-    std::lock_guard lock(_mutex);
+    const std::scoped_lock lock(_mutex);
 
     _line.clear();
     _prompted = false;
@@ -302,7 +306,7 @@ void Process::consume(const char *data, const size_t size) {
     std::string clean;
 
     {
-        std::lock_guard lock(_mutex);
+        const std::scoped_lock lock(_mutex);
 
         clean = sanitize(data, size);
 
@@ -343,7 +347,7 @@ void Process::check_prompt() {
     Prompt prompt;
 
     {
-        std::lock_guard lock(_mutex);
+        const std::scoped_lock lock(_mutex);
 
         if (_prompted) {
             return;

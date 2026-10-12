@@ -8,6 +8,7 @@
  */
 #include <filesystem>
 #include <stdexcept>
+#include <string_view>
 
 #include "BuildTask.h"
 #include "CleanTask.h"
@@ -35,7 +36,7 @@ void validate(const std::string &value, const std::string &description) {
 }
 
 // A run of a single step is filed under that step, anything larger is not.
-std::string operation_of(const int stages) {
+std::string_view operation_of(const unsigned stages) {
     switch (stages & ~(Options::CLANG | Options::CUSTOM | Options::FORCE)) {
         case Options::PULL:
             return "pull";
@@ -97,41 +98,41 @@ Workflow *WorkflowFactory::create(const Options &options) {
 
     auto *workflow = new Workflow(options.kernel.empty() ? "Maintenance" : "Kernel " + version.get_string());
 
-    workflow->set_force((options.stages & Options::FORCE) != 0);
+    workflow->set_force(options.has(Options::FORCE));
 
-    if (options.stages & Options::PULL) {
+    if (options.has(Options::PULL)) {
         workflow->queue(new PullTask());
     }
 
-    if (options.stages & Options::DOWNLOAD) {
-        KernelArchive archive(version);
+    if (options.has(Options::DOWNLOAD)) {
+        const KernelArchive archive(version);
 
         if (!std::filesystem::exists(archive.get_location())) {
             workflow->queue(new DownloadTask(archive));
         }
     }
 
-    if (options.stages & Options::EXTRACT) {
+    if (options.has(Options::EXTRACT)) {
         workflow->queue(new ExtractTask(version));
     }
 
-    if (options.stages & Options::PATCH) {
+    if (options.has(Options::PATCH)) {
         workflow->queue(new PatchTask(version, options.patch));
     }
 
-    if (options.stages & Options::REVERT) {
+    if (options.has(Options::REVERT)) {
         workflow->queue(new PatchTask(version, options.patch, PatchTask::Reverse));
     }
 
-    if (options.stages & Options::CONFIGURE) {
+    if (options.has(Options::CONFIGURE)) {
         workflow->queue(new ConfigureTask(version, options.config, compiler));
     }
 
-    if (options.stages & Options::BUILD) {
+    if (options.has(Options::BUILD)) {
         workflow->queue(new BuildTask(version, compiler));
     }
 
-    if (options.stages & Options::INSTALL) {
+    if (options.has(Options::INSTALL)) {
         const Kernel::Version replaced =
                 options.oldKernel.empty()
                         ? Kernel::Version{}
@@ -140,7 +141,7 @@ Workflow *WorkflowFactory::create(const Options &options) {
         workflow->queue(new InstallTask(version, compiler, replaced));
     }
 
-    if (options.stages & Options::SIGN) {
+    if (options.has(Options::SIGN)) {
         workflow->queue(new SignTask(version));
     }
 
@@ -150,22 +151,23 @@ Workflow *WorkflowFactory::create(const Options &options) {
                 options.oldKernel.empty()
                         ? version
                         : resolve(options.oldKernel, options.oldSuffix.empty() ? options.suffix : options.oldSuffix);
-        int mode = 0;
+        unsigned mode = 0;
 
-        if (options.stages & Options::CLEAN_INSTALLED) {
+        if (options.has(Options::CLEAN_INSTALLED)) {
             mode |= CleanTask::Installed;
         }
-        if (options.stages & Options::CLEAN_SOURCE) {
+        if (options.has(Options::CLEAN_SOURCE)) {
             mode |= CleanTask::Source;
         }
-        if (options.stages & Options::CLEAN_ARCHIVE) {
+        if (options.has(Options::CLEAN_ARCHIVE)) {
             mode |= CleanTask::Archive;
         }
 
         workflow->queue(new CleanTask(target, mode));
     }
 
-    workflow->set_context(options.kernel.empty() ? std::string{} : version.get_string(), operation_of(options.stages));
+    workflow->set_context(options.kernel.empty() ? std::string{} : version.get_string(),
+                          std::string(operation_of(options.stages)));
     workflow->sort();
 
     return workflow;

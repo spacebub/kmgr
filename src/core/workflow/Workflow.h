@@ -12,16 +12,17 @@
 
 #include "Task.h"
 #include <atomic>
+#include <cstdint>
 #include <string>
 #include <vector>
 
 class Workflow {
 public:
-    enum Status {
+    enum Status : std::uint8_t {
         Pending = 0,
         Running = 1,
         Failed = 2,
-        Done = 3
+        Done = 3,
     };
 
 private:
@@ -49,8 +50,13 @@ private:
     void set_status(Status status);
 
 public:
-    explicit Workflow(const std::string &name);
+    explicit Workflow(std::string name);
     ~Workflow();
+
+    Workflow(const Workflow &) = delete;
+    Workflow &operator=(const Workflow &) = delete;
+    Workflow(Workflow &&) = delete;
+    Workflow &operator=(Workflow &&) = delete;
 
     std::string get_name();
     [[nodiscard]] std::string get_kernel() const;

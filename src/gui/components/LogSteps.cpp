@@ -16,7 +16,7 @@
 #include "ttk/toolkit/controls/Label.h"
 
 namespace {
-using Palette = ttk::Theme::Palette;
+using ttk::Theme::Palette;
 }
 
 LogSteps::LogSteps(Reach *reach) : Box(Flow::Column), _reach(reach) {

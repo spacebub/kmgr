@@ -10,13 +10,14 @@
 #include "core/Kernel.h"
 #include <filesystem>
 
-ExtractTask::ExtractTask(KernelArchive *archive) : Task("Extract task", std::make_unique<Progress>()) {
-    _archive = archive;
+ExtractTask::ExtractTask(KernelArchive *archive)
+    : Task("Extract task", std::make_unique<Progress>()), _archive(archive) {
 }
 
 ExtractTask::ExtractTask(const Kernel::Version &version)
-    : Task("Extract task", std::make_unique<Progress>()), _owned(std::make_unique<KernelArchive>(version)) {
-    _archive = _owned.get();
+    : Task("Extract task", std::make_unique<Progress>()),
+      _owned(std::make_unique<KernelArchive>(version)),
+      _archive(_owned.get()) {
 }
 
 // A directory left behind by a run that stopped would pass for an unpacked kernel, so it goes.

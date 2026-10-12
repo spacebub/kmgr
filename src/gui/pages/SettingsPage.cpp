@@ -22,7 +22,7 @@
 #include "ttk/toolkit/layout/Spacer.h"
 
 namespace {
-using Palette = ttk::Theme::Palette;
+using ttk::Theme::Palette;
 
 constexpr double RAIL_GAP = 18.0;
 constexpr double FOOTER_HEIGHT = 62.0;
@@ -179,7 +179,7 @@ SettingsPage::SettingsPage(Reach *reach) : _reach(reach) {
     _rail = append(std::make_unique<Rail>(this));
 
     // Each group scrolls on its own, so a long one does not drag the rest with it.
-    const auto pane = [this]() -> ttk::Box * {
+    const auto pane = [this] -> ttk::Box * {
         ttk::Scroll *scroll = append(std::make_unique<ttk::Scroll>());
         ttk::Box *stack = static_cast<ttk::Box *>(scroll->hold(ttk::Box::column()));
 
@@ -533,10 +533,12 @@ void SettingsPage::sync() {
     _notifications->set_checked(_wantedNotifications);
 
     // Follows the field rather than the saved value, since the page shows what Save would write.
-    if (const std::vector<std::string> names = {"GCC",
-                                                "LLVM",
-                                                settings.customToolchainName.empty() ? std::string("Custom")
-                                                                                     : settings.customToolchainName};
+    if (const std::vector<std::string> names =
+                {
+                        "GCC",
+                        "LLVM",
+                        settings.customToolchainName.empty() ? std::string("Custom") : settings.customToolchainName,
+                };
         names != _toolchainNames) {
         _toolchainNames = names;
         _toolchain->set_options(names);

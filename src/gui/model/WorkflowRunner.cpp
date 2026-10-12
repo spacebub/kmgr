@@ -95,7 +95,7 @@ void WorkflowRunner::set_choices(const std::string &version,
     BuildConfig::write(Kernel::get_version(version, suffix), choices);
 }
 
-Options WorkflowRunner::options(const std::string &version, const std::string &suffix, const int stages) {
+Options WorkflowRunner::options(const std::string &version, const std::string &suffix, const unsigned stages) {
     const BuildConfig::Choices choices = WorkflowRunner::choices(version, suffix);
     Options options;
 
@@ -161,7 +161,7 @@ void WorkflowRunner::up_to_build(const std::string &version, const std::string &
 // A directory that already holds an image picks up at the install, as
 // --resume does. Rebuilding it is left to the Build button.
 void WorkflowRunner::everything(const std::string &version, const std::string &suffix) {
-    int stages = Options::INSTALL;
+    unsigned stages = Options::INSTALL;
 
     if (!built(version, suffix)) {
         stages |= Options::PATCH | Options::CONFIGURE | Options::BUILD;
@@ -201,44 +201,44 @@ void WorkflowRunner::pull() {
     start(request, "No repositories to update.");
 }
 
-std::string WorkflowRunner::describe(const int stages) {
-    if (stages & Options::INSTALL) {
-        return stages & Options::BUILD ? "Build and install" : "Install";
+std::string_view WorkflowRunner::describe(const unsigned stages) {
+    if ((stages & Options::INSTALL) != 0) {
+        return (stages & Options::BUILD) != 0 ? "Build and install" : "Install";
     }
 
-    if (stages & Options::BUILD) {
+    if ((stages & Options::BUILD) != 0) {
         return "Build";
     }
 
-    if (stages & Options::CONFIGURE) {
+    if ((stages & Options::CONFIGURE) != 0) {
         return "Configure";
     }
 
-    if (stages & Options::REVERT) {
+    if ((stages & Options::REVERT) != 0) {
         return "Revert patch";
     }
 
-    if (stages & Options::PATCH) {
+    if ((stages & Options::PATCH) != 0) {
         return "Patch";
     }
 
-    if (stages & Options::EXTRACT) {
+    if ((stages & Options::EXTRACT) != 0) {
         return "Extract";
     }
 
-    if (stages & Options::DOWNLOAD) {
+    if ((stages & Options::DOWNLOAD) != 0) {
         return "Download";
     }
 
-    if (stages & Options::SIGN) {
+    if ((stages & Options::SIGN) != 0) {
         return "Sign";
     }
 
-    if (stages & (Options::CLEAN_INSTALLED | Options::CLEAN_SOURCE | Options::CLEAN_ARCHIVE)) {
+    if ((stages & (Options::CLEAN_INSTALLED | Options::CLEAN_SOURCE | Options::CLEAN_ARCHIVE)) != 0) {
         return "Removal";
     }
 
-    if (stages & Options::PULL) {
+    if ((stages & Options::PULL) != 0) {
         return "Sources update";
     }
 
@@ -285,7 +285,7 @@ void WorkflowRunner::start(const Options &options, const std::string &nothingToD
 // Callbacks arrive on the worker thread, everything they touch is posted back.
 void WorkflowRunner::run(const std::shared_ptr<Workflow> &workflow) {
     {
-        std::lock_guard lock(_pendingMutex);
+        const std::scoped_lock lock(_pendingMutex);
         _pending.clear();
     }
 
@@ -377,7 +377,7 @@ void WorkflowRunner::run(const std::shared_ptr<Workflow> &workflow) {
 }
 
 void WorkflowRunner::append(const std::string &text) {
-    std::lock_guard lock(_pendingMutex);
+    const std::scoped_lock lock(_pendingMutex);
 
     _pending += text;
 }
@@ -386,7 +386,7 @@ void WorkflowRunner::flush() {
     std::string pending;
 
     {
-        std::lock_guard lock(_pendingMutex);
+        const std::scoped_lock lock(_pendingMutex);
 
         if (_pending.size() > 2 * OUTPUT_LIMIT) {
             _pending.erase(0, _pending.size() - OUTPUT_LIMIT);
@@ -440,7 +440,7 @@ void WorkflowRunner::measure() {
     if (const double seconds = std::chrono::duration<double>(now - _sampledAt).count(); seconds >= 0.35) {
         const double rate = _completed >= _sampled ? static_cast<double>(_completed - _sampled) / seconds : 0;
 
-        _rate = _rate > 0 ? _rate * 0.6 + rate * 0.4 : rate;
+        _rate = _rate > 0 ? (_rate * 0.6) + (rate * 0.4) : rate;
         _sampled = _completed;
         _sampledAt = now;
     }

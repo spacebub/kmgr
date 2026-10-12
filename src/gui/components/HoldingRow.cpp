@@ -16,7 +16,7 @@
 #include "ttk/draw/Typeface.h"
 
 namespace {
-using Palette = ttk::Theme::Palette;
+using ttk::Theme::Palette;
 }
 
 HoldingRow::HoldingRow(Reach *reach, Log::Holding holding, std::function<void()> toggled)

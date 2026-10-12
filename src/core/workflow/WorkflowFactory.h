@@ -15,7 +15,7 @@
 #include <string>
 
 struct Options {
-    enum Stage {
+    enum Stage : unsigned {
         NONE = 0,
         PULL = 1 << 0,
         DOWNLOAD = 1 << 1,
@@ -35,7 +35,7 @@ struct Options {
 
         PREPARE = DOWNLOAD | EXTRACT | PATCH,
         MAKE = CONFIGURE | BUILD,
-        FULL = PREPARE | MAKE | INSTALL
+        FULL = PREPARE | MAKE | INSTALL,
     };
 
     std::string kernel;
@@ -44,15 +44,17 @@ struct Options {
     std::string oldSuffix;
     std::string config;
     std::string patch;
-    int stages = NONE;
+    unsigned stages = NONE;
+
+    [[nodiscard]] bool has(const unsigned stage) const { return (stages & stage) != 0; }
 
     // Custom wins when a run names both.
     [[nodiscard]] Toolchain toolchain() const {
-        if (stages & CUSTOM) {
+        if (has(CUSTOM)) {
             return Toolchain::Custom;
         }
 
-        return stages & CLANG ? Toolchain::Llvm : Toolchain::Gcc;
+        return has(CLANG) ? Toolchain::Llvm : Toolchain::Gcc;
     }
 };
 

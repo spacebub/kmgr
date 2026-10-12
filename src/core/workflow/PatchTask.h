@@ -12,12 +12,13 @@
 
 #include "ProcessTask.h"
 #include "core/Kernel.h"
+#include <cstdint>
 
 class PatchTask final : public ProcessTask {
 public:
-    enum Direction {
+    enum Direction : std::uint8_t {
         Apply,
-        Reverse
+        Reverse,
     };
 
 private:

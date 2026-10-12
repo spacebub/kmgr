@@ -6,17 +6,19 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
-#include "gui/pages/HomePage.h"
+#include <format>
+
 #include "gui/app/Desk.h"
 #include "gui/app/Reach.h"
 #include "gui/components/Parts.h"
+#include "gui/pages/HomePage.h"
 #include "ttk/draw/Theme.h"
 #include "ttk/toolkit/Root.h"
 #include "ttk/toolkit/layout/Panel.h"
 #include "ttk/toolkit/layout/Spacer.h"
 
 namespace {
-using Palette = ttk::Theme::Palette;
+using ttk::Theme::Palette;
 
 const ttk::Theme::Palette &palette() {
     return ttk::Theme::palette();
@@ -149,7 +151,7 @@ HomePage::HomePage(Reach *reach) : Box(Flow::Column), _reach(reach) {
     _pull->tooltip("Run git pull in every repository in the base directory");
 }
 
-std::string HomePage::status() const {
+std::string_view HomePage::status() const {
     const SystemStatus &system = _reach->system;
 
     if (system.checking()) {
@@ -191,8 +193,12 @@ void HomePage::sync() {
     _status->set_visible(!update);
     _status->set_text(status());
 
-    if (const std::string shape = system.current() + '\n' + system.latest() + '\n' + _facts->text() + '\n' + status()
-                                  + (system.checking() ? "c" : "");
+    if (const std::string shape = std::format("{}\n{}\n{}\n{}{}",
+                                              system.current(),
+                                              system.latest(),
+                                              _facts->text(),
+                                              status(),
+                                              system.checking() ? "c" : "");
         shape != _shape) {
         _shape = shape;
 
@@ -226,10 +232,12 @@ void HomePage::sync() {
         std::vector<VersionList::Row> rows;
 
         for (const Catalog::Entry &entry : catalog.entries()) {
-            rows.push_back(VersionList::Row{.version = entry.name,
-                                            .summary = entry.summary(),
-                                            .running = entry.running,
-                                            .installed = static_cast<int>(entry.installed.size())});
+            rows.push_back(VersionList::Row{
+                    .version = entry.name,
+                    .summary = entry.summary(),
+                    .running = entry.running,
+                    .installed = static_cast<int>(entry.installed.size()),
+            });
         }
 
         _preview->set_rows(std::move(rows));

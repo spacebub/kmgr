@@ -22,9 +22,9 @@ public:
     struct Prompt {
         std::string text;
         // The child turned echo off to read, so it is asking for something to keep quiet.
-        bool secret;
+        bool secret = false;
         // The elevation command is still the one asking, nothing of ours has started yet.
-        bool elevating;
+        bool elevating = false;
     };
 
 private:

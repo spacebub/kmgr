@@ -105,7 +105,7 @@ bool Logs::remove_step(const std::string &build, const std::string &operation) {
 
 // A build that has filed nothing has no directory yet, so the root opens
 // instead. It is created first for a machine that has never run anything.
-bool Logs::open(const std::string &build) const {
+void Logs::open(const std::string &build) const {
     const std::string own = Log::directory(build);
     const std::string target = std::filesystem::is_directory(own) ? own : Log::directory();
     std::error_code error;
@@ -114,9 +114,5 @@ bool Logs::open(const std::string &build) const {
 
     if (!Desk::reveal(target)) {
         _notifier->warning("Nothing on this system offered to open " + Desk::pretty(target) + ".");
-
-        return false;
     }
-
-    return true;
 }

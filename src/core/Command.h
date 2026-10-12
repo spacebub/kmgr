@@ -17,7 +17,7 @@ class Command {
     std::string _command;
 
 public:
-    explicit Command(const std::string &command);
+    explicit Command(std::string command);
 
     [[nodiscard]] int execute() const;
     int execute(const std::function<void(const std::string &)> &callback) const;

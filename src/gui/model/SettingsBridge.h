@@ -12,6 +12,7 @@
 
 #include <functional>
 #include <string>
+#include <string_view>
 
 #include "ttk/notices/Notifier.h"
 
@@ -37,7 +38,7 @@ public:
     [[nodiscard]] static int detected_jobs();
 
     // The AOCC path is a placeholder for the user to replace.
-    [[nodiscard]] static std::string aocc_preset();
+    [[nodiscard]] static std::string_view aocc_preset();
 
     void load();
     bool save();

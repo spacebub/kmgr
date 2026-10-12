@@ -22,8 +22,11 @@
 #include "core/Progress.h"
 
 class Reporter {
+    // clang-format off
     static constexpr const char *SPINNER[] = {
-            "\u280b", "\u2819", "\u2839", "\u2838", "\u283c", "\u2834", "\u2826", "\u2827", "\u2807", "\u280f"};
+            "\u280b", "\u2819", "\u2839", "\u2838", "\u283c", "\u2834", "\u2826", "\u2827", "\u2807", "\u280f",
+    };
+    // clang-format on
 
     std::mutex _mutex;
     std::string _label;
@@ -130,7 +133,7 @@ private:
 
 public:
     void line(const std::string &text) {
-        std::lock_guard lock(_mutex);
+        const std::scoped_lock lock(_mutex);
 
         clear();
         std::cout << text << "\n" << std::flush;
@@ -138,7 +141,7 @@ public:
     }
 
     void begin(const std::string &label) {
-        std::lock_guard lock(_mutex);
+        const std::scoped_lock lock(_mutex);
 
         close(true);
 
@@ -156,13 +159,13 @@ public:
     }
 
     void finish(const bool success) {
-        std::lock_guard lock(_mutex);
+        const std::scoped_lock lock(_mutex);
 
         close(success);
     }
 
     void output(const std::string &data) {
-        std::lock_guard lock(_mutex);
+        const std::scoped_lock lock(_mutex);
 
         if (_running && !_expanded) {
             clear();
@@ -181,7 +184,7 @@ public:
     }
 
     void progress(const ProgressArgs &args) {
-        std::lock_guard lock(_mutex);
+        const std::scoped_lock lock(_mutex);
 
         if (args.total == 0 || !_running) {
             return;
@@ -193,7 +196,7 @@ public:
             const double sample =
                     args.completed >= _sampledBytes ? static_cast<double>(args.completed - _sampledBytes) / seconds : 0;
 
-            _rate = _rate > 0 ? _rate * 0.6 + sample * 0.4 : sample;
+            _rate = _rate > 0 ? (_rate * 0.6) + (sample * 0.4) : sample;
             _sampledBytes = args.completed;
             _sampled = now;
         }
@@ -206,7 +209,7 @@ public:
     }
 
     void tick() {
-        std::lock_guard lock(_mutex);
+        const std::scoped_lock lock(_mutex);
 
         _frame++;
         repaint();

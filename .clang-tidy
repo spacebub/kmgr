@@ -1,0 +1,56 @@
+# Only this project's own sources are linted: tools/lint.sh picks the files, and the
+# header filters below keep third party and fetched dependency headers out.
+Checks: >
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  concurrency-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  cppcoreguidelines-init-variables,
+  cppcoreguidelines-prefer-member-initializer,
+  cppcoreguidelines-pro-type-member-init,
+  cppcoreguidelines-slicing,
+  cppcoreguidelines-special-member-functions,
+  cppcoreguidelines-use-default-member-init,
+  cppcoreguidelines-virtual-class-destructor,
+  -bugprone-easily-swappable-parameters,
+  -misc-include-cleaner,
+  -misc-no-recursion,
+  -misc-non-private-member-variables-in-classes,
+  -modernize-avoid-c-arrays,
+  -modernize-use-designated-initializers,
+  -modernize-use-trailing-return-type,
+  -readability-avoid-nested-conditional-operator,
+  -readability-function-cognitive-complexity,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+  -readability-redundant-member-init
+
+# bugprone-easily-swappable-parameters      adjacent path/string parameters throughout
+# misc-include-cleaner                      wants a direct include for every std symbol
+# misc-no-recursion                         recursive tree walks are intentional
+# misc-non-private-member-variables-...     options, settings and step structs are plain data
+# modernize-avoid-c-arrays                  getopt tables and small fixed lists read better as arrays
+# modernize-use-designated-initializers     hash constants and geometry read better positionally
+# modernize-use-trailing-return-type        style choice, not used here
+# readability-avoid-nested-conditional-...  chained ?: reads as a selection table
+# readability-function-cognitive-complexity the option parser and page builders are long by nature
+# readability-identifier-length             short loop/lambda names are fine
+# readability-magic-numbers                 PE header offsets and layout metrics
+# readability-redundant-member-init         a {} on a member is what lets a designated
+#                                           initialiser elsewhere leave it out
+
+CheckOptions:
+  # Flag sets are combined with | and &, where anything narrower than int promotes to a signed int.
+  performance-enum-size.EnumIgnoreList: 'Options::Stage;Parser::Flags;CleanTask::Mode;Kernel::Status'
+  # A shift or mask by a literal cannot go negative.
+  bugprone-signed-bitwise.IgnorePositiveIntegerLiterals: true
+
+HeaderFilterRegex: '.*/src/.*'
+ExcludeHeaderFilterRegex: '.*/(external|_deps|\.download-cache)/.*'
+WarningsAsErrors: ''
+FormatStyle: none

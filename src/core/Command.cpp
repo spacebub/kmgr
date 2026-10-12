@@ -8,15 +8,16 @@
  */
 #include <stdexcept>
 #include <sys/wait.h>
+#include <utility>
 
 #include "Command.h"
 #include "Shell.h"
 
-Command::Command(const std::string &command) {
-    _command = command;
+Command::Command(std::string command) : _command(std::move(command)) {
 }
 
 int Command::execute() const {
+    // NOLINTNEXTLINE(cert-env33-c,bugprone-command-processor,concurrency-mt-unsafe): a shell line is what this runs.
     return system(_command.c_str());
 }
 
@@ -24,7 +25,7 @@ std::string Command::capture(int *status) const {
     std::string output;
     const int raw = execute([&output](const std::string &data) { output += data; });
 
-    if (status) {
+    if (status != nullptr) {
         *status = raw == -1 ? -1 : WIFEXITED(raw) ? WEXITSTATUS(raw) : 128 + WTERMSIG(raw);
     }
 
@@ -44,9 +45,10 @@ int Command::execute(const std::function<void(const std::string &)> &callback) c
         throw std::invalid_argument("Invalid callback!");
     }
 
+    // NOLINTNEXTLINE(cert-env33-c,bugprone-command-processor): a shell line is what this runs.
     FILE *pipe = popen(_command.c_str(), "r");
 
-    if (!pipe) {
+    if (pipe == nullptr) {
         throw std::runtime_error("Could not run command " + _command);
     }
 

@@ -40,7 +40,7 @@ Kernel Kernel::get_latest(const std::function<void(const Version &)> &callback) 
     std::string version;
 
     if (yyjson_doc *doc = yyjson_read(releasesJson.c_str(), releasesJson.size(), YYJSON_READ_NOFLAG)) {
-        yyjson_val *stable = yyjson_obj_get(yyjson_doc_get_root(doc), "latest_stable");
+        const yyjson_val *stable = yyjson_obj_get(yyjson_doc_get_root(doc), "latest_stable");
 
         if (const char *named = yyjson_get_str(yyjson_obj_get(stable, "version"))) {
             version = named;
@@ -76,10 +76,8 @@ std::vector<Kernel> Kernel::list_extracted() {
             continue;
         }
 
-        try {
-            kernels.emplace_back(filename.substr(6));
-        } catch (const std::exception &) {
-            // Not a version, not a kernel.
+        if (const std::optional<Version> version = parse(filename.substr(6))) {
+            kernels.emplace_back(*version);
         }
     }
 
@@ -122,14 +120,14 @@ std::vector<Kernel> Kernel::list_installed() {
     std::vector<Kernel> kernels;
 
     for (const std::string &name : names) {
-        try {
-            Kernel kernel(name);
+        const std::optional<Version> version = parse(name);
 
-            if (kernel.get_status() != NotInstalled) {
-                kernels.push_back(kernel);
-            }
-        } catch (const std::exception &) {
-            // Not a version, not a kernel.
+        if (!version) {
+            continue;
+        }
+
+        if (const Kernel kernel(*version); kernel.get_status() != NotInstalled) {
+            kernels.push_back(kernel);
         }
     }
 
@@ -147,9 +145,7 @@ Kernel::Version Kernel::get_version() const {
     return _version;
 }
 
-Kernel::Version Kernel::get_version(const std::string &suffixedVersion) {
-    const auto reject = [&suffixedVersion] { throw std::invalid_argument("Not a kernel version: " + suffixedVersion); };
-
+std::optional<Kernel::Version> Kernel::parse(const std::string &suffixedVersion) {
     const size_t separator = suffixedVersion.find('-');
     const std::string_view numbers(suffixedVersion.data(),
                                    separator == std::string::npos ? suffixedVersion.size() : separator);
@@ -159,13 +155,13 @@ Kernel::Version Kernel::get_version(const std::string &suffixedVersion) {
         version.suffix = suffixedVersion.substr(separator + 1);
     }
 
-    ushort *fields[] = {&version.major, &version.minor, &version.revision};
+    ushort *const fields[] = {&version.major, &version.minor, &version.revision};
     size_t count = 0;
     size_t start = 0;
 
     for (;;) {
         if (count == std::size(fields)) {
-            reject();
+            return std::nullopt;
         }
 
         const size_t dot = numbers.find('.', start);
@@ -173,13 +169,13 @@ Kernel::Version Kernel::get_version(const std::string &suffixedVersion) {
         unsigned value = 0;
 
         if (field.empty() || field.size() > 5) {
-            reject();
+            return std::nullopt;
         }
 
         const auto [end, error] = std::from_chars(field.data(), field.data() + field.size(), value);
 
         if (error != std::errc{} || end != field.data() + field.size() || value > 65535) {
-            reject();
+            return std::nullopt;
         }
 
         *fields[count++] = static_cast<ushort>(value);
@@ -192,10 +188,18 @@ Kernel::Version Kernel::get_version(const std::string &suffixedVersion) {
     }
 
     if (count < 2) {
-        reject();
+        return std::nullopt;
     }
 
     return version;
+}
+
+Kernel::Version Kernel::get_version(const std::string &suffixedVersion) {
+    if (const std::optional<Version> version = parse(suffixedVersion)) {
+        return *version;
+    }
+
+    throw std::invalid_argument("Not a kernel version: " + suffixedVersion);
 }
 
 Kernel::Version Kernel::get_version(const std::string &version, const std::string &suffix) noexcept {
@@ -212,18 +216,18 @@ Kernel::Version Kernel::get_version(const std::string &version, const std::strin
     return resolved;
 }
 
-Kernel::Status Kernel::get_status() const {
-    Status status = NotInstalled;
+unsigned Kernel::get_status() const {
+    unsigned status = NotInstalled;
     const std::string version = get_version().get_string();
 
     if (std::filesystem::exists("/usr/lib/modules/" + version) || std::filesystem::exists("/lib/modules/" + version)) {
-        status = status | ModulesInstalled;
+        status |= ModulesInstalled;
     }
     if (!get_image().empty()) {
-        status = status | ImageInstalled;
+        status |= ImageInstalled;
     }
     if (!get_initramfs().empty()) {
-        status = status | InitramsInstalled;
+        status |= InitramsInstalled;
     }
 
     return status;
@@ -231,9 +235,10 @@ Kernel::Status Kernel::get_status() const {
 
 namespace {
 std::string modules_directory(const std::string &version) {
-    for (const std::string &directory : {std::string("/usr/lib/modules"), std::string("/lib/modules")}) {
-        if (std::filesystem::is_directory(directory + "/" + version)) {
-            return directory + "/" + version;
+    for (const char *directory : {"/usr/lib/modules", "/lib/modules"}) {
+        if (std::string candidate = std::format("{}/{}", directory, version);
+            std::filesystem::is_directory(candidate)) {
+            return candidate;
         }
     }
 
@@ -323,11 +328,11 @@ bool Kernel::is_signed() const {
         return false;
     }
 
-    const uint16_t magic = static_cast<uint16_t>(static_cast<unsigned char>(header[pe + 24]))
-                           | static_cast<uint16_t>(static_cast<unsigned char>(header[pe + 25])) << 8;
+    const auto magic = static_cast<uint16_t>(static_cast<unsigned>(static_cast<unsigned char>(header[pe + 24]))
+                                             | static_cast<unsigned>(static_cast<unsigned char>(header[pe + 25])) << 8);
 
     // The certificate table is the fifth data directory of the optional header.
-    const size_t directory = pe + 24 + (magic == 0x20b ? 112 : 96) + 4 * 8;
+    const size_t directory = pe + 24 + (magic == 0x20b ? 112 : 96) + (4 * 8);
 
     return directory + 8 <= sizeof(header) && read32(directory + 4) > 0;
 }
@@ -401,12 +406,11 @@ bool Kernel::is_built(const Version &version) {
 
 namespace {
 Toolchain toolchain_of(const std::string &line) {
-    if (line.find("clang") != std::string::npos || line.find("Clang") != std::string::npos) {
+    if (line.contains("clang") || line.contains("Clang")) {
         return Toolchain::Llvm;
     }
 
-    return line.find("gcc") != std::string::npos || line.find("GCC") != std::string::npos ? Toolchain::Gcc
-                                                                                          : Toolchain::Unknown;
+    return line.contains("gcc") || line.contains("GCC") ? Toolchain::Gcc : Toolchain::Unknown;
 }
 }
 
@@ -422,7 +426,7 @@ Toolchain Kernel::built_with(const Version &version) {
         std::string line;
 
         while (std::getline(compiled, line)) {
-            if (line.find("LINUX_COMPILER") == std::string::npos) {
+            if (!line.contains("LINUX_COMPILER")) {
                 continue;
             }
 
@@ -536,14 +540,14 @@ std::string Kernel::find_patch(const Version &version) {
     return {};
 }
 
-std::string Kernel::Version::get_string(const int options) const {
+std::string Kernel::Version::get_string(const unsigned options) const {
     std::string string = std::format("{}.{}", major, minor);
 
-    if (revision > 0 || options & INCLUDE_ZERO_REVISION) {
+    if (revision > 0 || (options & INCLUDE_ZERO_REVISION) != 0) {
         string += std::format(".{}", revision);
     }
 
-    if (options & INCLUDE_SUFFIX && !suffix.empty()) {
+    if ((options & INCLUDE_SUFFIX) != 0 && !suffix.empty()) {
         string += "-" + suffix;
     }
 

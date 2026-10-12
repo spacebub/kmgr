@@ -68,6 +68,11 @@ protected:
 public:
     virtual ~Task() = default;
 
+    Task(const Task &) = delete;
+    Task &operator=(const Task &) = delete;
+    Task(Task &&) = delete;
+    Task &operator=(Task &&) = delete;
+
     explicit Task(std::string name, std::unique_ptr<Progress> counter)
         : _name(std::move(name)), _progress(std::move(counter)) {}
 
@@ -75,7 +80,7 @@ public:
     virtual int position() = 0;
 
     virtual void cancel() {}
-    virtual void provide_input(const std::string &) {}
+    virtual void provide_input(const std::string & /*input*/) {}
 
     [[nodiscard]] virtual bool is_interactive() const { return false; }
 

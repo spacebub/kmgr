@@ -30,12 +30,14 @@ bool BuildTask::prepare() {
         return false;
     }
 
-    _steps.push_back(Step{.label = "Building with " + std::to_string(Make::jobs()) + " jobs",
-                          .command = Make::command({}, _compiler),
-                          .directory = source,
-                          .elevated = false,
-                          .optional = false,
-                          .undo = {}});
+    _steps.push_back(Step{
+            .label = "Building with " + std::to_string(Make::jobs()) + " jobs",
+            .command = Make::command({}, _compiler),
+            .directory = source,
+            .elevated = false,
+            .optional = false,
+            .undo = {},
+    });
 
     return true;
 }

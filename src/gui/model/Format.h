@@ -18,7 +18,7 @@
 namespace Format {
 inline std::string size(const std::uintmax_t bytes) {
     static constexpr const char *units[] = {"B", "KB", "MB", "GB"};
-    double value = static_cast<double>(bytes);
+    auto value = static_cast<double>(bytes);
     size_t unit = 0;
 
     while (value >= 1024.0 && unit + 1 < std::size(units)) {

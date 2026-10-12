@@ -23,10 +23,10 @@ struct Settings {
     std::string baseDirectory;
     std::string archiveDirectory;
     std::string elevationCommand;
-    int jobs;
-    bool colors;
+    int jobs = 0;
+    bool colors = true;
 
-    Toolchain compiler;
+    Toolchain compiler = Toolchain::Gcc;
 
     // customFlags runs inside elevated steps, trusted as far as elevationCommand is.
     std::string customToolchainName;

@@ -10,12 +10,13 @@
 #define KERNELMGR_PARSER_H
 
 
+#include <cstdint>
 #include <getopt.h>
 #include <iostream>
 #include <string>
 
 struct Arguments {
-    int flags;
+    unsigned flags = 0;
     std::string path;
     std::string patch;
     std::string kernel;
@@ -26,6 +27,8 @@ struct Arguments {
     std::string clean;
     std::string completion;  // The shell to print completions for.
     std::string completeFor; // The option whose values the shell wants.
+
+    [[nodiscard]] bool has(const unsigned flag) const { return (flags & flag) != 0; }
 };
 
 static void print_short_usage() {
@@ -193,7 +196,7 @@ static void print_usage() {
 }
 
 namespace Parser {
-enum Flags {
+enum Flags : unsigned {
     NONE = 0,
     VERSION = 1 << 0,
     PULL = 1 << 1,
@@ -215,9 +218,9 @@ enum Flags {
 };
 
 // Long only, so numbered past any letter.
-enum LongOnly {
+enum LongOnly : std::uint16_t {
     COMPLETION = 256,
-    COMPLETE_FOR = 257
+    COMPLETE_FOR = 257,
 };
 
 inline bool parse(const int argc, char *argv[], Arguments *arguments) {
@@ -259,12 +262,13 @@ inline bool parse(const int argc, char *argv[], Arguments *arguments) {
         { .name = "autoupdate", .has_arg = no_argument, .flag = nullptr, .val = 'a'},
         { .name = "force"     , .has_arg = no_argument, .flag = nullptr, .val = 'f'},
         { .name = "help"      , .has_arg = no_argument, .flag = nullptr, .val = 'h'},
-        { .name = nullptr     , .has_arg = no_argument, .flag = nullptr, .val = 0   }
+        { .name = nullptr     , .has_arg = no_argument, .flag = nullptr, .val = 0   },
     };
     // clang-format on
 
-    int opt;
+    int opt = 0;
 
+    // NOLINTNEXTLINE(concurrency-mt-unsafe): the arguments are read before any thread starts.
     while ((opt = getopt_long(argc, argv, "p:P:k:K:s:S:c:vLuil::dwrxgnafh", options, nullptr)) != -1) {
         switch (opt) {
             case 'p':
@@ -308,7 +312,7 @@ inline bool parse(const int argc, char *argv[], Arguments *arguments) {
                 break;
             case 'l':
                 arguments->flags |= CLEAN;
-                arguments->clean = optarg ? optarg : "all";
+                arguments->clean = optarg != nullptr ? optarg : "all";
                 break;
             case 'd':
                 arguments->flags |= DELETE;

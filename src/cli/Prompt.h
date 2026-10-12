@@ -36,7 +36,7 @@ inline std::string read_line(const bool secret) {
 
     if (hidden) {
         termios hiddenAttributes = original;
-        hiddenAttributes.c_lflag &= ~ECHO;
+        hiddenAttributes.c_lflag &= ~static_cast<tcflag_t>(ECHO);
         tcsetattr(STDIN_FILENO, TCSAFLUSH, &hiddenAttributes);
     }
 
@@ -106,19 +106,18 @@ inline std::string log_target(const Arguments &arguments) {
 // Only a clean asked for on its own is confirmed. Cleaning up after an
 // install or an autoupdate is part of that request.
 inline bool confirm_clean(const Arguments &arguments, const Options &options) {
-    if (!(arguments.flags & Parser::CLEAN)) {
+    if (!arguments.has(Parser::CLEAN)) {
         return true;
     }
 
     std::vector<std::string> going;
 
-    if (options.stages & (Options::CLEAN_INSTALLED | Options::CLEAN_SOURCE)) {
-        if (!options.kernel.empty() || !options.oldKernel.empty()) {
-            going.push_back(clean_target(options) + " and everything installed with it");
-        }
+    if (options.has(Options::CLEAN_INSTALLED | Options::CLEAN_SOURCE)
+        && (!options.kernel.empty() || !options.oldKernel.empty())) {
+        going.push_back(clean_target(options) + " and everything installed with it");
     }
 
-    if (options.stages & Options::CLEAN_ARCHIVE) {
+    if (options.has(Options::CLEAN_ARCHIVE)) {
         going.emplace_back(options.kernel.empty() ? "every kernel archive"
                                                   : KernelArchive(Kernel::get_version(options.kernel)).get_location());
     }

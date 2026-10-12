@@ -23,7 +23,7 @@ std::vector<std::string> resolve(const std::filesystem::path &directory, const s
     const std::filesystem::path parent = directory / std::filesystem::path(pattern).parent_path();
     const std::string name = std::filesystem::path(pattern).filename();
 
-    if (name.find('*') == std::string::npos && name.find('?') == std::string::npos) {
+    if (!name.contains('*') && !name.contains('?')) {
         if (std::filesystem::exists(parent / name)) {
             matches.push_back(parent / name);
         }
@@ -132,12 +132,14 @@ bool PatchTask::plan(const std::string &source) {
     }
 
     if (definition.ends_with(".sh")) {
-        _steps.push_back(Step{.label = "Running patch script " + definition,
-                              .command = "sh " + Shell::quote(definition),
-                              .directory = source,
-                              .elevated = false,
-                              .optional = false,
-                              .undo = {}});
+        _steps.push_back(Step{
+                .label = "Running patch script " + definition,
+                .command = "sh " + Shell::quote(definition),
+                .directory = source,
+                .elevated = false,
+                .optional = false,
+                .undo = {},
+        });
 
         _definition = definition;
 
@@ -159,12 +161,14 @@ bool PatchTask::plan(const std::string &source) {
     }
 
     for (const std::string &patch : patches) {
-        _steps.push_back(Step{.label = "Applying " + std::filesystem::path(patch).filename().string(),
-                              .command = "patch -p1 -N --batch -i " + Shell::quote(patch),
-                              .directory = source,
-                              .elevated = false,
-                              .optional = false,
-                              .undo = "patch -p1 -R -N --batch -i " + Shell::quote(patch)});
+        _steps.push_back(Step{
+                .label = "Applying " + std::filesystem::path(patch).filename().string(),
+                .command = "patch -p1 -N --batch -i " + Shell::quote(patch),
+                .directory = source,
+                .elevated = false,
+                .optional = false,
+                .undo = "patch -p1 -R -N --batch -i " + Shell::quote(patch),
+        });
     }
 
     _definition = definition;
@@ -204,12 +208,14 @@ bool PatchTask::plan_reverse(const std::string &source) {
     }
 
     for (const std::string &patch : std::ranges::reverse_view(patches)) {
-        _steps.push_back(Step{.label = "Taking back " + std::filesystem::path(patch).filename().string(),
-                              .command = "patch -p1 -R -N --batch -i " + Shell::quote(patch),
-                              .directory = source,
-                              .elevated = false,
-                              .optional = false,
-                              .undo = "patch -p1 -N --batch -i " + Shell::quote(patch)});
+        _steps.push_back(Step{
+                .label = "Taking back " + std::filesystem::path(patch).filename().string(),
+                .command = "patch -p1 -R -N --batch -i " + Shell::quote(patch),
+                .directory = source,
+                .elevated = false,
+                .optional = false,
+                .undo = "patch -p1 -N --batch -i " + Shell::quote(patch),
+        });
     }
 
     _definition = definition;

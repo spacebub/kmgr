@@ -10,6 +10,8 @@
 #define KERNELMGR_GUI_PAGES_HOMEPAGE_H
 
 
+#include <string_view>
+
 #include "gui/components/EmptyState.h"
 #include "gui/components/VersionList.h"
 #include "ttk/toolkit/controls/Button.h"
@@ -37,7 +39,7 @@ private:
         void paint(const ttk::Painter &painter) override;
     };
 
-    [[nodiscard]] std::string status() const;
+    [[nodiscard]] std::string_view status() const;
 
     Reach *_reach;
     int _catalogSeen = -1;

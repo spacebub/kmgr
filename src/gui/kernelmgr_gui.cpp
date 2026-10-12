@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
     try {
         Configuration::get();
     } catch (const std::exception &ex) {
-        // NOLINTNEXTLINE(cert-err33-c): the process is leaving either way.
+        // NOLINTNEXTLINE(cert-err33-c,modernize-use-std-print): the process is leaving either way.
         std::fprintf(stderr, "Could not read the configuration: %s\n", ex.what());
 
         return 1;
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
     shell.set_minimum_size(480, 380);
 
     if (!shell.start("KernelManager", 1120, 720)) {
-        // NOLINTNEXTLINE(cert-err33-c): the process is leaving either way.
+        // NOLINTNEXTLINE(cert-err33-c,modernize-use-std-print): the process is leaving either way.
         std::fprintf(stderr, "KernelManager found no window, no surface or no font to draw with.\n");
 
         return 1;
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
 
         application.run();
     } catch (const std::exception &ex) {
-        // NOLINTNEXTLINE(cert-err33-c): the process is leaving either way.
+        // NOLINTNEXTLINE(cert-err33-c,modernize-use-std-print): the process is leaving either way.
         std::fprintf(stderr, "KernelManager stopped: %s\n", ex.what());
 
         return 1;

@@ -16,12 +16,12 @@
 #include <vector>
 
 namespace Log {
-enum class Level {
+enum class Level : std::uint8_t {
     Info,
     Step,
     Output,
     Warning,
-    Error
+    Error,
 };
 
 using Sink = std::function<void(Level level, const std::string &message)>;
@@ -33,9 +33,9 @@ void close();
 void write(Level level, const std::string &message);
 
 // A build without a suffix shares its version's name, so the scope must be said.
-enum class Scope {
+enum class Scope : std::uint8_t {
     Family, // A version and every build of it.
-    Build   // One build directory only.
+    Build,  // One build directory only.
 };
 
 struct Filed {

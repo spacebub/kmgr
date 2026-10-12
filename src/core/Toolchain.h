@@ -10,17 +10,19 @@
 #define KERNELMGR_TOOLCHAIN_H
 
 
+#include <cstdint>
 #include <string>
+#include <string_view>
 
 // Unknown is not a toolchain but a build directory that does not say.
-enum class Toolchain {
+enum class Toolchain : std::uint8_t {
     Unknown,
     Gcc,
     Llvm,
-    Custom
+    Custom,
 };
 
-inline std::string toolchain_name(const Toolchain toolchain) {
+inline std::string_view toolchain_name(const Toolchain toolchain) {
     switch (toolchain) {
         case Toolchain::Gcc:
             return "gcc";

@@ -6,8 +6,10 @@
  * Authors:
  *	spacebub <spacebubs@proton.me>
  */
-#include "gui/app/Look.h"
+#include <string_view>
+
 #include "core/Configuration.h"
+#include "gui/app/Look.h"
 #include "ttk/draw/Theme.h"
 
 namespace {
@@ -93,7 +95,7 @@ ttk::Theme::Mode mode_of(const std::string &name) {
     return name == "dark" ? ttk::Theme::Mode::Dark : ttk::Theme::Mode::System;
 }
 
-std::string name_of(const ttk::Theme::Mode mode) {
+std::string_view name_of(const ttk::Theme::Mode mode) {
     if (mode == ttk::Theme::Mode::Light) {
         return "light";
     }
@@ -109,7 +111,7 @@ void install() {
 }
 
 std::string mode_name() {
-    return name_of(ttk::Theme::mode());
+    return std::string(name_of(ttk::Theme::mode()));
 }
 
 // A shade that cannot be saved only warns. It is not worth stopping the application over.

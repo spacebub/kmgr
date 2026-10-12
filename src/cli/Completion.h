@@ -53,7 +53,7 @@ inline std::vector<std::string> flags() {
         "-f", "--force",
         "-v", "--version",
         "-h", "--help",
-        "--completion"
+        "--completion",
     };
 }
 // clang-format on
@@ -61,19 +61,12 @@ inline std::vector<std::string> flags() {
 inline std::vector<std::string> kernels() {
     std::set<std::string> names;
 
-    try {
-        for (const KernelArchive &archive : KernelArchive::list_archives()) {
-            names.insert(archive.get_version().get_string());
-        }
-    } catch (const std::exception &) {
-        // Completion stays quiet on errors.
+    for (const KernelArchive &archive : KernelArchive::list_archives()) {
+        names.insert(archive.get_version().get_string());
     }
 
-    try {
-        for (const Kernel &kernel : Kernel::list_extracted()) {
-            names.insert(kernel.get_version().get_string(Kernel::Version::INCLUDE_ZERO_REVISION));
-        }
-    } catch (const std::exception &) {
+    for (const Kernel &kernel : Kernel::list_extracted()) {
+        names.insert(kernel.get_version().get_string(Kernel::Version::INCLUDE_ZERO_REVISION));
     }
 
     return {names.begin(), names.end()};
@@ -82,11 +75,8 @@ inline std::vector<std::string> kernels() {
 inline std::vector<std::string> installed() {
     std::set<std::string> names;
 
-    try {
-        for (const Kernel &kernel : Kernel::list_installed()) {
-            names.insert(kernel.get_version().get_string());
-        }
-    } catch (const std::exception &) {
+    for (const Kernel &kernel : Kernel::list_installed()) {
+        names.insert(kernel.get_version().get_string());
     }
 
     return {names.begin(), names.end()};
@@ -95,13 +85,10 @@ inline std::vector<std::string> installed() {
 inline std::vector<std::string> suffixes() {
     std::set<std::string> found;
 
-    try {
-        for (const Kernel &kernel : Kernel::list_extracted()) {
-            if (const std::string suffix = kernel.get_version().suffix; !suffix.empty()) {
-                found.insert(suffix);
-            }
+    for (const Kernel &kernel : Kernel::list_extracted()) {
+        if (const std::string suffix = kernel.get_version().suffix; !suffix.empty()) {
+            found.insert(suffix);
         }
-    } catch (const std::exception &) {
     }
 
     return {found.begin(), found.end()};

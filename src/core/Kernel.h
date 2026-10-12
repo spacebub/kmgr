@@ -12,6 +12,7 @@
 
 #include <compare>
 #include <functional>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -20,33 +21,26 @@
 
 class Kernel {
 public:
-    enum Status {
+    // Combined with | and tested with &, so a status travels as an unsigned.
+    enum Status : unsigned {
         NotInstalled = 0,
         ModulesInstalled = 1 << 0,
         ImageInstalled = 1 << 1,
-        InitramsInstalled = 1 << 2
+        InitramsInstalled = 1 << 2,
     };
 
-    friend Status operator|(const Status a, const Status b) {
-        return static_cast<Status>(static_cast<int>(a) | static_cast<int>(b));
-    }
-
-    friend Status operator&(const Status a, const Status b) {
-        return static_cast<Status>(static_cast<int>(a) & static_cast<int>(b));
-    }
-
     struct Version {
-        static constexpr int NO_OPTIONS = 0;
-        static constexpr int INCLUDE_ZERO_REVISION = 1 << 0;
-        static constexpr int INCLUDE_SUFFIX = 1 << 1;
-        static constexpr int DEFAULT = INCLUDE_ZERO_REVISION | INCLUDE_SUFFIX;
+        static constexpr unsigned NO_OPTIONS = 0;
+        static constexpr unsigned INCLUDE_ZERO_REVISION = 1 << 0;
+        static constexpr unsigned INCLUDE_SUFFIX = 1 << 1;
+        static constexpr unsigned DEFAULT = INCLUDE_ZERO_REVISION | INCLUDE_SUFFIX;
 
         std::string suffix{};
-        ushort major;
-        ushort minor;
-        ushort revision;
+        ushort major = 0;
+        ushort minor = 0;
+        ushort revision = 0;
 
-        [[nodiscard]] std::string get_string(int options = DEFAULT) const;
+        [[nodiscard]] std::string get_string(unsigned options = DEFAULT) const;
 
         friend std::strong_ordering operator<=>(const Version &a, const Version &b) {
             return std::tie(a.major, a.minor, a.revision) <=> std::tie(b.major, b.minor, b.revision);
@@ -60,6 +54,7 @@ private:
 
 public:
     explicit Kernel(const std::string &suffixedVersion);
+    explicit Kernel(Version version) : _version(std::move(version)) {}
 
     static Kernel get_current();
 
@@ -73,10 +68,13 @@ public:
     // major.minor, an optional .revision and an optional -suffix. Anything else throws.
     static Version get_version(const std::string &suffixedVersion);
 
+    // The same, handing back nothing rather than throwing, for names that may be anything.
+    static std::optional<Version> parse(const std::string &suffixedVersion);
+
     // Returns a zero version rather than throwing: callers ask about directories already on disk.
     static Version get_version(const std::string &version, const std::string &suffix) noexcept;
 
-    [[nodiscard]] Status get_status() const;
+    [[nodiscard]] unsigned get_status() const;
     [[nodiscard]] std::string get_source_directory() const;
 
     [[nodiscard]] std::string get_image() const;

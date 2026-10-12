@@ -22,7 +22,7 @@ int SettingsBridge::detected_jobs() {
     return Make::jobs();
 }
 
-std::string SettingsBridge::aocc_preset() {
+std::string_view SettingsBridge::aocc_preset() {
     return R"(LLVM=/path/to/aocc/bin/ KCFLAGS="-march=native -mtune=native" )"
            R"(HOSTCFLAGS="-march=native -mtune=native")";
 }
@@ -111,20 +111,22 @@ bool SettingsBridge::save() {
         }
     }
 
-    const Settings settings{.bootDirectory = bootDirectory,
-                            .grubDirectory = grubDirectory,
-                            .archiveFormat = ttk::Text::trim(archiveFormat),
-                            .kernelCdn = ttk::Text::trim(kernelCdn),
-                            .baseDirectory = baseDirectory,
-                            .archiveDirectory = archiveDirectory,
-                            .elevationCommand = ttk::Text::trim(elevationCommand),
-                            .jobs = jobs,
-                            .colors = Configuration::get()->colors,
-                            .compiler = toolchain_from(compiler),
-                            .customToolchainName = ttk::Text::trim(customToolchainName),
-                            .customFlags = ttk::Text::trim(customFlags),
-                            .theme = Configuration::get()->theme,
-                            .notifications = notifications};
+    const Settings settings{
+            .bootDirectory = bootDirectory,
+            .grubDirectory = grubDirectory,
+            .archiveFormat = ttk::Text::trim(archiveFormat),
+            .kernelCdn = ttk::Text::trim(kernelCdn),
+            .baseDirectory = baseDirectory,
+            .archiveDirectory = archiveDirectory,
+            .elevationCommand = ttk::Text::trim(elevationCommand),
+            .jobs = jobs,
+            .colors = Configuration::get()->colors,
+            .compiler = toolchain_from(compiler),
+            .customToolchainName = ttk::Text::trim(customToolchainName),
+            .customFlags = ttk::Text::trim(customFlags),
+            .theme = Configuration::get()->theme,
+            .notifications = notifications,
+    };
 
     Configuration::set(settings);
 

@@ -19,7 +19,7 @@
 #include "ttk/toolkit/layout/Spacer.h"
 
 namespace {
-using Palette = ttk::Theme::Palette;
+using ttk::Theme::Palette;
 
 constexpr double GAP = 14.0;
 constexpr double LIST_WIDTH = 322.0;
@@ -556,10 +556,12 @@ void KernelsPage::sync_list() {
     std::vector<VersionList::Row> rows;
 
     for (const Catalog::Entry &entry : _reach->catalog.entries()) {
-        rows.push_back(VersionList::Row{.version = entry.name,
-                                        .summary = entry.summary(),
-                                        .running = entry.running,
-                                        .installed = static_cast<int>(entry.installed.size())});
+        rows.push_back(VersionList::Row{
+                .version = entry.name,
+                .summary = entry.summary(),
+                .running = entry.running,
+                .installed = static_cast<int>(entry.installed.size()),
+        });
     }
 
     _list->set_rows(std::move(rows));
@@ -689,10 +691,8 @@ void KernelsPage::sync_installed(const Catalog::Entry &shown) {
         _installed->clear();
 
         for (const Catalog::Build &kernel : shown.installed) {
-            const Catalog::Build copy = kernel;
-
-            _installedCards.push_back(
-                    _installed->append(std::make_unique<InstalledCard>(kernel, [this, copy](const std::string &action) {
+            _installedCards.push_back(_installed->append(
+                    std::make_unique<InstalledCard>(kernel, [this, copy = kernel](const std::string &action) {
                         const Catalog::Entry *held = entry();
 
                         if (action == "download") {

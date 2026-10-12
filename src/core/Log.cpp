@@ -12,6 +12,7 @@
 #include <format>
 #include <fstream>
 #include <mutex>
+#include <optional>
 #include <vector>
 
 #include "Configuration.h"
@@ -19,7 +20,7 @@
 
 namespace {
 std::mutex s_mutex;
-std::ofstream s_file;
+std::optional<std::ofstream> s_file;
 std::string s_path;
 Log::Sink s_sink;
 
@@ -40,11 +41,9 @@ std::string decorate(const Log::Level level, const std::string &message) {
 }
 
 std::string Log::open(const std::string &kernel, const std::string &operation) {
-    std::lock_guard lock(s_mutex);
+    const std::scoped_lock lock(s_mutex);
 
-    if (s_file.is_open()) {
-        s_file.close();
-    }
+    s_file.reset();
 
     std::filesystem::path directory = Log::directory();
 
@@ -67,21 +66,19 @@ std::string Log::open(const std::string &kernel, const std::string &operation) {
                          directory.string(),
                          std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now()));
 
-    s_file.open(s_path, std::ios::out | std::ios::trunc);
+    s_file.emplace(s_path, std::ios::out | std::ios::trunc);
 
     return s_path;
 }
 
 void Log::close() {
-    std::lock_guard lock(s_mutex);
+    const std::scoped_lock lock(s_mutex);
 
-    if (s_file.is_open()) {
-        s_file.close();
-    }
+    s_file.reset();
 }
 
 std::string Log::path() {
-    std::lock_guard lock(s_mutex);
+    const std::scoped_lock lock(s_mutex);
 
     return s_path;
 }
@@ -112,11 +109,11 @@ std::vector<std::filesystem::path> targets(const std::string &kernel, const Log:
 
 // Close any log a run is writing, so the file is not pulled out from under it.
 void release_under(const std::vector<std::filesystem::path> &going) {
-    std::lock_guard lock(s_mutex);
+    const std::scoped_lock lock(s_mutex);
 
     for (const std::filesystem::path &target : going) {
-        if (s_file.is_open() && (s_path == target.string() || s_path.starts_with(target.string() + "/"))) {
-            s_file.close();
+        if (s_file && (s_path == target.string() || s_path.starts_with(target.string() + "/"))) {
+            s_file.reset();
             s_path.clear();
 
             return;
@@ -216,9 +213,11 @@ std::vector<Log::Holding> Log::holdings() {
             continue;
         }
 
-        found.push_back(Holding{.name = it->path().filename().string(),
-                                .size = weigh_directory(it->path()),
-                                .runs = count_runs(it->path())});
+        found.push_back(Holding{
+                .name = it->path().filename().string(),
+                .size = weigh_directory(it->path()),
+                .runs = count_runs(it->path()),
+        });
     }
 
     std::ranges::sort(found, [](const Holding &a, const Holding &b) {
@@ -239,9 +238,11 @@ std::vector<Log::Filed> Log::filed(const std::string &build) {
         std::error_code inner;
 
         if (it->is_directory(inner)) {
-            steps.push_back(Filed{.operation = it->path().filename().string(),
-                                  .size = weigh_directory(it->path()),
-                                  .runs = count_files(it->path())});
+            steps.push_back(Filed{
+                    .operation = it->path().filename().string(),
+                    .size = weigh_directory(it->path()),
+                    .runs = count_files(it->path()),
+            });
         } else if (it->is_regular_file(inner)) {
             whole.size += it->file_size(inner);
             whole.runs++;
@@ -303,11 +304,11 @@ void Log::write(const Level level, const std::string &message) {
     Sink sink;
 
     {
-        std::lock_guard lock(s_mutex);
+        const std::scoped_lock lock(s_mutex);
 
-        if (s_file.is_open()) {
-            s_file << decorate(level, message);
-            s_file.flush();
+        if (s_file) {
+            *s_file << decorate(level, message);
+            s_file->flush();
         }
 
         sink = s_sink;
