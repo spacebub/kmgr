@@ -11,6 +11,7 @@
 
 
 #include <cctype>
+#include <cerrno>
 #include <cstdint>
 #include <string>
 #include <termios.h>
@@ -27,6 +28,8 @@
 #include "core/workflow/WorkflowFactory.h"
 
 namespace Prompt {
+// Read straight off the descriptor, so a password never sits in a stream buffer the
+// caller cannot wipe. The caller wipes what comes back once it is handed on.
 inline std::string read_line(const bool secret) {
     termios original{};
     const bool hidden = secret && tcgetattr(STDIN_FILENO, &original) == 0;
@@ -38,7 +41,23 @@ inline std::string read_line(const bool secret) {
     }
 
     std::string line;
-    std::getline(std::cin, line);
+    char character = 0;
+
+    for (;;) {
+        const ssize_t count = read(STDIN_FILENO, &character, 1);
+
+        if (count < 0 && errno == EINTR) {
+            continue;
+        }
+
+        if (count <= 0 || character == '\n') {
+            break;
+        }
+
+        line += character;
+    }
+
+    character = 0;
 
     if (hidden) {
         tcsetattr(STDIN_FILENO, TCSAFLUSH, &original);

@@ -37,6 +37,7 @@ bool ProcessTask::run() {
         report("Canceled.");
     }
 
+    _awaitingSecret = false;
     _progress->end(!success);
 
     if (success && _on_complete) {
@@ -65,10 +66,15 @@ void ProcessTask::provide_input(const std::string &input) {
         Elevation::remember(input);
     }
 
-    std::lock_guard lock(_processMutex);
+    std::shared_ptr<Process> process;
 
-    if (_process) {
-        _process->write(input);
+    {
+        std::lock_guard lock(_processMutex);
+        process = _process;
+    }
+
+    if (process) {
+        process->write(input);
     }
 }
 
@@ -91,25 +97,26 @@ bool ProcessTask::execute(const Step &step) {
         }
     });
 
-    // A known password is offered once. A second prompt means it was wrong, so it is
-    // dropped and the question goes through.
-    auto offered = std::make_shared<std::atomic<bool>>(false);
+    // The password is only ever offered to the elevation command, and only once. A second
+    // ask means the last answer was wrong, whoever gave it, so it is dropped and the
+    // question goes through. What the command itself asks is never answered for it.
+    auto answered = std::make_shared<std::atomic<bool>>(false);
 
     // The process owns this callback, so a shared pointer here would be a cycle that never frees.
-    process->on_prompt([this, raw = process.get(), offered](const Process::Prompt &prompt) {
-        if (prompt.secret) {
-            if (!offered->exchange(true)) {
-                if (const std::optional<std::string> secret = Elevation::recall()) {
-                    raw->write(*secret);
+    process->on_prompt([this, raw = process.get(), answered](const Process::Prompt &prompt) {
+        bool remember = false;
 
-                    return;
-                }
-            } else {
+        if (prompt.elevating && prompt.secret) {
+            if (answered->exchange(true)) {
                 Elevation::forget();
+            } else if (Elevation::feed([raw](const std::string_view secret) { raw->write(secret); })) {
+                return;
             }
+
+            remember = true;
         }
 
-        _awaitingSecret = prompt.secret;
+        _awaitingSecret = remember;
 
         if (_on_input_required) {
             _on_input_required(InputRequest{.prompt = prompt.text, .secret = prompt.secret});
@@ -133,6 +140,7 @@ bool ProcessTask::execute(const Step &step) {
         _process = nullptr;
     }
 
+    _awaitingSecret = false;
     step_finished(status == 0);
 
     if (status == 0) {

@@ -361,7 +361,15 @@ void WorkflowSheet::escape() {
 }
 
 void WorkflowSheet::send() {
+    const bool secret = _reach->workflow.prompt_secret();
+
     _reach->workflow.provide_input(_answer->text());
+
+    // The field keeps its buffer, so a password is written over before it is let go of.
+    if (secret) {
+        _answer->set_text(std::string(_answer->text().size(), '*'));
+    }
+
     _answer->set_text("");
 }
 

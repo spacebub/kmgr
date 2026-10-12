@@ -11,38 +11,46 @@
 
 
 #include <atomic>
-#include <chrono>
 #include <functional>
 #include <mutex>
 #include <string>
-#include <vector>
+#include <string_view>
 
 // A pty gives the child a controlling terminal, which make, kconfig and sudo need to prompt.
 class Process {
 public:
     struct Prompt {
         std::string text;
+        // The child turned echo off to read, so it is asking for something to keep quiet.
         bool secret;
+        // The elevation command is still the one asking, nothing of ours has started yet.
+        bool elevating;
     };
 
 private:
     std::string _command;
     std::string _workingDirectory;
-    std::vector<std::string> _environment;
+    bool _elevated = false;
 
     std::atomic<pid_t> _pid = -1;
     std::atomic<int> _master = -1;
     std::atomic<bool> _canceled = false;
     std::mutex _writeMutex;
 
+    // Guards the line being read and what has been made of it.
+    std::mutex _mutex;
     std::string _line;
+    std::string _escape;
     bool _prompted = false;
+    bool _elevating = false;
 
     std::function<void(const std::string &data)> _onOutput = nullptr;
     std::function<void(const Prompt &prompt)> _onPrompt = nullptr;
 
+    std::string sanitize(const char *data, size_t size);
     void consume(const char *data, size_t size);
     void check_prompt();
+    [[nodiscard]] bool reading_quietly() const;
 
 public:
     static constexpr int CANCELED = -1;
@@ -50,7 +58,6 @@ public:
     explicit Process(std::string command);
 
     Process &with_directory(const std::string &directory);
-    Process &with_environment(const std::string &variable, const std::string &value);
     Process &elevated();
 
     void on_output(const std::function<void(const std::string &data)> &callback);
@@ -60,7 +67,7 @@ public:
     [[nodiscard]] bool is_running() const;
 
     int run();
-    void write(const std::string &input);
+    void write(std::string_view input);
     void cancel();
 };
 

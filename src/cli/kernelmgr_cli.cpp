@@ -19,6 +19,7 @@
 #include "Reporter.h"
 #include "Stages.h"
 #include "core/Configuration.h"
+#include "core/Elevation.h"
 #include "core/Log.h"
 #include "core/workflow/WorkflowFactory.h"
 
@@ -202,8 +203,12 @@ int execute(const Arguments &arguments, const Options &options) {
     workflow->on_progress([](const ProgressArgs &args) { console().progress(args); });
 
     console().line(workflow->get_name());
-    workflow->on_input_required(
-            [&workflow](const InputRequest &request) { workflow->provide_input(Prompt::read_line(request.secret)); });
+    workflow->on_input_required([&workflow](const InputRequest &request) {
+        std::string answer = Prompt::read_line(request.secret);
+
+        workflow->provide_input(answer);
+        Elevation::wipe(answer);
+    });
 
     std::signal(SIGINT, signal_handler);
     std::signal(SIGTERM, signal_handler);
@@ -226,6 +231,7 @@ int execute(const Arguments &arguments, const Options &options) {
 
     running = false;
     poller.join();
+    Elevation::forget();
 
     console().finish(success);
     console().line(success ? "Done." : "Failed.");
