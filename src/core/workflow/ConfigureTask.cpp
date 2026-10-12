@@ -9,6 +9,7 @@
 #include "ConfigureTask.h"
 #include "core/Configuration.h"
 #include "core/Make.h"
+#include "core/Shell.h"
 #include <filesystem>
 #include <utility>
 
@@ -50,14 +51,16 @@ bool ConfigureTask::prepare() {
                               .command = Make::command("defconfig", _compiler, false),
                               .directory = source,
                               .elevated = false,
-                              .optional = false});
+                              .optional = false,
+                              .undo = {}});
     } else if (!config.empty()) {
         _steps.push_back(Step{.label = "Using configuration " + config,
-                              .command = config.ends_with(".gz") ? "zcat '" + config + "' > .config"
-                                                                 : "cp -v '" + config + "' .config",
+                              .command = config.ends_with(".gz") ? "zcat " + Shell::quote(config) + " > .config"
+                                                                 : "cp -v " + Shell::quote(config) + " .config",
                               .directory = source,
                               .elevated = false,
-                              .optional = false});
+                              .optional = false,
+                              .undo = present ? std::string{} : "rm -f .config"});
     } else {
         report("Reusing the configuration already present in the build directory.");
     }
@@ -65,7 +68,7 @@ bool ConfigureTask::prepare() {
     std::string tweaks = "./scripts/config --file .config --disable LOCALVERSION_AUTO";
 
     if (!_version.suffix.empty()) {
-        tweaks += " --set-str LOCALVERSION '-" + _version.suffix + "'";
+        tweaks += " --set-str LOCALVERSION " + Shell::quote("-" + _version.suffix);
     } else {
         tweaks += " --set-str LOCALVERSION ''";
     }
@@ -77,13 +80,15 @@ bool ConfigureTask::prepare() {
                           .command = tweaks,
                           .directory = source,
                           .elevated = false,
-                          .optional = false});
+                          .optional = false,
+                          .undo = {}});
 
     _steps.push_back(Step{.label = "Resolving new configuration symbols",
                           .command = Make::command("oldconfig", _compiler, false),
                           .directory = source,
                           .elevated = false,
-                          .optional = false});
+                          .optional = false,
+                          .undo = {}});
 
     return true;
 }

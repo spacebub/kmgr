@@ -31,6 +31,8 @@ public:
     [[nodiscard]] std::string current() const;
     [[nodiscard]] std::string suffix() const;
     [[nodiscard]] std::string release() const;
+    // The package the running kernel came from, or empty when it was built here.
+    [[nodiscard]] const std::string &package() const { return _package; }
     [[nodiscard]] const std::string &compiler() const { return _compiler; }
     [[nodiscard]] bool secure_boot() const { return _secureBoot; }
     [[nodiscard]] bool image_installed() const { return _imageInstalled; }
@@ -54,6 +56,7 @@ private:
     Kernel::Version _current{};
     Kernel::Version _latest{};
     std::string _compiler;
+    std::string _package;
     bool _secureBoot = false;
     bool _imageInstalled = false;
     bool _imageSigned = false;

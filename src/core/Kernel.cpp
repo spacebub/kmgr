@@ -16,9 +16,11 @@
 #include <stdexcept>
 #include <sys/utsname.h>
 
+#include "Command.h"
 #include "Configuration.h"
 #include "Download.h"
 #include "Kernel.h"
+#include "Shell.h"
 
 constexpr auto RELEASES_ENDPOINT = "https://kernel.org/releases.json";
 
@@ -328,6 +330,41 @@ bool Kernel::is_signed() const {
     const size_t directory = pe + 24 + (magic == 0x20b ? 112 : 96) + 4 * 8;
 
     return directory + 8 <= sizeof(header) && read32(directory + 4) > 0;
+}
+
+std::string Kernel::packaged_by() const {
+    const std::string version = get_version().get_string();
+
+    if (const std::string package = package_of(version); !package.empty()) {
+        return package;
+    }
+
+    const std::string directory = modules_directory(version);
+
+    if (directory.empty()) {
+        return {};
+    }
+
+    const std::string quoted = Shell::quote(directory);
+
+    if (Command::exists("pacman")) {
+        return Command("pacman -Qqo " + quoted + " 2>/dev/null").capture();
+    }
+
+    if (Command::exists("dpkg")) {
+        const std::string owner = Command("dpkg -S " + quoted + " 2>/dev/null").capture();
+
+        return owner.substr(0, owner.find_first_of(":\n"));
+    }
+
+    if (Command::exists("rpm")) {
+        int status = 0;
+        const std::string owner = Command("rpm -qf " + quoted + " 2>/dev/null").capture(&status);
+
+        return status == 0 ? owner.substr(0, owner.find('\n')) : std::string{};
+    }
+
+    return {};
 }
 
 std::string Kernel::get_source_directory() const {

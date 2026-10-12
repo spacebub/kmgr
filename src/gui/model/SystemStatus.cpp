@@ -27,6 +27,7 @@ void SystemStatus::refresh() {
 
     _current = current.get_version();
     _compiler = compiler == Toolchain::Llvm ? "LLVM" : "GCC";
+    _package = current.packaged_by();
     _secureBoot = sbctl == Present;
     _imageInstalled = !current.get_image().empty();
     _imageSigned = current.is_signed();

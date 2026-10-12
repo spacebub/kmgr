@@ -119,7 +119,7 @@ bool Workflow::run() {
         if (!task->run()) {
             success = false;
 
-            if (!_force || _canceled) {
+            if (!_force || _canceled || task->is_critical()) {
                 break;
             }
         }

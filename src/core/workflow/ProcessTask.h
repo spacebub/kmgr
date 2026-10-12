@@ -24,6 +24,8 @@ public:
         std::string directory;
         bool elevated = false;
         bool optional = false;
+        // Run, newest first, when the task fails or is canceled, so nothing is left half done.
+        std::string undo;
     };
 
 protected:
@@ -37,7 +39,17 @@ protected:
 
     virtual bool prepare() { return true; }
 
-    bool execute(const Step &step);
+private:
+    enum class Outcome {
+        Done,
+        Skipped,
+        Failed,
+        Canceled
+    };
+
+    int launch(const std::string &command, const std::string &directory, bool elevated, bool evenIfCanceled);
+    Outcome execute(const Step &step);
+    void roll_back(const std::vector<const Step *> &attempted);
 
 public:
     ProcessTask(std::string name, int position);

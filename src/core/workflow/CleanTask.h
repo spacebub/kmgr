@@ -30,6 +30,9 @@ protected:
     bool prepare() override;
 
 public:
+    [[nodiscard]] bool is_critical() const override { return true; }
+
+public:
     CleanTask(Kernel::Version version, int mode);
 };
 

@@ -132,7 +132,12 @@ Workflow *WorkflowFactory::create(const Options &options) {
     }
 
     if (options.stages & Options::INSTALL) {
-        workflow->queue(new InstallTask(version, compiler));
+        const Kernel::Version replaced =
+                options.oldKernel.empty()
+                        ? Kernel::Version{}
+                        : resolve(options.oldKernel, options.oldSuffix.empty() ? options.suffix : options.oldSuffix);
+
+        workflow->queue(new InstallTask(version, compiler, replaced));
     }
 
     if (options.stages & Options::SIGN) {
@@ -166,27 +171,34 @@ Workflow *WorkflowFactory::create(const Options &options) {
     return workflow;
 }
 
+// A kernel the package manager installed is its to keep and update, so the new one goes in
+// beside it under no suffix, and nothing of it is removed. One this built is replaced.
 Options WorkflowFactory::autoupdate() {
-    const Kernel::Version current = Kernel::get_current().get_version();
+    const Kernel running = Kernel::get_current();
+    const Kernel::Version current = running.get_version();
     const Kernel::Version latest = Kernel::get_latest().get_version();
 
     if (latest <= current) {
         throw std::runtime_error("No newer kernel available, " + current.get_string() + " is already up to date.");
     }
 
-    const auto [running, sbctlStatus] = SystemInfo::get();
+    const auto [compiler, sbctlStatus] = SystemInfo::get();
 
     Options options;
     options.kernel = latest.get_string(Kernel::Version::INCLUDE_ZERO_REVISION);
-    options.suffix = current.suffix;
-    options.oldKernel = current.get_string(Kernel::Version::INCLUDE_ZERO_REVISION);
-    options.oldSuffix = current.suffix;
-    options.stages = Options::FULL | Options::CLEAN_INSTALLED | Options::CLEAN_SOURCE;
+    options.stages = Options::FULL;
+
+    if (running.packaged_by().empty()) {
+        options.suffix = current.suffix;
+        options.oldKernel = current.get_string(Kernel::Version::INCLUDE_ZERO_REVISION);
+        options.oldSuffix = current.suffix;
+        options.stages |= Options::CLEAN_INSTALLED | Options::CLEAN_SOURCE;
+    }
 
     // The running kernel's banner cannot say "custom", so the setting decides first.
     if (Configuration::get()->compiler == Toolchain::Custom) {
         options.stages |= Options::CUSTOM;
-    } else if (running == Toolchain::Llvm) {
+    } else if (compiler == Toolchain::Llvm) {
         options.stages |= Options::CLANG;
     }
 

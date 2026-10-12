@@ -83,6 +83,9 @@ public:
     [[nodiscard]] std::string get_initramfs() const;
     [[nodiscard]] bool is_signed() const;
 
+    // The package that put the installed kernel there, or empty when it is nobody's.
+    [[nodiscard]] std::string packaged_by() const;
+
     [[nodiscard]] bool is_configured() const;
     [[nodiscard]] bool is_built() const;
     [[nodiscard]] bool is_patched() const;

@@ -34,7 +34,8 @@ bool BuildTask::prepare() {
                           .command = Make::command({}, _compiler),
                           .directory = source,
                           .elevated = false,
-                          .optional = false});
+                          .optional = false,
+                          .undo = {}});
 
     return true;
 }

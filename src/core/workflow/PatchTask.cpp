@@ -8,6 +8,7 @@
  */
 #include "PatchTask.h"
 #include "core/Configuration.h"
+#include "core/Shell.h"
 #include <algorithm>
 #include <filesystem>
 #include <fnmatch.h>
@@ -132,10 +133,11 @@ bool PatchTask::plan(const std::string &source) {
 
     if (definition.ends_with(".sh")) {
         _steps.push_back(Step{.label = "Running patch script " + definition,
-                              .command = "sh " + definition,
+                              .command = "sh " + Shell::quote(definition),
                               .directory = source,
                               .elevated = false,
-                              .optional = false});
+                              .optional = false,
+                              .undo = {}});
 
         _definition = definition;
 
@@ -158,10 +160,11 @@ bool PatchTask::plan(const std::string &source) {
 
     for (const std::string &patch : patches) {
         _steps.push_back(Step{.label = "Applying " + std::filesystem::path(patch).filename().string(),
-                              .command = "patch -p1 -N --batch -i '" + patch + "'",
+                              .command = "patch -p1 -N --batch -i " + Shell::quote(patch),
                               .directory = source,
                               .elevated = false,
-                              .optional = false});
+                              .optional = false,
+                              .undo = "patch -p1 -R -N --batch -i " + Shell::quote(patch)});
     }
 
     _definition = definition;
@@ -202,10 +205,11 @@ bool PatchTask::plan_reverse(const std::string &source) {
 
     for (const std::string &patch : std::ranges::reverse_view(patches)) {
         _steps.push_back(Step{.label = "Taking back " + std::filesystem::path(patch).filename().string(),
-                              .command = "patch -p1 -R -N --batch -i '" + patch + "'",
+                              .command = "patch -p1 -R -N --batch -i " + Shell::quote(patch),
                               .directory = source,
                               .elevated = false,
-                              .optional = false});
+                              .optional = false,
+                              .undo = "patch -p1 -N --batch -i " + Shell::quote(patch)});
     }
 
     _definition = definition;
@@ -225,8 +229,8 @@ bool PatchTask::prepare() {
     return _direction == Reverse ? plan_reverse(source) : plan(source);
 }
 
-// The mark changes only once every patch is in or out, so a run that stops part
-// way through leaves it as it found it.
+// The mark changes only once every patch is in or out. A run that stops part way
+// through takes back what it did and leaves the mark as it found it.
 bool PatchTask::run() {
     if (!ProcessTask::run()) {
         return false;

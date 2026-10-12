@@ -77,10 +77,16 @@ HomePage::HomePage(Reach *reach) : Box(Flow::Column), _reach(reach) {
     _update = news->append(std::make_unique<ttk::Button>("Update", [this] {
         const SystemStatus &system = _reach->system;
 
+        // A packaged kernel is kept and the new one built beside it, as the factory decides.
+        const bool packaged = !system.package().empty();
+        const std::string name = system.latest() + (system.suffix().empty() || packaged ? "" : "-" + system.suffix());
+        const std::string then =
+                packaged ? " is downloaded, built and installed alongside " + system.release() + ", which "
+                                   + system.package() + " installed and keeps."
+                         : " is downloaded, built and installed, then " + system.release() + " is removed.";
+
         _reach->ask("Update to " + system.latest() + "?",
-                    system.latest() + (system.suffix().empty() ? "" : "-" + system.suffix())
-                            + " is downloaded, built and installed, then " + system.release()
-                            + " is removed. Steps that touch /boot and /usr/lib ask for your password.",
+                    name + then + " Steps that touch /boot and /usr/lib ask for your password.",
                     "Start the update",
                     false,
                     [this] { _reach->workflow.update(); });

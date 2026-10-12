@@ -22,6 +22,9 @@ protected:
     bool prepare() override;
 
 public:
+    [[nodiscard]] bool is_critical() const override { return true; }
+
+public:
     explicit BuildTask(Kernel::Version version, Toolchain compiler = Toolchain::Gcc);
 };
 

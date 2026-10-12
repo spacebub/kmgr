@@ -79,6 +79,9 @@ public:
 
     [[nodiscard]] virtual bool is_interactive() const { return false; }
 
+    // A failure here stops the run whatever was asked, since what follows would act on it.
+    [[nodiscard]] virtual bool is_critical() const { return false; }
+
     std::string get_name() { return _name; }
 
     [[nodiscard]] Progress *counter() const { return _progress.get(); }

@@ -9,7 +9,9 @@
 #include "CleanTask.h"
 #include "core/Command.h"
 #include "core/Configuration.h"
+#include "core/Dkms.h"
 #include "core/KernelArchive.h"
+#include "core/Shell.h"
 #include <filesystem>
 #include <utility>
 
@@ -30,76 +32,74 @@ bool CleanTask::prepare() {
             return false;
         }
 
-        if (Command::exists("dkms")) {
+        const Kernel kernel(version);
+
+        // Files a package manager put there are its to take away, or its records go wrong.
+        if (const std::string package = kernel.packaged_by(); !package.empty()) {
+            fail(version + " was installed by the package " + package
+                 + ", so it is for the package manager to remove.");
+
+            return false;
+        }
+
+        if (Dkms::available()) {
             _steps.push_back(Step{.label = "Removing dkms modules built for " + version,
-                                  .command = "dkms status -k '" + version
-                                             + "' | while IFS= read -r entry; do "
-                                               "module=$(printf '%s' \"$entry\" | cut -d',' -f1); "
-                                               "[ -n \"$module\" ] && dkms remove \"$module\" -k '"
-                                             + version
-                                             + "'; "
-                                               "done; rm -rfv /var/lib/dkms/*/kernel-"
-                                             + version + "-*",
+                                  .command = Dkms::removal(version),
                                   .directory = settings->baseDirectory,
                                   .elevated = true,
-                                  .optional = true});
+                                  .optional = true,
+                                  .undo = {}});
         }
 
         _steps.push_back(Step{.label = "Removing modules",
-                              .command = "rm -rfv '/usr/lib/modules/" + version + "' '/lib/modules/" + version + "'",
+                              .command = "rm -rfv " + Shell::quote("/usr/lib/modules/" + version) + " "
+                                         + Shell::quote("/lib/modules/" + version),
                               .directory = settings->baseDirectory,
                               .elevated = true,
-                              .optional = false});
+                              .optional = false,
+                              .undo = {}});
 
         if (Command::exists("sbctl")) {
             _steps.push_back(Step{.label = "Removing image signature",
-                                  .command = "sbctl remove-file '" + boot + "/vmlinuz-" + version + "'",
+                                  .command = "sbctl remove-file " + Shell::quote(boot + "/vmlinuz-" + version),
                                   .directory = settings->baseDirectory,
                                   .elevated = true,
-                                  .optional = true});
+                                  .optional = true,
+                                  .undo = {}});
         }
 
-        std::string files = "'" + boot + "/vmlinuz-" + version
-                            + "'"
-                              " '"
-                            + boot + "/initramfs-" + version
-                            + ".img'"
-                              " '"
-                            + boot + "/initramfs-" + version
-                            + "-fallback.img'"
-                              " '"
-                            + boot + "/System.map-" + version
-                            + "'"
-                              " '"
-                            + boot + "/config-" + version
-                            + "'"
-                              " '/etc/mkinitcpio.d/"
-                            + version + ".preset'";
+        std::string files;
 
-        // A kernel installed by the distribution names its files after the package.
-        const Kernel kernel(version);
-
-        if (const std::string image = kernel.get_image(); !image.empty() && image != boot + "/vmlinuz-" + version) {
-            files += " '" + image + "'";
-        }
-
-        if (const std::string initramfs = kernel.get_initramfs();
-            !initramfs.empty() && initramfs != boot + "/initramfs-" + version + ".img") {
-            files += " '" + initramfs + "'";
+        for (const std::string &file : {boot + "/vmlinuz-" + version,
+                                        boot + "/initramfs-" + version + ".img",
+                                        boot + "/initramfs-" + version + "-fallback.img",
+                                        boot + "/System.map-" + version,
+                                        boot + "/config-" + version,
+                                        "/etc/mkinitcpio.d/" + version + ".preset"}) {
+            files += " " + Shell::quote(file);
         }
 
         _steps.push_back(Step{.label = "Removing boot files",
-                              .command = "rm -fv " + files,
+                              .command = "rm -fv" + files,
                               .directory = settings->baseDirectory,
                               .elevated = true,
-                              .optional = false});
+                              .optional = false,
+                              .undo = {}});
 
+        // Once the files are gone grub has to be told, or its menu offers a kernel that is not there.
         if (Command::exists("grub-mkconfig")) {
-            _steps.push_back(Step{.label = "Refreshing grub",
-                                  .command = "grub-mkconfig -o '" + settings->grubDirectory + "/grub.cfg'",
-                                  .directory = settings->baseDirectory,
-                                  .elevated = true,
-                                  .optional = true});
+            const std::string config = settings->grubDirectory + "/grub.cfg";
+
+            if (std::filesystem::exists(config)) {
+                _steps.push_back(Step{.label = "Refreshing grub",
+                                      .command = "grub-mkconfig -o " + Shell::quote(config),
+                                      .directory = settings->baseDirectory,
+                                      .elevated = true,
+                                      .optional = false,
+                                      .undo = {}});
+            } else {
+                report("No " + config + ", so grub is not refreshed.");
+            }
         }
     }
 
@@ -114,10 +114,11 @@ bool CleanTask::prepare() {
 
         if (std::filesystem::exists(source)) {
             _steps.push_back(Step{.label = "Removing build directory " + source,
-                                  .command = "rm -rf '" + source + "'",
+                                  .command = "rm -rf " + Shell::quote(source),
                                   .directory = settings->baseDirectory,
                                   .elevated = false,
-                                  .optional = false});
+                                  .optional = false,
+                                  .undo = {}});
         } else {
             report("No build directory at " + source + ".");
         }
@@ -126,11 +127,15 @@ bool CleanTask::prepare() {
     if (_mode & Archive) {
         std::string archives;
 
+        // A download cut short by a killed process leaves its working file, which goes too.
         if (versioned) {
-            archives = "'" + KernelArchive(_version).get_location() + "'";
+            const std::string location = KernelArchive(_version).get_location();
+
+            archives = " " + Shell::quote(location) + " " + Shell::quote(location + ".part");
         } else {
             for (const KernelArchive &archive : KernelArchive::list_archives()) {
-                archives += " '" + archive.get_location() + "'";
+                archives += " " + Shell::quote(archive.get_location()) + " "
+                            + Shell::quote(archive.get_location() + ".part");
             }
         }
 
@@ -138,10 +143,11 @@ bool CleanTask::prepare() {
             report("No archives to remove.");
         } else {
             _steps.push_back(Step{.label = "Removing archives",
-                                  .command = "rm -fv " + archives,
+                                  .command = "rm -fv" + archives,
                                   .directory = settings->baseDirectory,
                                   .elevated = false,
-                                  .optional = false});
+                                  .optional = false,
+                                  .undo = {}});
         }
     }
 

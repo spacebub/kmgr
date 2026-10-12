@@ -121,8 +121,10 @@ int get_options(const Arguments &arguments, Options *options) {
         if (arguments.flags & Parser::AUTOUPDATE) {
             *options = WorkflowFactory::autoupdate();
             console().line("Updating to " + options->kernel + (options->suffix.empty() ? "" : "-" + options->suffix)
-                           + ", replacing " + options->oldKernel
-                           + (options->oldSuffix.empty() ? "" : "-" + options->oldSuffix));
+                           + (options->oldKernel.empty()
+                                      ? ", alongside the kernel the package manager installed"
+                                      : ", replacing " + options->oldKernel
+                                                + (options->oldSuffix.empty() ? "" : "-" + options->oldSuffix)));
         } else {
             options->kernel = arguments.kernel;
             options->suffix = arguments.suffix;

@@ -19,12 +19,12 @@ ExtractTask::ExtractTask(const Kernel::Version &version)
     _archive = _owned.get();
 }
 
+// A directory left behind by a run that stopped would pass for an unpacked kernel, so it goes.
 bool ExtractTask::run() {
-    bool canceled = false;
+    const std::string destination = Kernel::get_source_directory(_archive->get_version());
+    bool failed = false;
 
     try {
-        const std::string destination = Kernel::get_source_directory(_archive->get_version());
-
         step("Extracting " + _archive->get_name() + " to " + destination);
 
         if (std::filesystem::exists(destination)) {
@@ -35,24 +35,30 @@ bool ExtractTask::run() {
         _progress->set_total(std::filesystem::file_size(_archive->get_location()));
         _archive->extract(_progress.get());
 
-        canceled = _progress->is_cancel_requested();
+        failed = _progress->is_cancel_requested();
 
-        if (canceled) {
-            std::filesystem::remove_all(destination);
+        if (failed) {
+            report("Canceled.");
         }
     } catch (const std::exception &ex) {
-        canceled = true;
+        failed = true;
         fail(ex.what());
     }
 
-    _progress->end(canceled);
-    step_finished(!canceled);
+    if (failed) {
+        std::error_code error;
 
-    if (!canceled && _on_complete) {
+        std::filesystem::remove_all(destination, error);
+    }
+
+    _progress->end(failed);
+    step_finished(!failed);
+
+    if (!failed && _on_complete) {
         _on_complete();
     }
 
-    return !canceled;
+    return !failed;
 }
 
 int ExtractTask::position() {

@@ -17,12 +17,16 @@
 class InstallTask final : public ProcessTask {
     Kernel::Version _version;
     Toolchain _compiler;
+    // The kernel this one takes the place of, if any. What it had, the new one must have too.
+    Kernel::Version _replaced;
 
 protected:
     bool prepare() override;
 
 public:
-    explicit InstallTask(Kernel::Version version, Toolchain compiler = Toolchain::Gcc);
+    explicit InstallTask(Kernel::Version version, Toolchain compiler = Toolchain::Gcc, Kernel::Version replaced = {});
+
+    [[nodiscard]] bool is_critical() const override { return true; }
 };
 
 

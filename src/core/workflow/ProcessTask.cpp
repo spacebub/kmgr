@@ -17,24 +17,38 @@ bool ProcessTask::run() {
     _progress->set_total(0);
 
     bool success = true;
+    std::vector<const Step *> attempted;
 
     try {
         success = prepare();
 
         for (const Step &step : _steps) {
-            if (!success || _canceled) {
+            if (!success) {
                 break;
             }
 
-            success = execute(step);
+            if (_canceled) {
+                success = false;
+                break;
+            }
+
+            attempted.push_back(&step);
+
+            const Outcome outcome = execute(step);
+
+            success = outcome == Outcome::Done || outcome == Outcome::Skipped;
         }
     } catch (const std::exception &ex) {
         success = false;
         fail(ex.what());
     }
 
-    if (!success && _canceled) {
-        report("Canceled.");
+    if (!success) {
+        if (_canceled) {
+            report("Canceled.");
+        }
+
+        roll_back(attempted);
     }
 
     _awaitingSecret = false;
@@ -78,16 +92,15 @@ void ProcessTask::provide_input(const std::string &input) {
     }
 }
 
-bool ProcessTask::execute(const Step &step) {
-    if (!step.label.empty()) {
-        this->step(step.label);
-    }
+int ProcessTask::launch(const std::string &command,
+                        const std::string &directory,
+                        const bool elevated,
+                        const bool evenIfCanceled) {
+    const auto process = std::make_shared<Process>(command);
 
-    const auto process = std::make_shared<Process>(step.command);
+    process->with_directory(directory);
 
-    process->with_directory(step.directory);
-
-    if (step.elevated) {
+    if (elevated) {
         process->elevated();
     }
 
@@ -126,8 +139,8 @@ bool ProcessTask::execute(const Step &step) {
     {
         std::lock_guard lock(_processMutex);
 
-        if (_canceled) {
-            return false;
+        if (_canceled && !evenIfCanceled) {
+            return Process::CANCELED;
         }
 
         _process = process;
@@ -141,14 +154,25 @@ bool ProcessTask::execute(const Step &step) {
     }
 
     _awaitingSecret = false;
+
+    return status;
+}
+
+ProcessTask::Outcome ProcessTask::execute(const Step &step) {
+    if (!step.label.empty()) {
+        this->step(step.label);
+    }
+
+    const int status = launch(step.command, step.directory, step.elevated, false);
+
     step_finished(status == 0);
 
     if (status == 0) {
-        return true;
+        return Outcome::Done;
     }
 
     if (status == Process::CANCELED) {
-        return false;
+        return Outcome::Canceled;
     }
 
     const std::string message =
@@ -157,10 +181,50 @@ bool ProcessTask::execute(const Step &step) {
     if (step.optional) {
         report("(skipped) " + message);
 
-        return true;
+        return Outcome::Skipped;
     }
 
     fail(message);
 
-    return false;
+    return Outcome::Failed;
+}
+
+// The step that failed is taken back too, since it may have got part of the way.
+void ProcessTask::roll_back(const std::vector<const Step *> &attempted) {
+    std::vector<const Step *> undoable;
+
+    for (const Step *step : attempted) {
+        if (!step->undo.empty()) {
+            undoable.push_back(step);
+        }
+    }
+
+    if (undoable.empty()) {
+        return;
+    }
+
+    step("Taking back what was done");
+
+    bool clean = true;
+
+    for (auto it = undoable.rbegin(); it != undoable.rend(); ++it) {
+        const Step *step = *it;
+
+        report("Undoing: " + step->label);
+
+        try {
+            if (launch(step->undo, step->directory, step->elevated, true) != 0) {
+                clean = false;
+            }
+        } catch (const std::exception &ex) {
+            report(ex.what());
+            clean = false;
+        }
+    }
+
+    step_finished(clean);
+
+    if (!clean) {
+        report("Not everything could be taken back, the log says what was tried.");
+    }
 }

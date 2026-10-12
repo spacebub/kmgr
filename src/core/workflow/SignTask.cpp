@@ -9,6 +9,7 @@
 #include "SignTask.h"
 #include "core/Command.h"
 #include "core/Configuration.h"
+#include "core/Shell.h"
 #include <filesystem>
 #include <utility>
 
@@ -31,10 +32,11 @@ bool SignTask::prepare() {
     }
 
     _steps.push_back(Step{.label = "Signing " + image,
-                          .command = "sbctl sign -s '" + image + "'",
+                          .command = "sbctl sign -s " + Shell::quote(image),
                           .directory = Configuration::get()->baseDirectory,
                           .elevated = true,
-                          .optional = false});
+                          .optional = false,
+                          .undo = {}});
 
     return true;
 }

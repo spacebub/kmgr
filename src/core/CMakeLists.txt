@@ -13,6 +13,7 @@ add_library(kernelmgr_core STATIC
         Command.h
         Download.cpp
         Download.h
+        Dkms.h
         Elevation.cpp
         Elevation.h
         Make.h

@@ -25,7 +25,8 @@ bool PullTask::prepare() {
                               .command = "git pull --ff-only",
                               .directory = entry.path(),
                               .elevated = false,
-                              .optional = true});
+                              .optional = true,
+                              .undo = {}});
     }
 
     if (_steps.empty()) {
