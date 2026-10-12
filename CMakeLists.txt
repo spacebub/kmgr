@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 project(kernelmgr
-        VERSION 1.0.3
+        VERSION 1.1.0
         DESCRIPTION "Provides a tool for kernel building and management"
         HOMEPAGE_URL "https://github.com/spacebub/kernelmgr")
 
