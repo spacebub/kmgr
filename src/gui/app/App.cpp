@@ -8,6 +8,7 @@
  */
 #include "gui/app/App.h"
 #include "gui/app/Look.h"
+#include "gui/dialogs/AboutDialog.h"
 #include "ttk/dialogs/ConfirmDialog.h"
 #include "ttk/dialogs/FilePickerDialog.h"
 #include "ttk/draw/Theme.h"
@@ -53,6 +54,7 @@ App::App(ttk::Shell &shell)
               .refresh = {},
               .ask = {},
               .pick = {},
+              .showAbout = {},
       } {
     wire();
     build();
@@ -63,6 +65,7 @@ void App::wire() {
     _reach.go = [this](const Page page) { go(page); };
     _reach.show = [this](const std::string &version) { show(version); };
     _reach.cycleShade = [this] { cycle_shade(); };
+    _reach.showAbout = [this] { show_about(); };
     _reach.refresh = [this] {
         _catalog.refresh();
         _system.refresh();
@@ -230,6 +233,10 @@ void App::cycle_shade() {
     touch();
 }
 
+void App::show_about() {
+    _dialogs->show(std::make_unique<AboutDialog>());
+}
+
 void App::ask(const std::string &title,
               const std::string &body,
               const std::string &accept,
@@ -285,6 +292,13 @@ bool App::shortcut(const ttk::Key &pressed) {
         }
 
         return false;
+    }
+
+    if (pressed.code == ttk::Code::F1 && !_dialogs->covered()) {
+        show_about();
+        touch();
+
+        return true;
     }
 
     return false;

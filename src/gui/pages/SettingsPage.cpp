@@ -245,8 +245,20 @@ SettingsPage::SettingsPage(Reach *reach) : _reach(reach) {
 
     general->append(card(inside, 4.0));
     inside->append(Parts::section("ABOUT"));
-    inside->append(Parts::text("KernelManager " + Program::version(), 600, ttk::Theme::fontBody, &Palette::text));
-    inside->append(Parts::note("Downloads, patches, configures, builds and installs kernels from kernel.org."));
+
+    ttk::Box *who = inside->append(ttk::Box::row());
+    who->spacing(16.0)->cross(ttk::Box::Place::Centre);
+
+    ttk::Box *said = who->append(ttk::Box::column());
+    said->spacing(3.0);
+    said->stretch = 1.0;
+    said->append(Parts::text("KernelManager " + Program::version(), 600, ttk::Theme::fontBody, &Palette::text));
+    said->append(Parts::note("Downloads, patches, configures, builds and installs kernels from kernel.org."));
+
+    who->append(std::make_unique<ttk::Button>("About", [this] {
+        _reach->showAbout();
+        _reach->touch();
+    }));
 
     // --- build ---
 

@@ -63,6 +63,8 @@ struct Reach {
                        bool directories,
                        std::function<void(const std::string &)> chosen)>
             pick;
+
+    std::function<void()> showAbout;
 };
 
 

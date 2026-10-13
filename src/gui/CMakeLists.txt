@@ -66,6 +66,9 @@ add_executable(kernelmgr_gui
         # overlays: what takes the window over
         overlays/WorkflowSheet.cpp
         overlays/WorkflowSheet.h
+        # dialogs: the modal ones, over everything
+        dialogs/AboutDialog.cpp
+        dialogs/AboutDialog.h
         ${SANITIZER_SOURCES})
 
 target_link_libraries(kernelmgr_gui PRIVATE
@@ -75,9 +78,11 @@ target_link_libraries(kernelmgr_gui PRIVATE
         ttk::ui)
 
 target_compile_options(kernelmgr_gui PRIVATE ${COMPILE_FLAGS})
+target_compile_definitions(kernelmgr_gui PRIVATE KERNELMGR_TINYTK_VERSION="${KERNELMGR_TINYTK_VERSION}")
 
 ttk_embed(kernelmgr_gui mark128 ${CMAKE_SOURCE_DIR}/assets/kernelmgr-128.png)
 ttk_embed(kernelmgr_gui mark48 ${CMAKE_SOURCE_DIR}/assets/kernelmgr-48.png)
+ttk_embed(kernelmgr_gui authors ${CMAKE_SOURCE_DIR}/AUTHORS.md)
 
 if (SANITIZE)
     target_compile_definitions(kernelmgr_gui PRIVATE

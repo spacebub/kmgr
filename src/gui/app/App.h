@@ -54,6 +54,7 @@ private:
     void go(Page page);
     void show(const std::string &version);
     void cycle_shade();
+    void show_about();
     void ask(const std::string &title,
              const std::string &body,
              const std::string &accept,
