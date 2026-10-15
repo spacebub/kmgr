@@ -24,8 +24,13 @@
 namespace {
 using ttk::Theme::Palette;
 
+constexpr double RAIL_WIDTH = 168.0;
 constexpr double RAIL_GAP = 18.0;
+constexpr double TABS_GAP = 14.0;
+constexpr double TABS_BELOW = 720.0;
 constexpr double FOOTER_HEIGHT = 62.0;
+constexpr double CARD_PAD = 20.0;
+constexpr double PANE_MARGIN = 12.0;
 
 const ttk::Theme::Palette &palette() {
     return ttk::Theme::palette();
@@ -35,7 +40,7 @@ std::unique_ptr<ttk::Panel> card(ttk::Box *&inside, const double spacing) {
     auto made = std::make_unique<ttk::Panel>();
 
     inside = made->append(ttk::Box::column());
-    inside->pad(20.0)->spacing(spacing);
+    inside->pad(CARD_PAD)->spacing(spacing);
 
     return made;
 }
@@ -177,13 +182,18 @@ SettingsPage::SettingsPage(Reach *reach) : _reach(reach) {
     const auto touched = [this](const std::string &) { _reach->touch(); };
 
     _rail = append(std::make_unique<Rail>(this));
+    _tabs = append(std::make_unique<SectionTabs>([this](const int index) {
+        _section = index;
+        _reach->touch();
+    }));
+    _tabs->set_tabs({{SECTIONS[0], ""}, {SECTIONS[1], ""}, {SECTIONS[2], ""}, {SECTIONS[3], ""}});
 
     // Each group scrolls on its own, so a long one does not drag the rest with it.
     const auto pane = [this] -> ttk::Box * {
         ttk::Scroll *scroll = append(std::make_unique<ttk::Scroll>());
         ttk::Box *stack = static_cast<ttk::Box *>(scroll->hold(ttk::Box::column()));
 
-        stack->pad(0.0, 0.0, 12.0, 0.0)->spacing(14.0);
+        stack->pad(0.0, 0.0, PANE_MARGIN, 0.0)->spacing(14.0);
         _panes.push_back(scroll);
 
         return stack;
@@ -228,7 +238,7 @@ SettingsPage::SettingsPage(Reach *reach) : _reach(reach) {
         _reach->touch();
     });
     inside = alerts->append(ttk::Box::column());
-    inside->pad(20.0)->spacing(12.0);
+    inside->pad(CARD_PAD)->spacing(12.0);
     inside->append(Parts::section("NOTIFICATIONS"));
 
     ttk::Box *alertRow = inside->append(ttk::Box::row());
@@ -409,20 +419,49 @@ SettingsPage::SettingsPage(Reach *reach) : _reach(reach) {
 }
 
 void SettingsPage::arrange(ttk::Typeface &type) {
-    const double rail = _box.w < 720.0 ? 132.0 : 168.0;
-    const double left = _box.x + rail + RAIL_GAP;
+    const bool tabbed = _box.w < TABS_BELOW;
+    const double left = tabbed ? _box.x : _box.x + RAIL_WIDTH + RAIL_GAP;
     const double wide = std::max(0.0, _box.x + _box.w - left);
     const bool footer = _footer->visible();
-    const double bottom = footer ? _box.y + _box.h - 2.0 - FOOTER_HEIGHT - 12.0 : _box.y + _box.h;
+    double top = _box.y;
 
-    _rail->place(BLRect{_box.x, _box.y, rail, _box.h}, type);
+    _rail->set_visible(!tabbed);
+    _tabs->set_visible(tabbed);
 
-    for (ttk::Scroll *pane : _panes) {
-        pane->place(BLRect{left, _box.y, wide, std::max(0.0, bottom - _box.y)}, type);
+    if (tabbed) {
+        const double tabs = _tabs->natural_height(type, _box.w);
+
+        _tabs->place(BLRect{_box.x, _box.y, _box.w, tabs}, type);
+        top += tabs + TABS_GAP;
+    } else {
+        _rail->place(BLRect{_box.x, _box.y, RAIL_WIDTH, _box.h}, type);
     }
 
-    _footer->place(BLRect{left, _box.y + _box.h - 2.0 - FOOTER_HEIGHT, std::max(0.0, wide - 12.0), FOOTER_HEIGHT},
-                   type);
+    const double bottom = footer ? _box.y + _box.h - 2.0 - FOOTER_HEIGHT - PANE_MARGIN : _box.y + _box.h;
+
+    // Past the widest setting row with its field stacked, the panes stop narrowing and are cut off instead.
+    double least = 0.0;
+
+    for (const SettingRow *row : {_base, _archives, _boot, _grub, _cdn, _format, _jobs, _elevation}) {
+        least = std::max(least, row->narrowest(type));
+    }
+
+    least += (CARD_PAD * 2.0) + PANE_MARGIN;
+
+    for (ttk::Scroll *pane : _panes) {
+        pane->content()->minWidth = least;
+        pane->place(BLRect{left, top, wide, std::max(0.0, bottom - top)}, type);
+    }
+
+    _footer->place(
+            BLRect{left, _box.y + _box.h - 2.0 - FOOTER_HEIGHT, std::max(wide, least) - PANE_MARGIN, FOOTER_HEIGHT},
+            type);
+}
+
+bool SettingsPage::clips(BLRect &region) const {
+    region = _box;
+
+    return true;
 }
 
 // Empty means one job per core, which is what a zero is in the file.
@@ -537,6 +576,7 @@ void SettingsPage::sync() {
     const bool running = _reach->workflow.running();
 
     _rail->invalidate();
+    _tabs->set_current(_section);
 
     for (size_t index = 0; index < _panes.size(); ++index) {
         _panes[index]->set_visible(std::cmp_equal(index, _section));

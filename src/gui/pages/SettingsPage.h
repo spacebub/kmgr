@@ -16,6 +16,7 @@
 #include "gui/components/Choice.h"
 #include "gui/components/HoldingRow.h"
 #include "gui/components/LogSteps.h"
+#include "gui/components/SectionTabs.h"
 #include "gui/components/SettingRow.h"
 #include "ttk/draw/Anim.h"
 #include "ttk/toolkit/Widget.h"
@@ -37,6 +38,7 @@ public:
     void sync();
 
     void arrange(ttk::Typeface &type) override;
+    bool clips(BLRect &region) const override;
 
 private:
     class Rail : public ttk::Widget {
@@ -113,6 +115,7 @@ private:
     std::vector<std::string> _toolchainNames;
 
     Rail *_rail = nullptr;
+    SectionTabs *_tabs = nullptr;
     std::vector<ttk::Scroll *> _panes;
     ttk::Panel *_footer = nullptr;
 

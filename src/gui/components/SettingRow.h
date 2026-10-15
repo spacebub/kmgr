@@ -34,14 +34,22 @@ public:
     [[nodiscard]] const std::string &text() const { return _field->text(); }
     void set_text(const std::string &text) const { _field->set_text(text); }
 
+    [[nodiscard]] double narrowest(ttk::Typeface &type) const;
+
     double natural_height(ttk::Typeface &type, double width) override;
     void arrange(ttk::Typeface &type) override;
     void paint(const ttk::Painter &painter) override;
 
 private:
     static constexpr double CONTROL_WIDTH = 460.0;
+    static constexpr double GAP = 24.0;
+    static constexpr double BELOW = 10.0;
 
-    [[nodiscard]] double texts_height(ttk::Typeface &type, double width) const;
+    [[nodiscard]] double texts_width(ttk::Typeface &type) const;
+    [[nodiscard]] double texts_height(ttk::Typeface &type) const;
+    [[nodiscard]] double column(ttk::Typeface &type) const;
+    [[nodiscard]] bool stacked(ttk::Typeface &type, double width) const;
+    void place_texts(ttk::Typeface &type, double y, double width);
 
     ttk::Label *_label = nullptr;
     ttk::Label *_description = nullptr;
