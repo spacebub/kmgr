@@ -30,6 +30,7 @@
 #include "ttk/dialogs/FilePicker.h"
 #include "ttk/notices/Notifier.h"
 #include "ttk/shell/Shell.h"
+#include "ttk/toolkit/layout/Scroll.h"
 #include "ttk/toolkit/overlays/Dialog.h"
 #include "ttk/toolkit/overlays/Tips.h"
 
@@ -82,7 +83,9 @@ private:
 
     TitleBar *_bar = nullptr;
     ttk::Widget *_pages = nullptr;
+    ttk::Scroll *_homeView = nullptr;
     HomePage *_home = nullptr;
+    ttk::Scroll *_kernelsView = nullptr;
     KernelsPage *_kernels = nullptr;
     SettingsPage *_settingsPage = nullptr;
     WorkflowSheet *_sheet = nullptr;

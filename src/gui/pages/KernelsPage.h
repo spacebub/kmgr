@@ -41,6 +41,7 @@ public:
     // Show a version now if it is here, or as soon as it turns up.
     void show(const std::string &version);
 
+    double natural_height(ttk::Typeface &type, double width) override;
     void arrange(ttk::Typeface &type) override;
 
 private:
@@ -48,6 +49,12 @@ private:
         Builds,
         Installed,
         Logs,
+    };
+
+    // Measured at its least, so the version pane stops shrinking once the tab body is at its minimum.
+    class Body : public ttk::Scroll {
+    public:
+        double natural_height(ttk::Typeface & /*type*/, double /*width*/) override { return 0.0; }
     };
 
     class Adder : public ttk::Widget {
@@ -125,7 +132,7 @@ private:
     ttk::Label *_fetchFrom = nullptr;
     ttk::GlyphButton *_download = nullptr;
     SectionTabs *_tabs = nullptr;
-    ttk::Scroll *_body = nullptr;
+    Body *_body = nullptr;
     ttk::Box *_buildsSection = nullptr;
     EmptyState *_noBuilds = nullptr;
     ttk::Box *_builds = nullptr;

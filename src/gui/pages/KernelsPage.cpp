@@ -24,6 +24,8 @@ using ttk::Theme::Palette;
 constexpr double GAP = 14.0;
 constexpr double LIST_WIDTH = 322.0;
 constexpr double LIST_HEIGHT = 220.0;
+constexpr double WIDE_BELOW = 720.0;
+constexpr double SCROLL_MARGIN = 12.0;
 
 const ttk::Theme::Palette &palette() {
     return ttk::Theme::palette();
@@ -234,7 +236,7 @@ KernelsPage::KernelsPage(Reach *reach) : _reach(reach) {
     _tabs->set_tabs({{"Builds", ""}, {"Installed", ""}, {"Logs", ""}});
     detail->append(Parts::above(2.0, std::move(tabs)));
 
-    _body = detail->append(std::make_unique<ttk::Scroll>());
+    _body = detail->append(std::make_unique<Body>());
     _body->stretch = 1.0;
     _body->minHeight = 90.0;
 
@@ -316,24 +318,38 @@ KernelsPage::KernelsPage(Reach *reach) : _reach(reach) {
     reselect();
 }
 
-void KernelsPage::arrange(ttk::Typeface &type) {
-    const bool wide = _box.w > 720.0;
-    const double head = _head->natural_height(type, _box.w);
+double KernelsPage::natural_height(ttk::Typeface &type, const double width) {
+    const double top = _head->natural_height(type, width) + GAP;
 
-    _head->place(BLRect{_box.x, _box.y, _box.w, head}, type);
+    if (width > WIDE_BELOW) {
+        const double right = std::max(0.0, width - LIST_WIDTH - GAP);
+
+        return top + std::max(_left->wanted_height(type, LIST_WIDTH), _right->wanted_height(type, right));
+    }
+
+    return top + LIST_HEIGHT + GAP + _right->wanted_height(type, width);
+}
+
+void KernelsPage::arrange(ttk::Typeface &type) {
+    // The page's scroll bar is drawn over the content, so a scrolling page keeps clear of it.
+    const auto *view = dynamic_cast<const ttk::Scroll *>(parent());
+    const double width = view != nullptr && view->scrollable() ? std::max(0.0, _box.w - SCROLL_MARGIN) : _box.w;
+    const double head = _head->natural_height(type, width);
+
+    _head->place(BLRect{_box.x, _box.y, width, head}, type);
 
     const double top = _box.y + head + GAP;
     const double tall = std::max(0.0, _box.y + _box.h - top);
 
-    if (wide) {
+    if (_box.w > WIDE_BELOW) {
         _left->place(BLRect{_box.x, top, LIST_WIDTH, tall}, type);
-        _right->place(BLRect{_box.x + LIST_WIDTH + GAP, top, std::max(0.0, _box.w - LIST_WIDTH - GAP), tall}, type);
+        _right->place(BLRect{_box.x + LIST_WIDTH + GAP, top, std::max(0.0, width - LIST_WIDTH - GAP), tall}, type);
 
         return;
     }
 
-    _left->place(BLRect{_box.x, top, _box.w, LIST_HEIGHT}, type);
-    _right->place(BLRect{_box.x, top + LIST_HEIGHT + GAP, _box.w, std::max(0.0, tall - LIST_HEIGHT - GAP)}, type);
+    _left->place(BLRect{_box.x, top, width, LIST_HEIGHT}, type);
+    _right->place(BLRect{_box.x, top + LIST_HEIGHT + GAP, width, std::max(0.0, tall - LIST_HEIGHT - GAP)}, type);
 }
 
 bool KernelsPage::idle_for(const std::string &version) const {

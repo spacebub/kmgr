@@ -135,8 +135,10 @@ void App::build() {
     frame->add(std::move(bar));
     frame->add(std::move(pages));
 
-    _home = _pages->append(std::make_unique<HomePage>(&_reach));
-    _kernels = _pages->append(std::make_unique<KernelsPage>(&_reach));
+    _homeView = _pages->append(std::make_unique<ttk::Scroll>());
+    _home = static_cast<HomePage *>(_homeView->hold(std::make_unique<HomePage>(&_reach)));
+    _kernelsView = _pages->append(std::make_unique<ttk::Scroll>());
+    _kernels = static_cast<KernelsPage *>(_kernelsView->hold(std::make_unique<KernelsPage>(&_reach)));
     _settingsPage = _pages->append(std::make_unique<SettingsPage>(&_reach));
 
     // Above the pages and below the dialogs.
@@ -198,8 +200,8 @@ void App::sync() {
     _dialogs->sync();
     _bar->sync(_page, _system.update_available(), _system.release());
 
-    _home->set_visible(_page == Page::Home);
-    _kernels->set_visible(_page == Page::Kernels);
+    _homeView->set_visible(_page == Page::Home);
+    _kernelsView->set_visible(_page == Page::Kernels);
     _settingsPage->set_visible(_page == Page::Settings);
 
     _home->sync();

@@ -19,6 +19,7 @@
 #include "ttk/toolkit/controls/Label.h"
 #include "ttk/toolkit/controls/Pill.h"
 #include "ttk/toolkit/layout/Box.h"
+#include "ttk/toolkit/layout/Panel.h"
 
 struct Reach;
 
@@ -27,6 +28,9 @@ public:
     explicit HomePage(Reach *reach);
 
     void sync();
+
+    double natural_height(ttk::Typeface &type, double width) override;
+    void arrange(ttk::Typeface &type) override;
 
 private:
     class Arrow : public ttk::Widget {
@@ -39,7 +43,16 @@ private:
         void paint(const ttk::Painter &painter) override;
     };
 
+    class Below : public ttk::Box {
+    public:
+        Below() : Box(Flow::Row) {}
+
+        using Box::set_flow;
+    };
+
     [[nodiscard]] std::string_view status() const;
+
+    bool stack(double width);
 
     Reach *_reach;
     int _catalogSeen = -1;
@@ -53,6 +66,8 @@ private:
     ttk::Label *_ahead = nullptr;
     ttk::Button *_retry = nullptr;
     ttk::Button *_update = nullptr;
+    Below *_below = nullptr;
+    ttk::Panel *_places = nullptr;
     EmptyState *_empty = nullptr;
     VersionList *_preview = nullptr;
     ttk::Fact *_base = nullptr;

@@ -20,6 +20,14 @@
 namespace {
 using ttk::Theme::Palette;
 
+constexpr double PLACES_WIDTH = 310.0;
+constexpr double BASE_WIDTH = 268.0;
+constexpr double MACHINE_HEIGHT = 280.0;
+constexpr double SCROLL_MARGIN = 12.0;
+
+// Narrower than this, the panels below the hero stack and each takes the full width.
+constexpr double STACK_BELOW = 800.0;
+
 const ttk::Theme::Palette &palette() {
     return ttk::Theme::palette();
 }
@@ -95,12 +103,13 @@ HomePage::HomePage(Reach *reach) : Box(Flow::Column), _reach(reach) {
     }));
     _update->kind(ttk::Button::Kind::Primary);
 
-    ttk::Box *below = append(ttk::Box::row());
-    below->spacing(14.0);
-    below->stretch = 1.0;
+    _below = append(std::make_unique<Below>());
+    _below->spacing(14.0);
+    _below->stretch = 1.0;
 
-    ttk::Panel *machine = below->append(std::make_unique<ttk::Panel>());
+    ttk::Panel *machine = _below->append(std::make_unique<ttk::Panel>());
     machine->stretch = 1.0;
+    machine->minHeight = MACHINE_HEIGHT;
 
     ttk::Box *listing = machine->append(ttk::Box::column());
     listing->pad(20.0)->spacing(12.0);
@@ -122,10 +131,9 @@ HomePage::HomePage(Reach *reach) : Box(Flow::Column), _reach(reach) {
     }));
     _preview->stretch = 1.0;
 
-    ttk::Panel *places = below->append(std::make_unique<ttk::Panel>());
-    places->fixedWidth = 310.0;
+    _places = _below->append(std::make_unique<ttk::Panel>());
 
-    ttk::Box *where = places->append(ttk::Box::column());
+    ttk::Box *where = _places->append(ttk::Box::column());
     where->pad(20.0)->spacing(16.0);
     where->append(Parts::section("WHERE THINGS LIVE"));
 
@@ -135,7 +143,6 @@ HomePage::HomePage(Reach *reach) : Box(Flow::Column), _reach(reach) {
             _reach->notify.warning("Nothing on this system offered to open it.");
         }
     });
-    _base->fixedWidth = 268.0;
 
     ttk::Box *counts = where->append(ttk::Box::row());
     counts->spacing(18.0);
@@ -149,6 +156,27 @@ HomePage::HomePage(Reach *reach) : Box(Flow::Column), _reach(reach) {
 
     _pull = where->append(std::make_unique<ttk::Button>("Update repositories", [this] { _reach->workflow.pull(); }));
     _pull->tooltip("Run git pull in every repository in the base directory");
+}
+
+bool HomePage::stack(const double width) {
+    const bool stacked = width < STACK_BELOW;
+
+    _below->set_flow(stacked ? Flow::Column : Flow::Row);
+    _places->fixedWidth = stacked ? -1.0 : PLACES_WIDTH;
+    _base->fixedWidth = stacked ? -1.0 : BASE_WIDTH;
+    pad(0.0, 0.0, stacked ? SCROLL_MARGIN : 0.0, 0.0);
+
+    return stacked;
+}
+
+// Side by side the page fits the view it is given, so only a stacked page asks for more height and scrolls.
+double HomePage::natural_height(ttk::Typeface &type, const double width) {
+    return stack(width) ? Box::natural_height(type, width) : 0.0;
+}
+
+void HomePage::arrange(ttk::Typeface &type) {
+    stack(_box.w);
+    Box::arrange(type);
 }
 
 std::string_view HomePage::status() const {
