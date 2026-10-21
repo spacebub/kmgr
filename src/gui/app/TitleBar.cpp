@@ -158,10 +158,10 @@ void TitleBar::paint(const ttk::Painter &painter) {
 
     if (!compact()) {
         const BLFont &face = painter.font(400, ttk::Theme::fontBody);
-        const double tall = painter.line_height(face);
 
+        // On the baseline the tabs' labels take.
         painter.tracked(face,
-                        BLPoint{bar.x + 16.0 + 22.0 + 9.0, bar.y + ((bar.h - tall) / 2.0)},
+                        BLPoint{bar.x + 16.0 + 22.0 + 9.0, painter.baseline(face, bar) - face.metrics().ascent},
                         "KernelManager",
                         palette.text,
                         0.2);
